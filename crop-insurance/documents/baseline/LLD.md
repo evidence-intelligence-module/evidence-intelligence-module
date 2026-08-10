@@ -557,6 +557,6 @@ Critical test cases:
 
 ## 18. References
 
-- High-level design: `document/Crop-Insurance-Claim-Intimation-HLD.md`
-- Business white paper: `document/Crop-Insurance-Claim-Intimation-Business-White-Paper.md`
-- Baseline roadmap: `document/Crop-Insurance-Claim-Intimation-Roadmap-India.md`
+- High-level design: [HLD.md](HLD.md)
+- Business white paper: [Business-White-Paper.md](Business-White-Paper.md)
+- Baseline roadmap: [Roadmap-Region_India.md](Roadmap-Region_India.md)

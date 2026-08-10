@@ -1,4 +1,4 @@
-# Voice Agent for Crop Insurance Claim Intimation
+# Voice Agent for Crop Insurance Claim Intimation - Reference Plan
 
 This folder contains the planning package for a farmer-facing voice agent that can listen to farmer requirements, fetch pre-collected farmer/farm/policy data from the backend, select the correct land parcel, prefill claim-intimation documents, collect missing details during the call, and route the intimation packet.
 
@@ -6,7 +6,9 @@ This folder contains the planning package for a farmer-facing voice agent that c
 
 | Document | Purpose |
 |---|---|
-| `Voice-Agent-Claim-Intimation-Plan.md` | Product, architecture, data, MCP/tooling, and implementation plan |
+| `Voice-Agent-Claim-Intimation-Plan.md` | Earlier product, architecture, data, MCP/tooling, and implementation plan |
+
+For the active design package, see [Current Design](../current-design/).
 
 ## Scope Boundary
 

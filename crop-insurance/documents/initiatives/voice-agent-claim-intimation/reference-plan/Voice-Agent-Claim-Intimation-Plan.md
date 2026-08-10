@@ -447,5 +447,5 @@ Success criteria:
 - OpenAI API quickstart and Agents SDK overview: https://platform.openai.com/docs/quickstart/make-your-first-api-request
 - Existing HLD: `../Crop-Insurance-Claim-Intimation-HLD.md`
 - Existing LLD: `../Crop-Insurance-Claim-Intimation-LLD.md`
-- Inclusion notes: `../inclusion.md`
-- Exclusion notes: `../exclusion list.md`
+- Inclusion notes: [Original-Inclusion-Notes.md](../../../notes/Original-Inclusion-Notes.md)
+- Exclusion notes: [Original-Exclusion-Notes.md](../../../notes/Original-Exclusion-Notes.md)
