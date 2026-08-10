@@ -17,6 +17,12 @@ Create a multilingual voice-assisted service reachable by phone call and WhatsAp
 
 The service is an **intimation and submission-facilitation layer**. It does not decide claim eligibility, approve claims, predict calamities, perform CCE, or conduct on-ground verification.
 
+## 2.1 Peril-Type Gating
+
+Not all crop losses require individual farmer intimation. Under PMFBY, only localized calamities (hailstorm, landslide, inundation, cloudburst, natural fire caused by lightning) and post-harvest losses require individual farm-level intimation within 72 hours. Widespread perils such as drought, dry spells, and large-scale floods are assessed via government Crop Cutting Experiments (CCEs) at the area level.
+
+The service must pre-validate the reported peril type against the scheme rules for the farmer's specific district and season before creating a claim draft. If the reported peril falls under area-based assessment, the farmer receives an immediate, clear explanation in their regional language and no intimation draft is created. This prevents invalid claims from entering the pipeline and sets correct expectations.
+
 ## 3. Initial Pilot Choice
 
 Start with two bounded integrations:
@@ -49,6 +55,22 @@ The service creates value by removing friction before official claim handling be
 
 The prototype is successful if it increases the share of complete farmer-initiated intimations created within 72 hours while reducing manual correction and repeat calls.
 
+## 5.1 Phone-to-Farmer Disambiguation
+
+In rural Indian households, a single mobile number is frequently shared by multiple family members, each potentially holding separate insurance policies under distinct FINs. The service must not assume a one-to-one mapping between phone number and farmer identity.
+
+When a call arrives from a phone number linked to multiple registered FINs, the voice agent presents the registered farmer names and asks the caller to identify themselves: "Hello, is this call regarding farmer [Name A] or farmer [Name B]?" Identity is confirmed via OTP or assisted verification before any policy data is accessed.
+
+## 5.2 Seasonal Policy Resolution
+
+A single land parcel may carry multiple active insurance policies across different agricultural seasons (Kharif and Rabi) or even across overlapping scheme years. The lookup chain must resolve:
+
+1. Verified FIN → All registered land parcels.
+2. Selected land parcel → Active policies filtered by current season and year.
+3. If multiple policies exist on the selected parcel, present season-specific options: "Are you reporting for your Kharif 2026 soybean policy or your Rabi 2025-26 wheat policy on plot 142/3A?"
+
+This prevents misdirected intimations and ensures the correct policy reference, sum insured, and scheme rules are applied.
+
 ## 6. MVP Scope
 
 In scope:
@@ -61,6 +83,10 @@ In scope:
 - Insurance-document ingestion that converts approved public or partner-provided documents into reviewable rule/context objects.
 - PostgreSQL prototype store, Kafka-based asynchronous processing, claim packet generation, acknowledgement ledger, and SMS/WhatsApp/email notifications.
 - Human handoff for ambiguity, policy mismatch, low confidence, or failed submission.
+- Mandatory geo-tagged photo and video evidence prompting via WhatsApp follow-up after voice intake, fulfilling PMFBY visual proof requirements.
+- IndicWhisper (AI4Bharat fine-tuned Whisper) as the primary ASR engine for improved accuracy with Indian regional languages and agricultural terminology.
+- AgriStack UFSI integration pathway for farmer identity and land parcel verification as an enhancement to the self-managed FIN registry, subject to DA&FW sandbox authorization.
+- Peril-type pre-validation against scheme rules before draft creation to prevent invalid intimations from entering the pipeline.
 
 Out of scope:
 
@@ -80,6 +106,7 @@ Out of scope:
 | Successful acknowledgement delivery | >= 95% |
 | Duplicate packets created | < 1% |
 | Calls escalated due to ambiguity or confidence | Measured and reduced by iteration |
+| Peril triage accuracy (individual vs. area-based classification) | >= 95% |
 
 ## 8. Delivery and Commercial Path
 
