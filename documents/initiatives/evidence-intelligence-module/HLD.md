@@ -2,7 +2,7 @@
 
 **Governed by:** [Constitution.md](./Constitution.md) — read that first; this document implements it and does not restate its boundaries.
 
-**Implemented by:** [`specs/001-evidence-generation-pipeline/`](../../../../specs/001-evidence-generation-pipeline/) — the Spec Kit plan (`plan.md`, `data-model.md`, `contracts/`, `tasks.md`) translating this architecture into `crop-insurance/code/`. This document is the source of truth for the architecture; that directory tracks its concrete, executable implementation and may lag behind if this document changes.
+**Implemented by:** [`specs/001-evidence-generation-pipeline/`](../../../specs/001-evidence-generation-pipeline/) — the Spec Kit plan (`plan.md`, `data-model.md`, `contracts/`, `tasks.md`) translating this architecture into `crop-insurance/code/`. This document is the source of truth for the architecture; that directory tracks its concrete, executable implementation and may lag behind if this document changes.
 
 ---
 

@@ -4,13 +4,13 @@
 
 One active initiative: the **Evidence Intelligence Module** — a satellite + weather evidence-generation service that turns heterogeneous satellite and weather observations into reproducible, spatially explicit, auditable technical evidence supporting crop-damage and yield-loss claims under India's PMFBY/RWBCIS crop insurance schemes.
 
-**Start here:** [`crop-insurance/documents/initiatives/evidence-intelligence-module/README.md`](crop-insurance/documents/initiatives/evidence-intelligence-module/README.md) — states the problem and the goal in full. This file is a pointer, not a substitute for reading it.
+**Start here:** [`documents/initiatives/evidence-intelligence-module/README.md`](documents/initiatives/evidence-intelligence-module/README.md) — states the problem and the goal in full. This file is a pointer, not a substitute for reading it.
 
 ## Hard boundaries — do not silently relax these
 
 1. **No CCE.** This module does not ingest Crop Cutting Experiment data, does not implement CCE-blended yield determination, and never claims to replace CCE.
 2. **No standalone prediction.** The module reacts to a reported/claimed loss event; it does not run proactive predictive alerting.
-3. **Standalone by design.** The module exposes a generic evidence-request interface and has no dependency on any specific claim-intimation channel's internal schema. A prior voice-assisted claim-intimation initiative existed in this repo and was **deliberately deleted** (see `crop-insurance/documents/initiatives/evidence-intelligence-module/notes/brainstorm-auth.md` §2/§6 for why) — do not treat its absence as an oversight, and do not recreate dependencies on it.
+3. **Standalone by design.** The module exposes a generic evidence-request interface and has no dependency on any specific claim-intimation channel's internal schema. A prior voice-assisted claim-intimation initiative existed in this repo and was **deliberately deleted** (see `documents/initiatives/evidence-intelligence-module/notes/brainstorm-auth.md` §2/§6 for why) — do not treat its absence as an oversight, and do not recreate dependencies on it.
 
 Full reasoning for all three lives in the Constitution — see below. If a task seems to require relaxing one of these, that's a scope decision for the user to make explicitly, not something to infer from a single request.
 
@@ -20,7 +20,7 @@ Full reasoning for all three lives in the Constitution — see below. If a task 
 
 | Path | What it is |
 |---|---|
-| `crop-insurance/documents/initiatives/evidence-intelligence-module/` | The active initiative — everything belonging to it lives in this one directory (see below), not scattered across sibling top-level folders |
+| `documents/initiatives/evidence-intelligence-module/` | The active initiative — everything belonging to it lives in this one directory (see below), not scattered across sibling top-level folders |
 | ↳ `README.md` → `Constitution.md` → `HLD.md` → `Modeling-Approach.md` → `Evidence-Flow-Spec.md` | Orientation → non-negotiables → architecture → modeling science → pipeline detail, in reading order |
 | ↳ `standards/YESTECH_Manual_2023.md` | External, verbatim government manual (DA&FW/MNCFC). Not our content — never edit it, only relocate/reference it. The modeling approach is designed to match and exceed its rigor. |
 | ↳ `research/` | Internal source white paper the initiative was derived from. Optional depth, not required reading. |

@@ -1,6 +1,6 @@
 # Contract: Evidence Request Interface
 
-**Derived from [`HLD.md`](../../../crop-insurance/documents/initiatives/evidence-intelligence-module/HLD.md) §5 — not an independent contract.** If the two ever disagree, `HLD.md` is authoritative and this file is stale and needs re-syncing, not the other way around.
+**Derived from [`HLD.md`](../../../documents/initiatives/evidence-intelligence-module/HLD.md) §5 — not an independent contract.** If the two ever disagree, `HLD.md` is authoritative and this file is stale and needs re-syncing, not the other way around.
 
 The sole external interface this module exposes (Constitution §5, HLD §5). Every caller — voice-agent system, web portal, CSC workflow, insurer's own claims system — integrates through this contract and no other; there is no privileged caller and no caller-specific variant.
 

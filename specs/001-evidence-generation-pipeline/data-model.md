@@ -1,6 +1,6 @@
 # Phase 1 Data Model: Evidence Generation Pipeline
 
-**Derived from [`HLD.md`](../../crop-insurance/documents/initiatives/evidence-intelligence-module/HLD.md) §4 — not an independent schema.** If the two ever disagree, `HLD.md` is authoritative and this file is stale and needs re-syncing, not the other way around.
+**Derived from [`HLD.md`](../../documents/initiatives/evidence-intelligence-module/HLD.md) §4 — not an independent schema.** If the two ever disagree, `HLD.md` is authoritative and this file is stale and needs re-syncing, not the other way around.
 
 Elaborates the schema already fixed in `HLD.md` §4 with validation rules and state transitions needed for implementation. Field names and table shapes are taken as given from `HLD.md` — this document adds the behavioral rules the spec (`spec.md`) and flow spec (`Evidence-Flow-Spec.md`) require but the HLD's table listing didn't spell out.
 

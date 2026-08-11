@@ -1,6 +1,6 @@
 # Open Queries — Evidence Generation Pipeline
 
-Questions that genuinely have no answer in `crop-insurance/documents/` or `YESTECH_Manual_2023.md`, surfaced during `/speckit-specify` and `/speckit-plan` rather than guessed at. Each is deferred, not blocking — see the referenced task/FR for how it's handled in the meantime.
+Questions that genuinely have no answer in `documents/` or `YESTECH_Manual_2023.md`, surfaced during `/speckit-specify` and `/speckit-plan` rather than guessed at. Each is deferred, not blocking — see the referenced task/FR for how it's handled in the meantime.
 
 | File | Surfaced during | Blocks |
 |---|---|---|
