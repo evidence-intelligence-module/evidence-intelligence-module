@@ -85,3 +85,26 @@ Two follow-up questions from the user, arriving together:
 
 - Still no CCE ingestion, no CCE-blending formula, no MITR/TIP governance adoption — the Constitution §4 boundary is unchanged; only the *rigor* of the non-CCE modeling components increased.
 - Still no standalone predictive alerting (Constitution §3 unchanged).
+
+---
+
+## 7. Round 3 — stale root-level plan file
+
+The user flagged `d:\Barrel\task\ACIX\implementation_plan.md` (repo root, outside `documents/`) as contradicting the current state. It was the original replan for the voice-agent-claim-intimation system — proposing edits to `baseline/HLD.md`/`LLD.md` and `initiatives/voice-agent-claim-intimation/current-design/*`, and creation of `Evidence-Collection-Spec.md`, `Peril-Validation-Logic.md`, `Integration-Tier-Strategy.md` in that folder. All of those target files were deleted in Round 2 — the plan's entire premise (peril-type gating, WhatsApp photo evidence, NCIP integration tiers, AgriStack UFSI, IndicWhisper) is the voice-agent scope that was deliberately removed. Confirmed with the user: deleted, recoverable from git history if ever needed.
+
+---
+
+## 8. Round 4 — restructure for consumption (Claude + human readers)
+
+Instruction: restructure/rewrite the documents for the best possible consumption by Claude and by a human trying to understand the goal, except `YESTECH_Manual_2023.md` — don't rewrite it, just relocate it.
+
+Assessment before changing anything: the per-concern doc split (Constitution/HLD/Modeling-Approach/Evidence-Flow-Spec/README) was already sound and kept as-is. Four concrete problems were found and fixed:
+
+1. **No `CLAUDE.md`.** Nothing loaded automatically into a fresh Claude session's context — every session had to be told to go read `documents/README.md`. Added `d:\Barrel\task\ACIX\CLAUDE.md`: states the goal in one sentence, restates the three hard boundaries so they never need re-deriving, and gives a directory map.
+2. **Ambiguous folder naming.** `documents/documentation/` (a folder named "documentation" inside "documents") told nobody what was in it. Renamed to `documents/research/` (internal source white paper) and created `documents/standards/` for the relocated, unedited `YESTECH_Manual_2023.md` (external, authoritative — kept visibly separate from anything this team authored).
+3. **Real duplication.** Constitution §6 and the module `README.md` §6 both restated the full YES-TECH adopted/not-adopted list in near-identical prose. Trimmed `README.md` §6 to a one-paragraph pointer; the Constitution stays the single source of the full list.
+4. **Fragmented mission statement.** A reader previously had to open two files before getting a single sentence describing the goal. Added a one-sentence "Goal, in one sentence" line at the top of the module `README.md`, directly under the title.
+
+All cross-references (in-tree and to the relocated `YESTECH_Manual_2023.md`/white paper) were updated and re-verified after the moves — grepped for dangling old paths (`documentation/`, the old repo-root `YESTECH_Manual_2023.md` location) and found none.
+
+**Left alone, deliberately:** the white paper's own content (already a good dense reference, rewriting 1,100+ lines wasn't worth it given the module docs already extract what's load-bearing from it), this log itself (it's a process record, not part of the goal-defining docs), and the numeric `§N` cross-references within the module docs (switching every one to heading-text references was judged a large mechanical diff for a marginal robustness gain, given the sections aren't expected to reorder again soon).

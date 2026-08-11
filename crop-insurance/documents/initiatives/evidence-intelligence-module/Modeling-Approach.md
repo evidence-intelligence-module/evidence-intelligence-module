@@ -1,6 +1,6 @@
 # Evidence Intelligence Module — Modeling Approach
 
-**Governed by:** [Constitution.md](./Constitution.md). **Implements:** [HLD.md](./HLD.md) §3 (Component Breakdown). This document is the science/methodology reference — it plays the same role for this module that Section 4 and Appendix 1 of `YESTECH_Manual_2023.md` play for YES-TECH: it names each modeling component, its inputs, its method, and its validation standard.
+**Governed by:** [Constitution.md](./Constitution.md). **Implements:** [HLD.md](./HLD.md) §3 (Component Breakdown). This document is the science/methodology reference — it plays the same role for this module that Section 4 and Appendix 1 of [`YESTECH_Manual_2023.md`](../../standards/YESTECH_Manual_2023.md) play for YES-TECH: it names each modeling component, its inputs, its method, and its validation standard.
 
 ---
 

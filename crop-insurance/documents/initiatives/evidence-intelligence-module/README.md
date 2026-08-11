@@ -1,6 +1,6 @@
 # Evidence Intelligence Module
 
-**A satellite + weather evidence-generation service supporting crop-damage and yield-loss claims under PMFBY/RWBCIS.**
+**Goal, in one sentence:** turn heterogeneous satellite and weather observations into reproducible, spatially explicit, auditable technical evidence that supports crop-damage and yield-loss claims under PMFBY/RWBCIS — starting with satellite + weather only; CCE and any specific intimation channel are explicitly out of scope for now.
 
 This is the orientation document — read this first. For the governing rules, see [Constitution.md](./Constitution.md); for the architecture, see [HLD.md](./HLD.md); for the modeling science, see [Modeling-Approach.md](./Modeling-Approach.md); for the step-by-step pipeline, see [Evidence-Flow-Spec.md](./Evidence-Flow-Spec.md).
 
@@ -63,7 +63,7 @@ This section is the point of this document: it maps each systemic evidence-gap f
 
 ## 6. Standards Alignment
 
-`YESTECH_Manual_2023.md` — the DA&FW/MNCFC government manual governing technology-based yield estimation under PMFBY — sets the bar this module targets: at least the same modeling rigor, and more robust where practical. YES-TECH mandates five documented modeling approaches (semi-physical, AI/ML, crop simulation, ensemble, and a parametric composite index); this module implements the same five-model-family structure, re-purposed for per-field damage/evidence scoring rather than IU-level CCE-blended yield — see [Modeling-Approach.md](./Modeling-Approach.md) for the full mapping, including where this module is deliberately more robust (always ensembling, per-field granularity, near-real-time cadence). It adopts that rigor without adopting YES-TECH's CCE-blending formula or its MITR/TIP governance structure, which apply to a different, formally constituted program. See [Constitution.md](./Constitution.md) §6 for the full posture.
+One line: this module targets at least [`YESTECH_Manual_2023.md`](../../standards/YESTECH_Manual_2023.md)'s modeling rigor, and exceeds it where practical (always-ensemble, per-field granularity, near-real-time cadence) — without adopting its CCE-blending formula or MITR/TIP governance, which govern a different, formally constituted program. Full posture and the adopted/not-adopted list live in [Constitution.md](./Constitution.md) §6, not repeated here; the model-by-model mapping lives in [Modeling-Approach.md](./Modeling-Approach.md).
 
 ## 7. Reading Order / Document Map
 
@@ -72,7 +72,7 @@ This section is the point of this document: it maps each systemic evidence-gap f
 3. **[HLD.md](./HLD.md)** — system architecture: components, data model, interface contract, tech stack.
 4. **[Modeling-Approach.md](./Modeling-Approach.md)** — the modeling science: five components mirroring and exceeding YES-TECH's own model-family structure.
 5. **[Evidence-Flow-Spec.md](./Evidence-Flow-Spec.md)** — the detailed pipeline, step by step, including fallback paths.
-6. **`../../documentation/Evidence-Collection-Generation-White-Paper.md`** — the original research/business-case white paper this initiative is derived from (peril-specific evidence packages, legal admissibility detail, cost-benefit analysis).
+6. **[`../../research/Evidence-Collection-Generation-White-Paper.md`](../../research/Evidence-Collection-Generation-White-Paper.md)** — the original research/business-case white paper this initiative is derived from (peril-specific evidence packages, legal admissibility detail, cost-benefit analysis). Optional deep-dive, not required to understand the goal.
 
 ## 8. Roadmap Pointer
 
