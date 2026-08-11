@@ -4,6 +4,8 @@
 
 **Input**: Feature specification from `/specs/001-evidence-generation-pipeline/spec.md`
 
+**Implements**: [`crop-insurance/documents/initiatives/evidence-intelligence-module/HLD.md`](../../crop-insurance/documents/initiatives/evidence-intelligence-module/HLD.md) — that document is the architectural source of truth; this plan and its Phase 0/1 artifacts (`research.md`, `data-model.md`, `contracts/`) translate it into an executable build, they do not redesign it.
+
 ## Summary
 
 A standalone backend service that accepts a generic evidence-request (field geometry, event date, peril type, optional external reference ID), acquires satellite imagery and weather data for the event window, runs three independent damage/yield-loss assessment approaches (semi-physical, AI/ML, and — for high-scrutiny requests — crop-simulation assimilation) plus a causation-confidence scorer, blends the results into an ensemble estimate and a Damage Severity Index, and assembles everything into a §65B-admissible evidence package (PDF + JSON + maps). Built as a Python service on top of Google Earth Engine, following the architecture already fixed in `HLD.md` — this plan implements that architecture, it does not redesign it.

@@ -43,7 +43,7 @@ Confirms required tools (git, the selected AI integration, script runtime) are p
 1. [`CLAUDE.md`](CLAUDE.md) — hard boundaries and directory map
 2. [`crop-insurance/documents/initiatives/evidence-intelligence-module/README.md`](crop-insurance/documents/initiatives/evidence-intelligence-module/README.md)
 3. `Constitution.md` → `HLD.md` → `Modeling-Approach.md` → `Evidence-Flow-Spec.md` in that same folder
-4. [`crop-insurance/documents/notes/brainstorm-auth.md`](crop-insurance/documents/notes/brainstorm-auth.md) — why things were deliberately removed, before assuming something is missing
+4. [`crop-insurance/documents/initiatives/evidence-intelligence-module/notes/brainstorm-auth.md`](crop-insurance/documents/initiatives/evidence-intelligence-module/notes/brainstorm-auth.md) — why things were deliberately removed, before assuming something is missing
 
 ## Notes
 

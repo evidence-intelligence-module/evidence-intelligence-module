@@ -16,7 +16,7 @@ Packaging must satisfy Indian Evidence Act, 1872 §65B (electronic record admiss
 This module does not ingest, validate, or dispute Crop Cutting Experiment data, does not implement CCE-blended yield determination, and never claims to replace CCE — it may produce a yield-loss *estimate* as supporting evidence only, clearly labeled as such. It reacts to a reported/claimed loss event; it does not run continuous proactive predictive alerting. These boundaries may only be relaxed by an explicit, recorded amendment to the canonical Constitution — never inferred from a single feature request.
 
 ### V. Standalone Interface, No Privileged Caller
-The module exposes a generic evidence-request contract (location, event date, peril type, optional external reference ID) and has no dependency on any specific claim-intimation channel's internal schema, message bus, or tooling. A voice-agent system, web portal, CSC-assisted workflow, or insurer's own claims system all integrate the same way; none is assumed or privileged. The module owns its own data model and does not read from or write to another initiative's tables, topics, or tool definitions. (A prior voice-assisted claim-intimation initiative was deliberately deleted from this repo for this reason — see `crop-insurance/documents/notes/brainstorm-auth.md` — its absence is not an oversight.)
+The module exposes a generic evidence-request contract (location, event date, peril type, optional external reference ID) and has no dependency on any specific claim-intimation channel's internal schema, message bus, or tooling. A voice-agent system, web portal, CSC-assisted workflow, or insurer's own claims system all integrate the same way; none is assumed or privileged. The module owns its own data model and does not read from or write to another initiative's tables, topics, or tool definitions. (A prior voice-assisted claim-intimation initiative was deliberately deleted from this repo for this reason — see `crop-insurance/documents/initiatives/evidence-intelligence-module/notes/brainstorm-auth.md` — its absence is not an oversight.)
 
 ## Additional Constraints
 
@@ -28,7 +28,7 @@ The module exposes a generic evidence-request contract (location, event date, pe
 
 ## Development Workflow
 
-Cross-document references use `File.md §N — Section Title` or a markdown link, naming sections by actual heading text so references survive renumbering. This is a documentation-only repo today — there's no build/test/run step; correctness means internal consistency (cross-references resolve, no contradicted boundaries) and factual accuracy against cited sources. Read `crop-insurance/documents/notes/brainstorm-auth.md` before assuming something is "missing" — it's the running decision log for why prior material was deliberately removed.
+Cross-document references use `File.md §N — Section Title` or a markdown link, naming sections by actual heading text so references survive renumbering. This is a documentation-only repo today — there's no build/test/run step; correctness means internal consistency (cross-references resolve, no contradicted boundaries) and factual accuracy against cited sources. Read `crop-insurance/documents/initiatives/evidence-intelligence-module/notes/brainstorm-auth.md` before assuming something is "missing" — it's the running decision log for why prior material was deliberately removed.
 
 ## Governance
 

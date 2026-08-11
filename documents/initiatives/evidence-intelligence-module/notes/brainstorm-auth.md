@@ -53,3 +53,31 @@ A document named `ACIS_ML_Platform_Document.md` (originally `CropSure_ML_Platfor
 Confirmed with the user: an external pitch being evaluated, not something to build as specified. Decision: keep the technically sound ideas that don't depend on CCE data or proactive alerting (HLS cross-sensor harmonization, STARFM/ESTARFM fusion, foundation-model crop segmentation, a physics-informed neural network, per-prediction confidence intervals, an isolation-forest anomaly-scoring technique separated from its always-on wrapper, blockchain hash-anchoring), reject everything CCE-, SaaS-, or prediction-shaped (tenancy, dashboards, pricing, roadmap, staffing, financials), and don't leave the rejected material in place. The trimmed, rewritten content became `documents/research/Remote-Sensing-ML-Techniques-Reference.md` (reference only, not a design spec, with its own "what was deliberately not kept" section). The original root-level file was deleted; one pointer line added to the module `README.md`'s reading order.
 
 Not done: no edits to `Constitution.md`, `HLD.md`, `Modeling-Approach.md`, or `Evidence-Flow-Spec.md` to actually adopt any kept technique — that's a separate future decision per technique.
+
+## 7. Round 7 — Spec Kit engineering tree connected back to the documentation tree
+
+`specs/001-evidence-generation-pipeline/` (Spec Kit's `spec.md` → `plan.md` → `tasks.md`, implementing `HLD.md`) and `.specify/`/`SETUP.md` were added at the repo root, outside this directory, and initially left unlinked from it — neither `CLAUDE.md` nor `documents/README.md` mentioned them.
+
+User asked to restructure for clarity, scoped explicitly to include this tree. Checked first whether `crop-insurance/documents/` itself was actually confusing: it wasn't — Round 4 already fixed folder naming, Round 5 already fixed duplication, and the reading order/cross-references have held since. Moving files here again would have re-risked what those rounds already got right for no real benefit.
+
+Decision: connect the two trees with cross-links instead of moving anything. `CLAUDE.md`'s directory map now has two explicit groups — "domain documentation" (this tree, hand-authored) vs. "engineering execution state" (`specs/`, `.specify/`, regenerated via `/speckit-*` skills) — rather than one flat list. `documents/README.md` gained a "Turning This Into Code" pointer to `specs/001-.../`; `HLD.md` gained a reciprocal "Implemented by" pointer back; `plan.md` gained an "Implements" pointer to `HLD.md`, mirroring the "Governed by" convention this tree already uses. `specs/001-.../issue/` (open questions deferred during `/speckit-specify`/`/speckit-plan` rather than guessed at, matching this log's own convention of recording *why* something is missing rather than leaving it unexplained) gained a `README.md` index since it had grown to three files with no listing.
+
+No file in `crop-insurance/documents/` was moved or renamed.
+
+## 8. Round 8 — considered decommissioning Constitution.md/HLD.md, decided against
+
+After Round 7 connected the two trees, user asked whether `Constitution.md` and `HLD.md` could be decommissioned from `documents/` now that `specs/001-evidence-generation-pipeline/` exists. Declined, for reasons worth keeping:
+
+1. `specs/001-.../` is scoped to *one feature*. `Constitution.md`/`HLD.md` are scoped to the whole initiative and would still be needed as the thing any future `specs/002-.../` implements — decommissioning them now would leave nothing durable behind once this feature's spec directory stops being the active one.
+2. `Constitution.md` §8 already governs this exact situation: amendment requires an explicit, recorded decision with rationale, not silent removal or superseding by a later document. Deleting it wouldn't be an amendment.
+3. The actual discomfort prompting the question was resolved instead by fixing the two genuinely stale duplicates found in this same pass — `documents/README.md`'s reading order had drifted from the module README's (missing the Round 6 research-reference addition), and `data-model.md`/`contracts/evidence-request-api.md` didn't say outright that they're derived from `HLD.md`, not independent. Both fixed by trimming to a pointer and adding an explicit "derived from, not authoritative" line respectively — same "single source of truth wins" instinct as Round 4, applied without touching governance documents themselves.
+
+`Constitution.md` and `HLD.md` remain unchanged and canonical.
+
+## 9. Round 9 — standards/, research/, notes/ moved inside this initiative's own directory
+
+Previously siblings of `initiatives/` under `documents/` (a Round 4 decision, at a time when the repo's shape was less settled). User asked for them to move under `initiatives/evidence-intelligence-module/` instead, since there is and has only ever been one active initiative in this repo — keeping them as top-level siblings bought nothing but an extra directory hop, and this module's own decision log, standards reference, and source research are logically part of it, not the wider (currently nonexistent) multi-initiative structure Round 4's layout was implicitly designed for.
+
+Moved with `git mv` (history preserved): `documents/standards/` → `initiatives/evidence-intelligence-module/standards/`, `documents/research/` → `.../research/`, `documents/notes/` → `.../notes/`. All cross-references updated: `Constitution.md` §6, `Modeling-Approach.md` §1, and this module's own `README.md` §6/§7 now link to `./standards/...` and `./research/...` (same-directory, no longer `../../`); `CLAUDE.md`, `SETUP.md`, and `.specify/memory/constitution.md` updated to the new `notes/brainstorm-auth.md` path. `documents/README.md` rewritten — it now only holds this one directory, so its "Directory Guide" collapsed from four sibling rows into one row describing what's inside the initiative directory.
+
+Not moved: `Constitution.md`, `HLD.md`, `Modeling-Approach.md`, `Evidence-Flow-Spec.md`, and this module's own `README.md` — already in the right place, per Round 8.

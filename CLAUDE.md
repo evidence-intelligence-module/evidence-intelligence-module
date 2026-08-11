@@ -10,19 +10,30 @@ One active initiative: the **Evidence Intelligence Module** — a satellite + we
 
 1. **No CCE.** This module does not ingest Crop Cutting Experiment data, does not implement CCE-blended yield determination, and never claims to replace CCE.
 2. **No standalone prediction.** The module reacts to a reported/claimed loss event; it does not run proactive predictive alerting.
-3. **Standalone by design.** The module exposes a generic evidence-request interface and has no dependency on any specific claim-intimation channel's internal schema. A prior voice-assisted claim-intimation initiative existed in this repo and was **deliberately deleted** (see `crop-insurance/documents/notes/brainstorm-auth.md` §2/§6 for why) — do not treat its absence as an oversight, and do not recreate dependencies on it.
+3. **Standalone by design.** The module exposes a generic evidence-request interface and has no dependency on any specific claim-intimation channel's internal schema. A prior voice-assisted claim-intimation initiative existed in this repo and was **deliberately deleted** (see `crop-insurance/documents/initiatives/evidence-intelligence-module/notes/brainstorm-auth.md` §2/§6 for why) — do not treat its absence as an oversight, and do not recreate dependencies on it.
 
 Full reasoning for all three lives in the Constitution — see below. If a task seems to require relaxing one of these, that's a scope decision for the user to make explicitly, not something to infer from a single request.
 
 ## Directory map
 
+**Domain documentation** — what's being built and why; hand-authored, changes rarely:
+
 | Path | What it is |
 |---|---|
-| `crop-insurance/documents/initiatives/evidence-intelligence-module/` | The active initiative: `README.md` (orientation) → `Constitution.md` (non-negotiables) → `HLD.md` (architecture) → `Modeling-Approach.md` (modeling science) → `Evidence-Flow-Spec.md` (pipeline detail) |
-| `crop-insurance/documents/standards/YESTECH_Manual_2023.md` | External, verbatim government manual (DA&FW/MNCFC). Not our content — never edit it, only relocate/reference it. The modeling approach is designed to match and exceed its rigor. |
-| `crop-insurance/documents/research/` | Internal source white paper the initiative was derived from. Optional depth, not required reading. |
-| `crop-insurance/documents/notes/brainstorm-auth.md` | Running decision log — why the module is scoped the way it is, including why earlier material (baseline platform docs, the voice-agent initiative, an old root-level `implementation_plan.md`) was deleted. Read this before assuming something is "missing." |
-| `crop-insurance/code/` | Empty — no implementation exists yet. This repo is currently documentation-only. |
+| `crop-insurance/documents/initiatives/evidence-intelligence-module/` | The active initiative — everything belonging to it lives in this one directory (see below), not scattered across sibling top-level folders |
+| ↳ `README.md` → `Constitution.md` → `HLD.md` → `Modeling-Approach.md` → `Evidence-Flow-Spec.md` | Orientation → non-negotiables → architecture → modeling science → pipeline detail, in reading order |
+| ↳ `standards/YESTECH_Manual_2023.md` | External, verbatim government manual (DA&FW/MNCFC). Not our content — never edit it, only relocate/reference it. The modeling approach is designed to match and exceed its rigor. |
+| ↳ `research/` | Internal source white paper the initiative was derived from. Optional depth, not required reading. |
+| ↳ `notes/brainstorm-auth.md` | Running decision log — why the module is scoped the way it is, including why earlier material (baseline platform docs, the voice-agent initiative, an old root-level `implementation_plan.md`) was deleted, and why this directory itself is laid out this way. Read this before assuming something is "missing." |
+| `crop-insurance/code/` | Empty — no implementation exists yet, though `specs/001-evidence-generation-pipeline/tasks.md` (below) is a ready-to-execute plan for it. |
+
+**Engineering execution state** — Spec Kit's translation of the domain documentation above into a buildable plan; regenerated/updated via `/speckit-*` skills, not hand-authored prose:
+
+| Path | What it is |
+|---|---|
+| `specs/001-evidence-generation-pipeline/` | The Spec Kit feature directory implementing `evidence-intelligence-module/HLD.md`: `spec.md` (requirements) → `plan.md` (architecture-to-code mapping) → `research.md`/`data-model.md`/`contracts/`/`quickstart.md` (Phase 0/1 design) → `tasks.md` (executable task list). `issue/` holds open questions the spec/plan deliberately deferred rather than guessed at (see its `README.md`). |
+| `.specify/` | Spec Kit's own scaffolding — templates, PowerShell scripts, `memory/constitution.md` (a Spec-Kit-facing distillation of the domain Constitution, kept in sync with it, not an independent authority). Not hand-edited in normal use. |
+| `SETUP.md` | Machine/tooling setup for a fresh clone (Spec Kit CLI, PowerShell, the `brainstorming` skill's optional Node dependency). Separate from this file, which is orientation, not setup. |
 
 ## Working conventions
 

@@ -63,7 +63,7 @@ This section is the point of this document: it maps each systemic evidence-gap f
 
 ## 6. Standards Alignment
 
-One line: this module targets at least [`YESTECH_Manual_2023.md`](../../standards/YESTECH_Manual_2023.md)'s modeling rigor, and exceeds it where practical (always-ensemble, per-field granularity, near-real-time cadence) — without adopting its CCE-blending formula or MITR/TIP governance, which govern a different, formally constituted program. Full posture and the adopted/not-adopted list live in [Constitution.md](./Constitution.md) §6, not repeated here; the model-by-model mapping lives in [Modeling-Approach.md](./Modeling-Approach.md).
+One line: this module targets at least [`YESTECH_Manual_2023.md`](./standards/YESTECH_Manual_2023.md)'s modeling rigor, and exceeds it where practical (always-ensemble, per-field granularity, near-real-time cadence) — without adopting its CCE-blending formula or MITR/TIP governance, which govern a different, formally constituted program. Full posture and the adopted/not-adopted list live in [Constitution.md](./Constitution.md) §6, not repeated here; the model-by-model mapping lives in [Modeling-Approach.md](./Modeling-Approach.md).
 
 ## 7. Reading Order / Document Map
 
@@ -72,8 +72,8 @@ One line: this module targets at least [`YESTECH_Manual_2023.md`](../../standard
 3. **[HLD.md](./HLD.md)** — system architecture: components, data model, interface contract, tech stack.
 4. **[Modeling-Approach.md](./Modeling-Approach.md)** — the modeling science: five components mirroring and exceeding YES-TECH's own model-family structure.
 5. **[Evidence-Flow-Spec.md](./Evidence-Flow-Spec.md)** — the detailed pipeline, step by step, including fallback paths.
-6. **[`../../research/Evidence-Collection-Generation-White-Paper.md`](../../research/Evidence-Collection-Generation-White-Paper.md)** — the original research/business-case white paper this initiative is derived from (peril-specific evidence packages, legal admissibility detail, cost-benefit analysis). Optional deep-dive, not required to understand the goal.
-7. **[`../../research/Remote-Sensing-ML-Techniques-Reference.md`](../../research/Remote-Sensing-ML-Techniques-Reference.md)** — remote-sensing and ML techniques extracted from an external SaaS platform pitch that was evaluated and rejected on scope (CCE blending, predictive alerting, SaaS framing) but contained reusable technical ideas. Reference only, not a design spec.
+6. **[`research/Evidence-Collection-Generation-White-Paper.md`](./research/Evidence-Collection-Generation-White-Paper.md)** — the original research/business-case white paper this initiative is derived from (peril-specific evidence packages, legal admissibility detail, cost-benefit analysis). Optional deep-dive, not required to understand the goal.
+7. **[`research/Remote-Sensing-ML-Techniques-Reference.md`](./research/Remote-Sensing-ML-Techniques-Reference.md)** — remote-sensing and ML techniques extracted from an external SaaS platform pitch that was evaluated and rejected on scope (CCE blending, predictive alerting, SaaS framing) but contained reusable technical ideas. Reference only, not a design spec.
 
 ## 8. Roadmap Pointer
 

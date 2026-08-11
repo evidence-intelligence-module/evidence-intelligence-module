@@ -52,7 +52,7 @@ This module does not assume, depend on, or reference any specific claim-intimati
 
 ## 6. YES-TECH Alignment Posture
 
-[`YESTECH_Manual_2023.md`](../../standards/YESTECH_Manual_2023.md) is the government's own standard for technology-based yield estimation under PMFBY. This module aligns with its **modeling rigor and evidentiary discipline** without adopting its **governance or CCE-blending machinery** — and, per direct instruction, is designed to at least match that rigor and exceed it where practical.
+[`YESTECH_Manual_2023.md`](./standards/YESTECH_Manual_2023.md) is the government's own standard for technology-based yield estimation under PMFBY. This module aligns with its **modeling rigor and evidentiary discipline** without adopting its **governance or CCE-blending machinery** — and, per direct instruction, is designed to at least match that rigor and exceed it where practical.
 
 **Adopted as a concrete design pattern, not just in spirit** (full detail in [Modeling-Approach.md](./Modeling-Approach.md)):
 - The same five-model-family structure YES-TECH mandates — a semi-physical (RUE-based) model, AI/ML models with disclosed hyperparameters and MAE/RMSE/NRMSE accuracy reporting, crop simulation model assimilation, ensemble blending, and an entropy-weighted composite index — re-purposed for per-field damage/evidence scoring rather than IU-level yield determination.
