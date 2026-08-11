@@ -73,6 +73,7 @@ One line: this module targets at least [`YESTECH_Manual_2023.md`](../../standard
 4. **[Modeling-Approach.md](./Modeling-Approach.md)** — the modeling science: five components mirroring and exceeding YES-TECH's own model-family structure.
 5. **[Evidence-Flow-Spec.md](./Evidence-Flow-Spec.md)** — the detailed pipeline, step by step, including fallback paths.
 6. **[`../../research/Evidence-Collection-Generation-White-Paper.md`](../../research/Evidence-Collection-Generation-White-Paper.md)** — the original research/business-case white paper this initiative is derived from (peril-specific evidence packages, legal admissibility detail, cost-benefit analysis). Optional deep-dive, not required to understand the goal.
+7. **[`../../research/Remote-Sensing-ML-Techniques-Reference.md`](../../research/Remote-Sensing-ML-Techniques-Reference.md)** — remote-sensing and ML techniques extracted from an external SaaS platform pitch that was evaluated and rejected on scope (CCE blending, predictive alerting, SaaS framing) but contained reusable technical ideas. Reference only, not a design spec.
 
 ## 8. Roadmap Pointer
 

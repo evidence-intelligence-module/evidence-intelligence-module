@@ -1,110 +1,55 @@
 # Brainstorm Log — Evidence Intelligence Module
 
-**Purpose:** Running decision log for scoping and designing the satellite + weather evidence-collection initiative. Captures what was researched, what was decided, and why — so the reasoning behind `initiatives/evidence-intelligence-module/` doesn't have to be reverse-engineered later.
+**Purpose:** Record of *why* things that no longer exist in this repo were removed, and why structural decisions (standalone scope, directory layout) were made the way they were. This is not a restatement of current rules — those live in `Constitution.md` — it's the answer to "why is X missing?" or "why isn't this built the obvious way?" See `CLAUDE.md`'s directory map, which points here for exactly that.
+
+**Condensed 2026-08-12:** earlier content that duplicated `Constitution.md`, `README.md`, or `Modeling-Approach.md`, or that later rounds made moot, was cut. Full original history is in git.
 
 ---
 
 ## 1. Starting point
 
-Two new white papers landed in `documents/documentation/`:
+Two white papers landed in what was then `documents/documentation/` (later renamed `documents/research/` — see Round 4): **Evidence-Collection-Generation-White-Paper.md**, proposing a satellite+weather "Evidence Intelligence Module" on the thesis that most legitimate PMFBY claim failures are an *evidence poverty* problem, not fraud; and **Document-Lapse-Report-White-Paper.md**, an audit of the voice-agent claim-intimation docs that found real defects (broken WhatsApp EXIF pipeline, wrong retention period, timeline conflicts) — deleted in Round 2 along with the initiative it audited.
 
-- **Evidence-Collection-Generation-White-Paper.md** — proposes a satellite+weather "Evidence Intelligence Module" (Google Earth Engine, Sentinel-1/2, CHIRPS, ERA5, SMAP, MODIS) to generate reproducible, auditable evidence for crop-damage/yield claims. Core thesis: most legitimate PMFBY claim failures are an *evidence poverty* problem, not fraud — missed 72h deadlines, no pre-event crop-health baseline, CCE sampling only 4 plots per Insurance Unit, sparse weather stations, no proven causation link between a weather event and the damage.
-- **Document-Lapse-Report-White-Paper.md** — an audit of the *existing* voice-agent claim-intimation docs. Found real defects: WhatsApp strips EXIF GPS/timestamp metadata from photos unless sent as a "Document" attachment, which breaks the evidence-validation pipeline as currently specified (CRITICAL, unresolved); retention stated as 5 years where IRDAI mandates 10; a 12-week vs. 14-week timeline conflict across docs; missing TTS engine spec; missing cross-references.
+Goal as stated by the user: satellite + weather evidence only, CCE explicitly out of scope from the start. Standards reference: `YESTECH_Manual_2023.md`.
 
-Goal stated by the user: turn heterogeneous satellite, weather, CCE, and field observations into reproducible, spatially explicit, auditable technical evidence supporting crop-damage/yield assessments submitted to insurers/government. **CCE is explicitly out of scope for now** — only satellite + weather evidence to support farmer claim intimation.
+## 2. Scope decision — standalone, not integrated with voice-agent
 
-Standards reference: `YESTECH_Manual_2023.md` (the actual DA&FW/MNCFC government manual governing technology-based yield estimation under PMFBY).
+Initial framing (mine) proposed integrating the new module directly into the voice-agent initiative's existing schema, topics, and tools, and editing its `HLD.md` §9 in place to resolve a boundary contradiction it had with the new module. User pushback, across several rounds, landed on:
 
-## 2. Research findings (3 parallel deep-dives)
+> The Evidence Intelligence Module is a **fully standalone initiative**. It has its own data model, its own document set, and no dependency on, reference to, or edit of anything inside `initiatives/voice-agent-claim-intimation/`. It still conceptually supports "claim intimation" as a business goal, but exposes a generic, consumer-agnostic evidence-request/output contract rather than assuming any specific intimation channel's internals.
 
-**`baseline/` (platform-wide docs):** All four files predate the voice-agent initiative but remain broadly authoritative. `baseline/HLD.md` already anticipates a "Weather, satellite, and scheme reference sources" adapter in its integration layer — a ready seam for future work. `baseline/Roadmap-Region_India.md` contains the ancestral satellite/YES-TECH/CCE market background that the new white paper now supersedes with much more technical depth. No conflicts found.
+Practical effect worth keeping: because this was a fresh design rather than a fix to voice-agent's docs, retention was stated correctly (10 years, IRDAI) from day one — there was no 5-year bug to inherit.
 
-**`initiatives/voice-agent-claim-intimation/current-design/` (the voice-agent spec):** `HLD.md` §9 "Explicit Boundaries" states the architecture **excludes "satellite assessment"** — a direct textual conflict with the new initiative. `Evidence-Collection-Spec.md` defines a WhatsApp-photo EXIF-GPS pipeline that is technically broken per the lapse report. `Business-Justification.md` excludes "calamity prediction," which sits ambiguously close to the white paper's "proactive event detection" feature. Retention stated as 5 years in two places.
+Three deep-dives (`baseline/`, the voice-agent spec, `notes/`/`reference-plan/`) preceded this decision and found real but non-blocking issues, concluding nothing was *purely* redundant — so a blind delete pass wasn't justified at the time. That conclusion was itself overtaken by events: Round 2 deleted `baseline/` and the voice-agent initiative outright anyway, once they were judged out of scope rather than redundant.
 
-**`notes/`, `reference-plan/`, root `README.md`:** `reference-plan/` holds unique implementation detail (MCP server table, tool contracts, phased rollout) not duplicated in `current-design/` — not redundant. Root `README.md` does not reference the `documentation/` folder at all — a real navigation gap, unrelated to any initiative's internal scope.
+## 3. Round 2 — modeling rigor grounded in YES-TECH, repo scrapped to match new scope
 
-**Conclusion:** nothing in the repo is *purely* redundant. A blind "delete redundant files" pass would not have been justified by the evidence.
+Two things converged:
 
-## 3. Scope discussion — how the module relates to the voice-agent initiative
+1. **Rigor check.** Round 1's `HLD.md`/`Evidence-Flow-Spec.md` used a single NDVI-difference threshold plus one generic regression as the entire damage/yield engine — not grounded in `YESTECH_Manual_2023.md`, which (Appendix 1, past line 2000, missed in Round 1) mandates five real modeling approaches: semi-physical (RUE), AI/ML, Crop Simulation Models, Ensemble, and Crop Health Factor (CHF — entropy-weighted, blended 70/30 with CCE). Instruction: match that rigor and exceed it. Full component definitions now live in `Modeling-Approach.md`, not restated here.
+2. **Scrap everything else.** Confirmed explicitly, twice: delete `baseline/` (4 files), all of `initiatives/voice-agent-claim-intimation/` (8 files), `documentation/Document-Lapse-Report-White-Paper.md`, and `notes/Original-Inclusion-Notes.md` / `Original-Exclusion-Notes.md` (scope-capture files that were never treated as a source of truth for this module's boundaries anyway). Kept: `YESTECH_Manual_2023.md`, the module's own doc set, the source white paper, and this log. No salvage pass was needed on the lapse report — its one durable fact (IRDAI's 10-year retention mandate) was already independently sourced in `Constitution.md` §7.
 
-Initial framing (mine) proposed integrating the new module directly with the voice-agent's existing `claim_evidence` table, Kafka topics (`evidence.upload.received`, `evidence.validation.completed`), and MCP tools (`request_evidence`, `create_evidence_link`), and directly editing `current-design/HLD.md` §9 to resolve the boundary contradiction plus the 5yr→10yr retention line elsewhere in that initiative.
+Result: `Modeling-Approach.md` created (five components re-purposed for per-field evidence scoring, not IU-level CCE-blended yield); `HLD.md`, `Evidence-Flow-Spec.md`, and `Constitution.md` §6 updated to match. The Constitution §3/§4 boundaries (no CCE ingestion, no standalone predictive alerting) were unchanged throughout — only the rigor of the non-CCE components increased.
 
-User pushback, across several rounds: the voice-agent initiative is **out of scope for this work**. Final, confirmed decision:
+## 4. Round 3 — stale root-level plan file deleted
 
-> The Evidence Intelligence Module is a **fully standalone initiative**. It has its own data model, its own document set, and no dependency on, reference to, or edit of anything inside `initiatives/voice-agent-claim-intimation/` — not the schema, not the topics, not the tools, not even the `§9` boundary line. It still conceptually supports "claim intimation" as a business goal, but exposes a generic, consumer-agnostic evidence-request/output contract rather than assuming any specific intimation channel's internals.
+`implementation_plan.md` (repo root) was the original replan for the voice-agent system — proposing edits to files and initiatives that Round 2 had already deleted. Its entire premise (peril-type gating, WhatsApp photo evidence, NCIP integration tiers) was voice-agent scope that had been deliberately removed. Deleted; recoverable from git history.
 
-Practical effect: the module is architected only against `baseline/` platform concepts (the already-anticipated integration seam), the two white papers, and `YESTECH_Manual_2023.md` as a standards reference. It does not inherit voice-agent's 5-year retention bug — since it's a new design, retention is stated correctly (10 years, IRDAI) from the start, no "fix" needed.
+## 5. Round 4 — restructured for consumption (Claude + human readers)
 
-Also confirmed separately: `baseline/Roadmap-Region_India.md` stays untouched (no trim); the WhatsApp-EXIF (R1) and retention (R2) lapse-report fixes remain the voice-agent initiative's own follow-up work, not bundled here.
+Four concrete problems found and fixed:
 
-One further correction: the original `notes/Original-Inclusion-Notes.md` / `Original-Exclusion-Notes.md` scope-capture files are **not used as a reference or source of truth** for this module's boundaries. This module's in/out-of-scope lines are derived fresh from the two white papers, the YES-TECH manual, and direct instruction in this conversation — not from those older notes.
+1. **No `CLAUDE.md`** — nothing loaded automatically into a fresh session's context. Added, stating the goal, the three hard boundaries, and a directory map.
+2. **Ambiguous folder naming** — `documents/documentation/` renamed to `documents/research/`; `documents/standards/` created for the relocated, unedited `YESTECH_Manual_2023.md` (external, authoritative, kept visibly separate from anything this team authored).
+3. **Real duplication** — Constitution §6 and the module `README.md` §6 both restated the full YES-TECH adopted/not-adopted list. Trimmed `README.md` §6 to a pointer; Constitution stays the single source.
+4. **Fragmented mission statement** — added a one-sentence "Goal, in one sentence" line at the top of the module `README.md`.
 
-## 4. What got built as a result
+All cross-references were re-verified after the moves (grepped for dangling old paths, found none). Left alone deliberately: the white paper's own content, and the numeric `§N` cross-references within the module docs.
 
-- `initiatives/evidence-intelligence-module/Constitution.md` — principles and boundaries (evidence generation vs. prediction, evidence vs. CCE/yield-blending, standalone-interface principle, YES-TECH alignment posture, 10-year retention).
-- `initiatives/evidence-intelligence-module/HLD.md` — architecture: own data model, own interface contract, own tech stack — no dependency on voice-agent internals.
-- `initiatives/evidence-intelligence-module/Evidence-Flow-Spec.md` — in-depth pipeline flow (imagery acquisition → damage detection → weather causation → yield-loss estimate → report packaging), with a generic trigger contract rather than a voice-call-specific one.
-- `initiatives/evidence-intelligence-module/README.md` — top-level orientation document: end-to-end flow plus an explicit "what this fixes" section framed against the *systemic* evidence gap described in the white paper, not against any other initiative's internal bugs.
-- `documents/README.md` — one small additive edit: added the missing `documentation/` folder and the new initiative to the navigation tree and reading order. No existing content changed.
+## 6. Round 5 — external ACIS pitch evaluated and trimmed to a technical reference
 
-## 5. What was explicitly not done (round 1)
+A document named `ACIS_ML_Platform_Document.md` (originally `CropSure_ML_Platform_Document.md`, renamed by the user) landed at the repo root — an external, third-party SaaS platform pitch. Evaluated against `Constitution.md` and found to conflict with all three hard boundaries: a configurable CCE-blending ratio (§4), continuous proactive anomaly scanning with auto-notification and an auto-trigger that generates a claim document without a reported event (§3), and its own multi-tenant SaaS product architecture rather than a component behind a generic evidence-request contract (§5).
 
-- No edits inside `initiatives/voice-agent-claim-intimation/` (including its own `§9` contradiction — left as that initiative's own future fix).
-- No edits to `baseline/Roadmap-Region_India.md` or `baseline/HLD.md`.
-- No file deletions anywhere.
-- No bundling of the R1 (WhatsApp EXIF) or R2 (retention) lapse-report fixes.
-- `notes/Original-Inclusion-Notes.md` / `Original-Exclusion-Notes.md` left untouched and unreferenced.
+Confirmed with the user: an external pitch being evaluated, not something to build as specified. Decision: keep the technically sound ideas that don't depend on CCE data or proactive alerting (HLS cross-sensor harmonization, STARFM/ESTARFM fusion, foundation-model crop segmentation, a physics-informed neural network, per-prediction confidence intervals, an isolation-forest anomaly-scoring technique separated from its always-on wrapper, blockchain hash-anchoring), reject everything CCE-, SaaS-, or prediction-shaped (tenancy, dashboards, pricing, roadmap, staffing, financials), and don't leave the rejected material in place. The trimmed, rewritten content became `documents/research/Remote-Sensing-ML-Techniques-Reference.md` (reference only, not a design spec, with its own "what was deliberately not kept" section). The original root-level file was deleted; one pointer line added to the module `README.md`'s reading order.
 
----
-
-## 6. Round 2 — tech-stack upgrade + repo scrap
-
-Two follow-up questions from the user, arriving together:
-
-1. **Was the tech stack actually grounded in YES-TECH?** No. Round 1's `HLD.md`/`Evidence-Flow-Spec.md` used a single NDVI-difference threshold table plus one generic regression as the entire damage/yield-loss engine. Re-reading `YESTECH_Manual_2023.md` past line 2000 — Appendix 1, which round 1 never reached — showed the manual mandates five real modeling approaches, each with genuine technical depth and disclosure requirements:
-   - **Semi-physical (RUE) model**: biomass = PAR × fAPAR × RUE × water/temperature stress scalars → yield via Harvest Index.
-   - **AI/ML models** (RF, DNN): a named feature set (Table 8: vegetation indices, SAR backscatter, IMD weather, fAPAR/LAI, soil texture, SRTM, SMAP) with mandatory hyperparameter disclosure and MAE/RMSE/NRMSE accuracy reporting.
-   - **Crop Simulation Models** (DSSAT, APSIM, InfoCrop, ORYZA, WOFOST): process-based, calibrated genetic coefficients, can assimilate remote-sensing state variables.
-   - **Ensemble models**: weighted-average/stacking of ML + CSM outputs.
-   - **Crop Health Factor (CHF)**: an entropy-weighted, Min-Max-normalized composite index, blended 70/30 with CCE yield deviation.
-
-   Instruction: the module should **at least match this rigor, and be more robust** — not just "reproducible in spirit," which is what round 1 delivered.
-
-2. **Scrap "everything else."** Confirmed explicitly, twice (the second time after I flagged the apparent tension with round 1's "edit `§9` directly" answer, which the user resolved by saying voice-agent scope should be removed entirely, then here going further): delete `baseline/`, all of `initiatives/voice-agent-claim-intimation/`, `documentation/Document-Lapse-Report-White-Paper.md`, and the two original scope-capture notes. Keep only: `YESTECH_Manual_2023.md` (repo root), `evidence-intelligence-module/` itself, `documentation/Evidence-Collection-Generation-White-Paper.md` (the module's own source research), and this log.
-
-   No salvage pass was needed before deleting the lapse report — the one fact worth keeping from it (IRDAI's 10-year retention mandate) was already independently stated in `Constitution.md` §7 in round 1, sourced from the actual regulation, not from that white paper.
-
-### What got built/changed as a result
-
-- **Deleted**: `baseline/` (4 files), `initiatives/voice-agent-claim-intimation/` (8 files across `current-design/` and `reference-plan/`), `documentation/Document-Lapse-Report-White-Paper.md`, `notes/Original-Inclusion-Notes.md` + `Original-Exclusion-Notes.md`.
-- **New**: `evidence-intelligence-module/Modeling-Approach.md` — the science/methodology document. Names five components mirroring YES-TECH's structure (semi-physical damage model, AI/ML damage & yield-loss models, optional CSM assimilation, ensemble blending, a CHF-inspired Damage Severity Index) but applied to per-field damage/evidence scoring rather than IU-level CCE-blended yield.
-- **The "more robust" argument, concretely**: this module always ensembles multiple components per request rather than a state committing to one model for a whole season; it operates per-field rather than per-IU; it reacts within hours/days of a claimed event via near-real-time sources rather than working to a seasonal report cadence; and full provenance/versioning is a constitutional (not merely procedural) requirement.
-- **Updated**: `HLD.md` (component breakdown, data model, tech stack extended for the multi-model pipeline), `Evidence-Flow-Spec.md` (damage-detection and yield-loss steps rewritten around the five components), `Constitution.md` §6 (YES-TECH alignment posture stated concretely rather than "in spirit"), both `README.md` files (module-level reading order, and the root nav rewritten around the now much smaller tree).
-
-### What's still explicitly not done
-
-- Still no CCE ingestion, no CCE-blending formula, no MITR/TIP governance adoption — the Constitution §4 boundary is unchanged; only the *rigor* of the non-CCE modeling components increased.
-- Still no standalone predictive alerting (Constitution §3 unchanged).
-
----
-
-## 7. Round 3 — stale root-level plan file
-
-The user flagged `d:\Barrel\task\ACIX\implementation_plan.md` (repo root, outside `documents/`) as contradicting the current state. It was the original replan for the voice-agent-claim-intimation system — proposing edits to `baseline/HLD.md`/`LLD.md` and `initiatives/voice-agent-claim-intimation/current-design/*`, and creation of `Evidence-Collection-Spec.md`, `Peril-Validation-Logic.md`, `Integration-Tier-Strategy.md` in that folder. All of those target files were deleted in Round 2 — the plan's entire premise (peril-type gating, WhatsApp photo evidence, NCIP integration tiers, AgriStack UFSI, IndicWhisper) is the voice-agent scope that was deliberately removed. Confirmed with the user: deleted, recoverable from git history if ever needed.
-
----
-
-## 8. Round 4 — restructure for consumption (Claude + human readers)
-
-Instruction: restructure/rewrite the documents for the best possible consumption by Claude and by a human trying to understand the goal, except `YESTECH_Manual_2023.md` — don't rewrite it, just relocate it.
-
-Assessment before changing anything: the per-concern doc split (Constitution/HLD/Modeling-Approach/Evidence-Flow-Spec/README) was already sound and kept as-is. Four concrete problems were found and fixed:
-
-1. **No `CLAUDE.md`.** Nothing loaded automatically into a fresh Claude session's context — every session had to be told to go read `documents/README.md`. Added `d:\Barrel\task\ACIX\CLAUDE.md`: states the goal in one sentence, restates the three hard boundaries so they never need re-deriving, and gives a directory map.
-2. **Ambiguous folder naming.** `documents/documentation/` (a folder named "documentation" inside "documents") told nobody what was in it. Renamed to `documents/research/` (internal source white paper) and created `documents/standards/` for the relocated, unedited `YESTECH_Manual_2023.md` (external, authoritative — kept visibly separate from anything this team authored).
-3. **Real duplication.** Constitution §6 and the module `README.md` §6 both restated the full YES-TECH adopted/not-adopted list in near-identical prose. Trimmed `README.md` §6 to a one-paragraph pointer; the Constitution stays the single source of the full list.
-4. **Fragmented mission statement.** A reader previously had to open two files before getting a single sentence describing the goal. Added a one-sentence "Goal, in one sentence" line at the top of the module `README.md`, directly under the title.
-
-All cross-references (in-tree and to the relocated `YESTECH_Manual_2023.md`/white paper) were updated and re-verified after the moves — grepped for dangling old paths (`documentation/`, the old repo-root `YESTECH_Manual_2023.md` location) and found none.
-
-**Left alone, deliberately:** the white paper's own content (already a good dense reference, rewriting 1,100+ lines wasn't worth it given the module docs already extract what's load-bearing from it), this log itself (it's a process record, not part of the goal-defining docs), and the numeric `§N` cross-references within the module docs (switching every one to heading-text references was judged a large mechanical diff for a marginal robustness gain, given the sections aren't expected to reorder again soon).
+Not done: no edits to `Constitution.md`, `HLD.md`, `Modeling-Approach.md`, or `Evidence-Flow-Spec.md` to actually adopt any kept technique — that's a separate future decision per technique.
