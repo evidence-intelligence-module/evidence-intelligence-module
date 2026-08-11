@@ -52,17 +52,19 @@ This module does not assume, depend on, or reference any specific claim-intimati
 
 ## 6. YES-TECH Alignment Posture
 
-`YESTECH_Manual_2023.md` is the government's own standard for technology-based yield estimation under PMFBY. This module aligns with its **evidentiary discipline** without adopting its **governance or blending machinery**:
+`YESTECH_Manual_2023.md` is the government's own standard for technology-based yield estimation under PMFBY. This module aligns with its **modeling rigor and evidentiary discipline** without adopting its **governance or CCE-blending machinery** — and, per direct instruction, is designed to at least match that rigor and exceed it where practical.
 
-**Adopted (spirit and practice):**
-- Reproducibility and methodology documentation as a hard requirement for every model/output (YES-TECH mandates SOPs, model versioning, and documented accuracy per Section 4–6 of the manual).
-- Transparent, auditable conversion of a satellite-observed anomaly into a loss estimate — analogous in spirit to YES-TECH's Look-Up-Table approach (Table 2: % change in a satellite index → associated % yield reduction, for flood, lodging, wetness, heat, and pest signatures), used here as a design pattern for damage-severity-to-loss mapping, not copied as a governance rule.
-- Preference for wall-to-wall, per-field coverage over sparse sampling, consistent with YES-TECH's own critique of CCE's statistical inadequacy.
+**Adopted as a concrete design pattern, not just in spirit** (full detail in [Modeling-Approach.md](./Modeling-Approach.md)):
+- The same five-model-family structure YES-TECH mandates — a semi-physical (RUE-based) model, AI/ML models with disclosed hyperparameters and MAE/RMSE/NRMSE accuracy reporting, crop simulation model assimilation, ensemble blending, and an entropy-weighted composite index — re-purposed for per-field damage/evidence scoring rather than IU-level yield determination.
+- Reproducibility and methodology documentation as a hard requirement for every model/output (YES-TECH mandates SOPs, model versioning, and documented accuracy per Section 4–6 and Appendix 1 of the manual).
+- Transparent, auditable conversion of a satellite-observed anomaly into a severity/loss estimate — the Damage Severity Index (Modeling-Approach.md §6) plays the same structural role as YES-TECH's Crop Health Factor (entropy-weighted, Min-Max normalized), without the CCE-blending step.
+- Preference for wall-to-wall, per-field coverage over sparse sampling or IU-group aggregation, consistent with YES-TECH's own critique of CCE's statistical inadequacy — and going further than YES-TECH's own IU-level granularity.
+- Ensembling as the **default** behavior for every request, rather than a single model family selected once per season — see Modeling-Approach.md §8 for the full robustness comparison.
 
 **Not adopted:**
 - The CCE + modelled-yield blending formula and its mandated weightages.
 - MITR/TIP empanelment, Tripartite Agreements, or YES-TECH's dispute-resolution governance — those apply to the formal YES-TECH program and its yield-determination authority, not to this evidence-support module.
-- Any claim that this module's yield-loss estimate is a Threshold-Yield-grade figure suitable for indemnity calculation.
+- Any claim that this module's yield-loss estimate or Damage Severity Index is a Threshold-Yield-grade figure suitable for indemnity calculation.
 
 ## 7. Data & Retention Principles
 

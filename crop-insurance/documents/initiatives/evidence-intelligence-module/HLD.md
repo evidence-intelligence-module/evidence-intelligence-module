@@ -8,7 +8,7 @@
 
 The Evidence Intelligence Module is a standalone, consumer-agnostic service. It sits behind a generic evidence-request interface (Section 5) and can be called by any system that needs auditable satellite/weather evidence for a crop-loss event — a voice-agent claim-intimation system, a web portal, a CSC-assisted workflow, or an insurer's own claims platform. It has no privileged caller and no dependency on any other initiative's internal schema.
 
-Conceptually it occupies the "Weather, satellite, and scheme reference sources" seam already anticipated in the broader platform's `baseline/HLD.md` integration layer — but this module is self-contained and does not require that platform to function; it can be called directly.
+This module is self-contained: it defines its own interface (Section 5) and does not require any other platform or initiative to function; any external system can call it directly.
 
 ## 2. System Context
 
@@ -42,14 +42,19 @@ flowchart LR
 
 ## 3. Component Breakdown
 
+The damage/yield-loss modeling components below mirror YES-TECH's own five-model-family structure (semi-physical, AI/ML, crop simulation, ensemble, composite index), applied to per-field evidence scoring rather than IU-level CCE-blended yield. Full methodology for each is in [Modeling-Approach.md](./Modeling-Approach.md) — this table is the system-design view, not the science.
+
 | Component | Responsibility |
 |---|---|
 | **Evidence Request Interface** | Accepts requests, validates the input contract, returns a request ID immediately, and later serves the completed package or current status |
 | **Imagery Ingestion** | Queries GEE for pre-event and post-event optical (Sentinel-2/Landsat) and, where needed, SAR (Sentinel-1) imagery for the requested geometry and date window |
-| **Damage Detection Engine** | Computes NDVI/other indices, differences pre- vs. post-event, classifies damage severity, and (for flood) runs SAR backscatter change detection |
 | **Weather Correlation Engine** | Pulls CHIRPS/ERA5/GPM/SMAP data for the event window and compares against historical baselines to characterize the weather event |
+| **Semi-Physical Damage Model** | RUE-chain biomass estimate (PAR/fAPAR/water-temperature stress) vs. observed trajectory — Modeling-Approach.md §2 |
+| **AI/ML Damage & Yield-Loss Models** | RF/DNN models over a documented multi-source feature set, with mandatory hyperparameter and accuracy disclosure — Modeling-Approach.md §3 |
+| **CSM Assimilation Engine** (advanced tier) | Remote-sensing-assimilated crop simulation model (WOFOST/InfoCrop) run for high-scrutiny claims — Modeling-Approach.md §4 |
+| **Ensemble Blending Engine** | Always combines the above components per request, weighted by each one's own confidence — Modeling-Approach.md §5 |
+| **Damage Severity Index (DSI) Engine** | Entropy-weighted composite index, computed per field against its own historical archive — Modeling-Approach.md §6 |
 | **Causation Analysis Engine** | Scores temporal alignment, spatial alignment, magnitude correlation, and physiological plausibility between the weather event and the observed damage |
-| **Yield-Loss Estimator** | Applies a calibrated NDVI-to-yield regression to produce a yield-loss estimate, explicitly labeled as an estimate (Constitution §4) |
 | **Report/Package Generator** | Assembles all of the above into the Output Artifact (Section 6), including the mandatory §65B admissibility fields |
 | **Evidence Store** | Persists request metadata, intermediate analysis results, and final packages against the retention principle in Constitution §7 |
 
@@ -74,8 +79,21 @@ Owned entirely by this module — no foreign keys into any other initiative's sc
 | `result_id`, `request_id` (FK) | |
 | `source_dataset`, `source_version`, `acquisition_date` | Mandatory provenance fields (Constitution §2) |
 | `pre_event_index_value`, `post_event_index_value`, `index_type` | e.g. NDVI |
-| `damage_classification`, `affected_area_ha` | |
 | `flood_extent_geometry` | Nullable — populated only when SAR flood mapping ran |
+
+### `model_component_results`
+
+One row per modeling component run per request (Modeling-Approach.md §2–§6) — not a single shared blob, so each component's provenance and confidence are independently auditable.
+
+| Field | Notes |
+|---|---|
+| `result_id`, `request_id` (FK) | |
+| `component` | `SEMI_PHYSICAL` \| `AI_ML` \| `CSM_ASSIMILATION` \| `ENSEMBLE` \| `DSI` |
+| `methodology_version` | Pinned per component, independently of the others |
+| `point_estimate` | Damage/yield-loss estimate, or DSI score for the `DSI` row |
+| `confidence_or_accuracy` | R²/NRMSE for `AI_ML`; calibration confidence for `SEMI_PHYSICAL`/`CSM_ASSIMILATION`; combined confidence for `ENSEMBLE`; entropy-weight summary for `DSI` |
+| `damage_classification`, `affected_area_ha` | Populated on the `ENSEMBLE` row — the reconciled, reportable figures |
+| `component_inputs` | Structured reference to the specific feature values/datasets that produced this row (Modeling-Approach.md §7) |
 
 ### `weather_correlation_results`
 | Field | Notes |
@@ -153,9 +171,11 @@ Every completed request produces:
 | Weather reanalysis | ERA5-Land | Via GEE / Copernicus CDS API |
 | Soil moisture | SMAP L3 | Via GEE |
 | Official weather records | IMD AWS | Via API / data-sharing agreement — used to corroborate, not substitute, gridded sources |
+| AI/ML modeling | scikit-learn (Random Forest) and/or a documented DNN framework | Component 2 — Modeling-Approach.md §3; every trained version carries disclosed hyperparameters and MAE/RMSE/NRMSE |
+| Crop simulation | WOFOST or InfoCrop (Indian-calibrated) | Component 3, advanced tier — Modeling-Approach.md §4 |
 | Report generation | Python (Matplotlib/Folium for maps, ReportLab for PDF) | Open source |
 | Object storage | S3-compatible | Evidence packages, imagery derivatives |
-| Compute | Cloud-based; GEE handles heavy satellite compute server-side | |
+| Compute | Cloud-based; GEE handles heavy satellite compute server-side; ML/CSM components run on standard cloud compute | |
 
 ## 8. Non-Functional Requirements
 

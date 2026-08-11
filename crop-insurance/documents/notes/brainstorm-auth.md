@@ -47,10 +47,41 @@ One further correction: the original `notes/Original-Inclusion-Notes.md` / `Orig
 - `initiatives/evidence-intelligence-module/README.md` — top-level orientation document: end-to-end flow plus an explicit "what this fixes" section framed against the *systemic* evidence gap described in the white paper, not against any other initiative's internal bugs.
 - `documents/README.md` — one small additive edit: added the missing `documentation/` folder and the new initiative to the navigation tree and reading order. No existing content changed.
 
-## 5. What was explicitly not done
+## 5. What was explicitly not done (round 1)
 
 - No edits inside `initiatives/voice-agent-claim-intimation/` (including its own `§9` contradiction — left as that initiative's own future fix).
 - No edits to `baseline/Roadmap-Region_India.md` or `baseline/HLD.md`.
 - No file deletions anywhere.
 - No bundling of the R1 (WhatsApp EXIF) or R2 (retention) lapse-report fixes.
 - `notes/Original-Inclusion-Notes.md` / `Original-Exclusion-Notes.md` left untouched and unreferenced.
+
+---
+
+## 6. Round 2 — tech-stack upgrade + repo scrap
+
+Two follow-up questions from the user, arriving together:
+
+1. **Was the tech stack actually grounded in YES-TECH?** No. Round 1's `HLD.md`/`Evidence-Flow-Spec.md` used a single NDVI-difference threshold table plus one generic regression as the entire damage/yield-loss engine. Re-reading `YESTECH_Manual_2023.md` past line 2000 — Appendix 1, which round 1 never reached — showed the manual mandates five real modeling approaches, each with genuine technical depth and disclosure requirements:
+   - **Semi-physical (RUE) model**: biomass = PAR × fAPAR × RUE × water/temperature stress scalars → yield via Harvest Index.
+   - **AI/ML models** (RF, DNN): a named feature set (Table 8: vegetation indices, SAR backscatter, IMD weather, fAPAR/LAI, soil texture, SRTM, SMAP) with mandatory hyperparameter disclosure and MAE/RMSE/NRMSE accuracy reporting.
+   - **Crop Simulation Models** (DSSAT, APSIM, InfoCrop, ORYZA, WOFOST): process-based, calibrated genetic coefficients, can assimilate remote-sensing state variables.
+   - **Ensemble models**: weighted-average/stacking of ML + CSM outputs.
+   - **Crop Health Factor (CHF)**: an entropy-weighted, Min-Max-normalized composite index, blended 70/30 with CCE yield deviation.
+
+   Instruction: the module should **at least match this rigor, and be more robust** — not just "reproducible in spirit," which is what round 1 delivered.
+
+2. **Scrap "everything else."** Confirmed explicitly, twice (the second time after I flagged the apparent tension with round 1's "edit `§9` directly" answer, which the user resolved by saying voice-agent scope should be removed entirely, then here going further): delete `baseline/`, all of `initiatives/voice-agent-claim-intimation/`, `documentation/Document-Lapse-Report-White-Paper.md`, and the two original scope-capture notes. Keep only: `YESTECH_Manual_2023.md` (repo root), `evidence-intelligence-module/` itself, `documentation/Evidence-Collection-Generation-White-Paper.md` (the module's own source research), and this log.
+
+   No salvage pass was needed before deleting the lapse report — the one fact worth keeping from it (IRDAI's 10-year retention mandate) was already independently stated in `Constitution.md` §7 in round 1, sourced from the actual regulation, not from that white paper.
+
+### What got built/changed as a result
+
+- **Deleted**: `baseline/` (4 files), `initiatives/voice-agent-claim-intimation/` (8 files across `current-design/` and `reference-plan/`), `documentation/Document-Lapse-Report-White-Paper.md`, `notes/Original-Inclusion-Notes.md` + `Original-Exclusion-Notes.md`.
+- **New**: `evidence-intelligence-module/Modeling-Approach.md` — the science/methodology document. Names five components mirroring YES-TECH's structure (semi-physical damage model, AI/ML damage & yield-loss models, optional CSM assimilation, ensemble blending, a CHF-inspired Damage Severity Index) but applied to per-field damage/evidence scoring rather than IU-level CCE-blended yield.
+- **The "more robust" argument, concretely**: this module always ensembles multiple components per request rather than a state committing to one model for a whole season; it operates per-field rather than per-IU; it reacts within hours/days of a claimed event via near-real-time sources rather than working to a seasonal report cadence; and full provenance/versioning is a constitutional (not merely procedural) requirement.
+- **Updated**: `HLD.md` (component breakdown, data model, tech stack extended for the multi-model pipeline), `Evidence-Flow-Spec.md` (damage-detection and yield-loss steps rewritten around the five components), `Constitution.md` §6 (YES-TECH alignment posture stated concretely rather than "in spirit"), both `README.md` files (module-level reading order, and the root nav rewritten around the now much smaller tree).
+
+### What's still explicitly not done
+
+- Still no CCE ingestion, no CCE-blending formula, no MITR/TIP governance adoption — the Constitution §4 boundary is unchanged; only the *rigor* of the non-CCE modeling components increased.
+- Still no standalone predictive alerting (Constitution §3 unchanged).

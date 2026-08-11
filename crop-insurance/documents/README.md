@@ -1,28 +1,24 @@
 # Crop Insurance Documentation
 
-This directory separates the original platform material from the active voice-assisted claim-intimation design. No source document was deleted during the restructure.
+This directory now contains a single active initiative: the **Evidence Intelligence Module**, a satellite + weather evidence-generation service supporting crop-damage and yield-loss claims under PMFBY/RWBCIS. Earlier platform material (a broader baseline platform design and a voice-assisted claim-intimation initiative) has been removed — it was not load-bearing for this initiative and is recoverable from git history if ever needed.
 
 ## Directory Guide
 
 | Location | Contents | Use |
 |---|---|---|
-| [`baseline/`](baseline/) | Original platform HLD, LLD, business white paper, and India roadmap | Background and broader platform reference |
-| [`initiatives/voice-agent-claim-intimation/current-design/`](initiatives/voice-agent-claim-intimation/current-design/) | Business justification, HLD, LLD, and supporting specifications | Primary implementation package for the voice-assisted prototype |
-| [`initiatives/voice-agent-claim-intimation/reference-plan/`](initiatives/voice-agent-claim-intimation/reference-plan/) | Earlier voice-agent planning package | Reference material and design history |
-| [`initiatives/evidence-intelligence-module/`](initiatives/evidence-intelligence-module/) | Constitution, HLD, and evidence-flow spec for satellite/weather claim evidence | Standalone initiative — generates auditable evidence to support claim intimation; no dependency on the voice-agent initiative |
-| [`documentation/`](documentation/) | Evidence Collection & Generation white paper; Document Lapse Report audit | Research and audit source material |
-| [`notes/`](notes/) | Preserved original inclusion and exclusion notes | Original requirements capture |
+| [`initiatives/evidence-intelligence-module/`](initiatives/evidence-intelligence-module/) | Constitution, HLD, Modeling-Approach, and Evidence-Flow-Spec | The active initiative — start here |
+| [`documentation/Evidence-Collection-Generation-White-Paper.md`](documentation/Evidence-Collection-Generation-White-Paper.md) | Original research/business-case white paper | Source material the initiative is derived from |
+| [`notes/brainstorm-auth.md`](notes/brainstorm-auth.md) | Running decision log | Why the module is scoped and designed the way it is |
+
+**External standards reference:** [`YESTECH_Manual_2023.md`](../../YESTECH_Manual_2023.md) (repo root) — the DA&FW/MNCFC government manual this module's modeling approach targets matching and exceeding.
 
 ## Recommended Reading Order
 
-1. [Business Justification](initiatives/voice-agent-claim-intimation/current-design/Business-Justification.md)
-2. [Current HLD](initiatives/voice-agent-claim-intimation/current-design/HLD.md)
-3. [Current LLD](initiatives/voice-agent-claim-intimation/current-design/LLD.md)
-4. [Peril Validation Logic](initiatives/voice-agent-claim-intimation/current-design/Peril-Validation-Logic.md)
-5. [Evidence Collection Specification](initiatives/voice-agent-claim-intimation/current-design/Evidence-Collection-Spec.md)
-6. [Integration Tier Strategy](initiatives/voice-agent-claim-intimation/current-design/Integration-Tier-Strategy.md)
-7. [Reference voice-agent plan](initiatives/voice-agent-claim-intimation/reference-plan/Voice-Agent-Claim-Intimation-Plan.md)
-8. Relevant [baseline](baseline/) material.
-9. [Evidence Intelligence Module](initiatives/evidence-intelligence-module/README.md) — standalone satellite/weather evidence-generation initiative; start with its own README, then Constitution, HLD, and Evidence-Flow-Spec.
+1. [Evidence Intelligence Module — README](initiatives/evidence-intelligence-module/README.md) — orientation, the problem, and what this fixes.
+2. [Constitution](initiatives/evidence-intelligence-module/Constitution.md) — non-negotiables and scope boundaries.
+3. [HLD](initiatives/evidence-intelligence-module/HLD.md) — system architecture.
+4. [Modeling-Approach](initiatives/evidence-intelligence-module/Modeling-Approach.md) — the modeling science, mapped against YES-TECH.
+5. [Evidence-Flow-Spec](initiatives/evidence-intelligence-module/Evidence-Flow-Spec.md) — the detailed pipeline.
+6. [Evidence Collection & Generation White Paper](documentation/Evidence-Collection-Generation-White-Paper.md) — original source research.
 
-The current design is limited to farmer-initiated claim intimation. It excludes CCE, prediction, on-ground verification, claim adjudication, and payment.
+The module is standalone: CCE, standalone predictive alerting, and any specific claim-intimation channel's internal implementation are explicitly out of scope (see Constitution §3–§5).

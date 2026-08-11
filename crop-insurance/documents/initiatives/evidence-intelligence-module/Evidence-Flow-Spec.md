@@ -33,24 +33,20 @@ If `peril_type` is `other` or ambiguous, the pipeline still runs a generic damag
 
 **Sowing/growth-stage sanity check:** the pre-event NDVI phenology curve is checked against the expected crop calendar window (Kharif/Rabi/Zaid) for the geometry's region to confirm a crop was plausibly standing before the claimed event — flagged, not blocked, if inconsistent.
 
-## 4. Step 2 — NDVI/SAR Damage Detection & Classification
+## 4. Step 2 — Multi-Model Damage Detection
 
-1. Compute NDVI (or the relevant index) for pre-event and post-event composites.
-2. Difference: `ndvi_change = post_event_ndvi - pre_event_ndvi`.
-3. Classify severity using fixed, versioned thresholds:
+Round 1 of this module used a single NDVI-difference threshold table as the entire damage-detection engine. That is no longer sufficient — [Modeling-Approach.md](./Modeling-Approach.md) defines five components mirroring YES-TECH's own model-family structure, and this step runs them.
 
-| NDVI Change | Classification | Indicative Yield Impact |
-|---|---|---|
-| > -0.05 | No significant change | < 10% |
-| -0.05 to -0.15 | Mild damage | 10–25% |
-| -0.15 to -0.30 | Moderate damage | 25–50% |
-| -0.30 to -0.50 | Severe damage | 50–75% |
-| < -0.50 | Total loss | > 75% |
+1. Compute NDVI/LSWI for pre-event and post-event composites — this remains the base spectral input every component consumes.
+2. **Run in parallel:**
+   - **Semi-Physical Damage Model** (Modeling-Approach.md §2) — RUE-chain expected-vs-observed biomass deviation.
+   - **AI/ML Damage & Yield-Loss Models** (Modeling-Approach.md §3) — RF/DNN prediction over the documented feature set.
+   - **CSM Assimilation** (Modeling-Approach.md §4) — advanced tier only, triggered for high-value/high-scrutiny claims.
+3. **Flood/cloud-cover case**: if `peril_type` is `flood` or optical imagery is unusable (monsoon cloud cover), Sentinel-1 SAR change detection runs as an additional input to all three components above — pre-event vs. flood-period VV backscatter, threshold at <-15dB with a >3dB drop, producing a binary flood-extent map. This is the primary path during monsoon, not a fallback of last resort.
+4. Each component's raw output — including the classification thresholds a component uses internally (e.g., the AI/ML model's own severity bands) — is stored independently in `model_component_results` (HLD §4), never overwritten by a later component's result.
+5. Affected area is computed by counting damaged pixels (per the reconciled Ensemble output, Step 4 below) within the submitted geometry and multiplying by pixel area.
 
-4. **Flood/cloud-cover case**: if `peril_type` is `flood` or optical imagery is unusable (monsoon cloud cover), run Sentinel-1 SAR change detection instead — pre-event vs. flood-period VV backscatter, threshold at <-15dB with a >3dB drop, producing a binary flood-extent map. This is the primary path during monsoon, not a fallback of last resort.
-5. Affected area is computed by counting damaged pixels within the submitted geometry and multiplying by pixel area.
-
-Thresholds and classification bands are versioned (`methodology_version` in HLD §4) so a later recalibration doesn't silently change past reports' meaning.
+Every component's methodology is versioned (`methodology_version` in HLD §4) so a later recalibration doesn't silently change past reports' meaning.
 
 ## 5. Step 3 — Weather Correlation & Causation Analysis
 
@@ -66,11 +62,14 @@ Thresholds and classification bands are versioned (`methodology_version` in HLD 
 | Magnitude correlation | 25% | Larger weather anomaly correlates with larger NDVI drop |
 | Physiological plausibility | 20% | Whether the peril type is capable of producing the observed damage pattern at the crop's inferred growth stage |
 
-## 6. Step 4 — Yield-Loss Estimation
+## 6. Step 4 — Ensemble Blending & Damage Severity Index
 
-A calibrated regression (NDVI peak, NDVI seasonal integral, seasonal precipitation → yield) produces a point estimate and a stated model confidence (R²).
+Two distinct outputs are produced here, answering different questions — both included in the evidence package, neither replacing the other:
 
-This is explicitly **not** a YES-TECH-style blended yield determination (Constitution §4) — it is one evidence component, always labeled as an estimate with its own confidence figure, never presented as a final indemnity-grade number. Calibration coefficients are versioned per crop/district and recorded in `methodology_version`.
+1. **Ensemble yield-loss estimate** (Modeling-Approach.md §5): the Semi-Physical, AI/ML, and (where run) CSM Assimilation results from Step 2 are combined via weighted averaging or stacking, weighted by each component's own validation accuracy or calibration confidence — not a fixed a-priori split. Unlike YES-TECH, where a state commits to one model family for an entire season, this blending runs on every single request. The result carries a combined confidence figure derived from its inputs.
+2. **Damage Severity Index** (Modeling-Approach.md §6): an entropy-weighted, Min-Max-normalized composite of NDVI/LSWI/SAR/FAPAR deviation and weather anomaly magnitude, computed against the field's own historical archive — CHF-inspired, but per-field rather than per-IU-group, and never blended with CCE data.
+
+This is explicitly **not** a YES-TECH-style CCE-blended yield determination (Constitution §4) — both outputs are evidence components, always labeled as estimates, never presented as final indemnity-grade numbers. Every coefficient/weight used is versioned per crop/district/field-history and recorded in `methodology_version`.
 
 ## 7. Step 5 — Report/Package Generation & Legal Admissibility Packaging
 
@@ -120,9 +119,13 @@ sequenceDiagram
         IMD-->>EIM: Station record
     end
 
-    EIM->>EIM: Damage classification (Step 2)
+    par Multi-model damage detection (Step 2)
+        EIM->>EIM: Semi-Physical Damage Model
+        EIM->>EIM: AI/ML Damage & Yield-Loss Models
+        EIM->>EIM: CSM Assimilation (advanced tier only)
+    end
     EIM->>EIM: Causation confidence scoring (Step 3)
-    EIM->>EIM: Yield-loss estimation (Step 4)
+    EIM->>EIM: Ensemble blending + Damage Severity Index (Step 4)
     EIM->>EIM: Assemble evidence package (Step 5)
     EIM-->>Requester: status=COMPLETE, package (PDF + JSON + maps)
 ```
