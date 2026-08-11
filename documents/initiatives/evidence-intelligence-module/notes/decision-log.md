@@ -1,4 +1,4 @@
-# Brainstorm Log — Evidence Intelligence Module
+# Decision Log — Evidence Intelligence Module
 
 **Purpose:** Record of *why* things that no longer exist in this repo were removed, and why structural decisions (standalone scope, directory layout) were made the way they were. This is not a restatement of current rules — those live in `Constitution.md` — it's the answer to "why is X missing?" or "why isn't this built the obvious way?" See `CLAUDE.md`'s directory map, which points here for exactly that.
 
@@ -89,3 +89,19 @@ User asked for the whole `documents/` tree (as reorganized in Round 9) to move o
 Moved with `git mv` (history preserved): `crop-insurance/documents/` → `documents/`. This shifted every file under it up one directory level, so every relative link crossing that boundary needed a `../` removed: `HLD.md`'s pointer to `specs/001-evidence-generation-pipeline/`, `documents/README.md`'s same pointer, and — going the other direction — `plan.md`/`data-model.md`/`contracts/evidence-request-api.md`'s "derived from"/"implements" pointers back to `HLD.md`, plus `CLAUDE.md`, `SETUP.md`, and `.specify/memory/constitution.md`'s references to this directory and to `notes/brainstorm-auth.md`. Links entirely *within* this initiative directory (Constitution → standards/, README → research/, etc., fixed in Round 9) were unaffected, since they and their targets moved together.
 
 Left alone deliberately: `crop-insurance/code/` — the user asked to move `documents/` specifically, not `code/`, so `crop-insurance/` remains as the (currently empty-except-`code/`) implementation namespace. `specs/001-.../tasks.md`'s many `crop-insurance/code/...` file paths are correspondingly still correct and were not touched.
+
+## 11. Round 11 — top-level `documents/README.md` and the module's own `README.md` merged into one
+
+After Round 10, `documents/` contained exactly one subdirectory, so its own `README.md` had shrunk to a thin directory index (start-here pointer, a directory-guide table, a `specs/` pointer) sitting alongside the module's real orientation doc at `initiatives/evidence-intelligence-module/README.md` — two files answering "what is this" with genuinely distinct but increasingly overlapping content. User asked why, then asked to merge them, keeping the result at the top level (`documents/README.md`).
+
+Merged: the module `README.md`'s full content (goal, problem table, end-to-end flow diagram, what-this-fixes table, explicit boundaries, standards alignment, reading order, roadmap pointer) plus the top `README.md`'s unique content (single-initiative framing, directory guide, `specs/` pointer) into one file at `documents/README.md`. The old top `README.md`'s separate "Recommended Reading Order" (itself already just a pointer to the module's §7, per Round 7/9) and "The Boundary, in One Place" section (a shorter restatement of the module README's own §5) were dropped rather than merged — both were pure duplicates once the two files became one. `documents/initiatives/evidence-intelligence-module/README.md` deleted (`git rm`); every link into it — internal section links (now `initiatives/evidence-intelligence-module/Constitution.md` etc. instead of `./Constitution.md`), `CLAUDE.md`'s "Start here" pointer and directory map, `SETUP.md`'s reading order — updated to point at `documents/README.md` instead.
+
+Net effect: one orientation document, not two. `initiatives/evidence-intelligence-module/` now holds only `Constitution.md`, `HLD.md`, `Modeling-Approach.md`, `Evidence-Flow-Spec.md`, `standards/`, `research/`, `notes/` — no README of its own, since `documents/README.md` now serves that role for the whole tree.
+
+## 12. Round 12 — this file renamed from `brainstorm-auth.md` to `decision-log.md`
+
+User pointed out the old name didn't fit: "auth" is a leftover from when this log tracked decisions about the voice-agent claim-intimation initiative (which had an auth-adjacent scope) — that initiative was deleted back in Round 2, but the filename never caught up. Every other document already described this file in prose as the "running decision log," never as a "brainstorm log," so the rename brings the filename in line with what it's actually called everywhere it's referenced.
+
+Renamed with `git mv` (history preserved): `notes/brainstorm-auth.md` → `notes/decision-log.md`. Title changed from "Brainstorm Log" to "Decision Log" to match. Every live reference updated: `CLAUDE.md` (both mentions), `SETUP.md`, `documents/README.md` (Reading Order §8 and Directory Guide), `.specify/memory/constitution.md` (both mentions), and `research/Remote-Sensing-ML-Techniques-Reference.md`'s pointer.
+
+Left alone deliberately: this file's own Round 9–11 entries above, which mention `notes/brainstorm-auth.md` by the name it actually had at the time those rounds happened — same treatment Round 1's mention of the pre-Round-4 `documents/documentation/` name got. Historical entries describe what was true when they were written, not what's true now.

@@ -41,9 +41,9 @@ Confirms required tools (git, the selected AI integration, script runtime) are p
 ## First read, in order
 
 1. [`CLAUDE.md`](CLAUDE.md) — hard boundaries and directory map
-2. [`documents/initiatives/evidence-intelligence-module/README.md`](documents/initiatives/evidence-intelligence-module/README.md)
-3. `Constitution.md` → `HLD.md` → `Modeling-Approach.md` → `Evidence-Flow-Spec.md` in that same folder
-4. [`documents/initiatives/evidence-intelligence-module/notes/brainstorm-auth.md`](documents/initiatives/evidence-intelligence-module/notes/brainstorm-auth.md) — why things were deliberately removed, before assuming something is missing
+2. [`documents/README.md`](documents/README.md) — goal, problem, boundaries, reading order
+3. `Constitution.md` → `HLD.md` → `Modeling-Approach.md` → `Evidence-Flow-Spec.md` in `documents/initiatives/evidence-intelligence-module/`
+4. [`documents/initiatives/evidence-intelligence-module/notes/decision-log.md`](documents/initiatives/evidence-intelligence-module/notes/decision-log.md) — why things were deliberately removed, before assuming something is missing
 
 ## Notes
 

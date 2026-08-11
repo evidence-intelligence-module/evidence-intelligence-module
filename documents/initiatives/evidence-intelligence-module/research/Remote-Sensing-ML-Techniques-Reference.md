@@ -13,7 +13,7 @@ A third-party pitch document proposed a general-purpose, multi-tenant SaaS platf
 - It runs **continuous proactive anomaly scanning with auto-notification** to stakeholders before any loss is reported (Constitution §3 excludes standalone predictive alerting).
 - It is architected as its **own end-to-end SaaS product** — tenants, dashboards, pricing tiers, claim pipeline — rather than a component behind a generic evidence-request contract (Constitution §5).
 
-The pitch itself — tenancy model, pricing, roadmap, staffing, financial projections, and YES-TECH "compliance" framing built around CCE blending — was rejected and is not reproduced here. See `notes/brainstorm-auth.md` for the full decision record.
+The pitch itself — tenancy model, pricing, roadmap, staffing, financial projections, and YES-TECH "compliance" framing built around CCE blending — was rejected and is not reproduced here. See `notes/decision-log.md` for the full decision record.
 
 What survived: a set of **remote-sensing and ML techniques** that are technically sound, don't depend on CCE data or proactive alerting, and improve on gaps in this module's own [`Modeling-Approach.md`](../initiatives/evidence-intelligence-module/Modeling-Approach.md) and [`Evidence-Flow-Spec.md`](../initiatives/evidence-intelligence-module/Evidence-Flow-Spec.md). Those are captured below as reference material — evaluate and adopt deliberately, the same way any other research input is used; nothing here is pre-approved for implementation.
 
