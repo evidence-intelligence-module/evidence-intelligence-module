@@ -28,6 +28,7 @@ def test_settings() -> Settings:
         evidence_store_bucket="test-bucket",
         causation_low_confidence_threshold=None,
         csm_high_scrutiny_enabled=False,
+        ai_ml_model_path=None,
     )
 
 

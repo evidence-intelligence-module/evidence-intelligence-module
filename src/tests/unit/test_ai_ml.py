@@ -33,7 +33,9 @@ def test_yield_loss_fraction_scaled_by_harvest_index():
     assert result.yield_loss_fraction == result.damage_fraction * 0.5
 
 
-def test_trained_model_reports_supplied_validation_metrics():
+def test_trained_but_unevaluated_model_reports_null_metrics_not_fabricated():
+    """A model that's been fit() but not yet evaluate()'d is genuinely
+    'trained', but has no real accuracy figures yet — still never fabricated."""
     import numpy as np
 
     from evidence_intelligence.models.ai_ml import FEATURE_NAMES
@@ -41,8 +43,91 @@ def test_trained_model_reports_supplied_validation_metrics():
     model = AiMlModel()
     features = np.random.RandomState(0).rand(20, len(FEATURE_NAMES))
     labels = np.random.RandomState(1).rand(20)
-    model.fit(features, labels, validation_metrics={"mae": 0.05, "rmse": 0.08, "nrmse": 0.12})
+    model.fit(features, labels)
 
     result = model.predict({name: 0.1 for name in FEATURE_NAMES}, harvest_index=0.4)
     assert result.confidence_or_accuracy["status"] == "trained"
-    assert result.confidence_or_accuracy["nrmse"] == 0.12
+    assert result.confidence_or_accuracy["mae"] is None
+
+
+def test_evaluate_records_real_metrics_from_held_out_data():
+    import numpy as np
+
+    from evidence_intelligence.models.ai_ml import FEATURE_NAMES
+
+    rng = np.random.RandomState(0)
+    train_features, train_labels = rng.rand(50, len(FEATURE_NAMES)), rng.rand(50)
+    val_features, val_labels = rng.rand(10, len(FEATURE_NAMES)), rng.rand(10)
+
+    model = AiMlModel()
+    model.fit(train_features, train_labels)
+    metrics = model.evaluate(val_features, val_labels)
+
+    assert metrics["mae"] >= 0
+    assert metrics["rmse"] >= 0
+    assert metrics["nrmse"] is None or metrics["nrmse"] >= 0
+
+    result = model.predict({name: 0.1 for name in FEATURE_NAMES}, harvest_index=0.4)
+    assert result.confidence_or_accuracy["mae"] == metrics["mae"]
+
+
+def test_evaluate_before_fit_raises():
+    import numpy as np
+    import pytest
+
+    from evidence_intelligence.models.ai_ml import FEATURE_NAMES
+
+    model = AiMlModel()
+    with pytest.raises(RuntimeError):
+        model.evaluate(np.zeros((5, len(FEATURE_NAMES))), np.zeros(5))
+
+
+def test_save_untrained_model_raises(tmp_path):
+    import pytest
+
+    model = AiMlModel()
+    with pytest.raises(RuntimeError):
+        model.save(tmp_path / "model.joblib")
+
+
+def test_save_and_load_round_trip_preserves_predictions(tmp_path):
+    import numpy as np
+
+    from evidence_intelligence.models.ai_ml import FEATURE_NAMES
+
+    rng = np.random.RandomState(0)
+    model = AiMlModel()
+    model.fit(rng.rand(50, len(FEATURE_NAMES)), rng.rand(50))
+    model.evaluate(rng.rand(10, len(FEATURE_NAMES)), rng.rand(10))
+
+    save_path = tmp_path / "model.joblib"
+    model.save(save_path)
+    loaded = AiMlModel.load(save_path)
+
+    feature_vector = {name: 0.3 for name in FEATURE_NAMES}
+    original_result = model.predict(feature_vector, harvest_index=0.4)
+    loaded_result = loaded.predict(feature_vector, harvest_index=0.4)
+
+    assert loaded_result.damage_fraction == original_result.damage_fraction
+    assert loaded_result.confidence_or_accuracy["status"] == "trained"
+    assert (
+        loaded_result.confidence_or_accuracy["mae"]
+        == original_result.confidence_or_accuracy["mae"]
+    )
+
+
+def test_load_rejects_mismatched_feature_names(tmp_path, monkeypatch):
+    import numpy as np
+    import pytest
+
+    from evidence_intelligence.models import ai_ml as ai_ml_module
+
+    rng = np.random.RandomState(0)
+    model = AiMlModel()
+    model.fit(rng.rand(20, len(ai_ml_module.FEATURE_NAMES)), rng.rand(20))
+    save_path = tmp_path / "model.joblib"
+    model.save(save_path)
+
+    monkeypatch.setattr(ai_ml_module, "FEATURE_NAMES", ["a_completely_different_feature_set"])
+    with pytest.raises(ValueError):
+        ai_ml_module.AiMlModel.load(save_path)

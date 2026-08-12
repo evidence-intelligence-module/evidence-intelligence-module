@@ -14,6 +14,7 @@ class Settings:
     evidence_store_bucket: str
     causation_low_confidence_threshold: int | None
     csm_high_scrutiny_enabled: bool
+    ai_ml_model_path: str | None
 
 
 def load_settings() -> Settings:
@@ -37,6 +38,10 @@ def load_settings() -> Settings:
         # exists yet. Defaults to disabled per tasks.md T038.
         csm_high_scrutiny_enabled=os.environ.get("CSM_HIGH_SCRUTINY_ENABLED", "false").lower()
         == "true",
+        # Path to a model saved by AiMlModel.save() (see scripts/train_ai_ml_model.py).
+        # Unset by default — the model ships untrained until one is trained and pointed
+        # to here (see README.md "Training the AI/ML Model").
+        ai_ml_model_path=os.environ.get("AI_ML_MODEL_PATH"),
     )
 
 

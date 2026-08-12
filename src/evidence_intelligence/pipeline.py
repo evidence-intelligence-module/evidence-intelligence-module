@@ -30,6 +30,28 @@ CLOUDBURST_HAILSTORM_PERILS = {PerilType.CLOUDBURST, PerilType.HAILSTORM}
 
 logger = logging.getLogger("evidence_intelligence")
 
+_ai_ml_model_cache: dict[str, ai_ml.AiMlModel] = {}
+
+
+def _load_ai_ml_model(settings: Settings) -> ai_ml.AiMlModel:
+    """Loads the trained model at `settings.ai_ml_model_path` (see
+    scripts/train_ai_ml_model.py) if one is configured, caching it per path
+    for the life of the process. Falls back to an untrained instance —
+    logged, not silent — if no path is set or the load fails, so a bad
+    config degrades to the disclosed placeholder rather than crashing every
+    request."""
+    path = settings.ai_ml_model_path
+    if path is None:
+        return ai_ml.AiMlModel()
+    if path not in _ai_ml_model_cache:
+        try:
+            _ai_ml_model_cache[path] = ai_ml.AiMlModel.load(path)
+            logger.info("ai_ml_model_loaded path=%s", path)
+        except Exception:
+            logger.exception("ai_ml_model_load_failed path=%s falling back to untrained", path)
+            _ai_ml_model_cache[path] = ai_ml.AiMlModel()
+    return _ai_ml_model_cache[path]
+
 
 def _ndvi_to_fapar(ndvi: float | None) -> float:
     if ndvi is None:
@@ -59,7 +81,7 @@ def run_pipeline(
     gee_client = gee_client or GEEClient()
     weather_client = weather_client or WeatherClient()
     imd_client = imd_client or IMDClient()
-    ai_ml_model = ai_ml_model or ai_ml.AiMlModel()
+    ai_ml_model = ai_ml_model or _load_ai_ml_model(settings)
     storage = storage or LocalObjectStorage(settings.evidence_store_bucket)
 
     store.set_status(request_id, RequestStatus.IN_PROGRESS)

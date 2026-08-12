@@ -89,11 +89,35 @@ curl http://localhost:8000/evidence-requests/EIM-...
 
 `peril_type` is one of `hailstorm`, `flood`, `drought`, `cyclone`, `unseasonal_rain`, `frost`, `heatwave`, `pest_disease_weather_induced`, `landslide`, `cloudburst`, `other`. Full request/response shapes, including the weather-only-preliminary and 404 cases: [`contracts/evidence-request-api.md`](specs/001-evidence-generation-pipeline/contracts/evidence-request-api.md).
 
+## Training the AI/ML Model
+
+The AI/ML damage model (`evidence_intelligence/models/ai_ml.py`, Modeling-Approach.md §3) ships **untrained** by default — no labeled data exists in this repo (see the open question below), so it falls back to a disclosed placeholder formula and every prediction honestly reports `confidence_or_accuracy.status == "untrained_placeholder"` rather than a fabricated MAE/RMSE/NRMSE.
+
+Once real labeled data exists, training it and putting it into production is a three-step, verified-working loop:
+
+**1. Prepare labeled data as a CSV.** One row per historical claim, one column per name in `ai_ml.FEATURE_NAMES` (satellite/weather/radar deviations — see the file for the exact list), plus a `damage_fraction` column (the verified outcome, `0`–`1`) as the label. See the [open question on where this data comes from](specs/001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md) — this isn't solved yet, deliberately.
+
+**2. Train and evaluate:**
+```bash
+cd src
+.venv/Scripts/python scripts/train_ai_ml_model.py --data path/to/labeled.csv --output models/ai_ml_v1.joblib
+# Trained on 48 rows, validated on 12 held-out rows.
+# MAE=0.0272  RMSE=0.0327  NRMSE=0.2797
+# Saved to models/ai_ml_v1.joblib
+```
+The script holds out a validation split (`--test-size`, default 20%) the model never trains on, and reports MAE/RMSE/NRMSE computed against that held-out set — never a number the model has already seen, and never fabricated if training data is too thin (`evaluate()` requires `fit()` to have run first, `save()` refuses to persist an untrained model).
+
+**3. Point the running service at it:**
+```bash
+export AI_ML_MODEL_PATH=models/ai_ml_v1.joblib
+```
+`config.py` reads this at startup; `pipeline.py` loads and caches the model once per process (`_load_ai_ml_model`). From then on, every evidence package's `confidence_or_accuracy.status` reads `"trained"` with real MAE/RMSE/NRMSE instead of the placeholder. If the path is unset, missing, or the saved model was trained against a different feature set or methodology version, the service logs it and falls back to the untrained placeholder rather than crashing or silently mispredicting.
+
 ## Current Status
 
-All 42 implementation tasks in [`tasks.md`](specs/001-evidence-generation-pipeline/tasks.md) are complete and tested (46/46 passing). Two things are honestly incomplete rather than papered over:
+All 42 implementation tasks in [`tasks.md`](specs/001-evidence-generation-pipeline/tasks.md) are complete and tested (55/55 passing). Two things are honestly incomplete rather than papered over:
 
-- The AI/ML damage model ships **untrained** — no labeled data exists yet, so it uses a disclosed placeholder formula and reports `"untrained_placeholder"` rather than a fabricated accuracy figure.
+- The AI/ML damage model ships **untrained** by default — see "Training the AI/ML Model" above for how to change that once labeled data exists.
 - Nothing has run against real Earth Engine or a real Postgres instance in this environment — only against injected fakes. See `src/tests/fakes.py` for what's simulated.
 
-Two spec-level decisions remain deliberately open (not blocking, both gated/configurable): the CSM "high-scrutiny" trigger and the causation low-confidence numeric threshold — see [`specs/001-evidence-generation-pipeline/issue/`](specs/001-evidence-generation-pipeline/issue/).
+Three things remain deliberately open (not blocking, all documented rather than guessed at): the CSM "high-scrutiny" trigger, the causation low-confidence numeric threshold, and the AI/ML training-data source (including whether historical CCE outcomes may be used as offline training labels) — see [`specs/001-evidence-generation-pipeline/issue/`](specs/001-evidence-generation-pipeline/issue/).
