@@ -31,8 +31,8 @@ Optional, only for the `brainstorming` skill's visual companion (mockups/diagram
 
 1. [`CLAUDE.md`](CLAUDE.md) — hard boundaries and directory map
 2. [`documents/README.md`](documents/README.md) — goal, problem, boundaries, reading order
-3. `Constitution.md` → `HLD.md` → `Modeling-Approach.md` → `Evidence-Flow-Spec.md` in `documents/initiatives/evidence-intelligence-module/`
-4. [`documents/initiatives/evidence-intelligence-module/notes/decision-log.md`](documents/initiatives/evidence-intelligence-module/notes/decision-log.md) — why things were deliberately removed, before assuming something is missing
+3. `Constitution.md` → `HLD.md` → `Modeling-Approach.md` → `Evidence-Flow-Spec.md` in `documents/`
+4. [`documents/notes/decision-log.md`](documents/notes/decision-log.md) — why things were deliberately removed, before assuming something is missing
 
 ## Notes
 

@@ -10,7 +10,7 @@ One active initiative: the **Evidence Intelligence Module** — a satellite + we
 
 1. **No CCE.** This module does not ingest Crop Cutting Experiment data, does not implement CCE-blended yield determination, and never claims to replace CCE.
 2. **No standalone prediction.** The module reacts to a reported/claimed loss event; it does not run proactive predictive alerting.
-3. **Standalone by design.** The module exposes a generic evidence-request interface and has no dependency on any specific claim-intimation channel's internal schema. A prior voice-assisted claim-intimation initiative existed in this repo and was **deliberately deleted** (see `documents/initiatives/evidence-intelligence-module/notes/decision-log.md` §2/§6 for why) — do not treat its absence as an oversight, and do not recreate dependencies on it.
+3. **Standalone by design.** The module exposes a generic evidence-request interface and has no dependency on any specific claim-intimation channel's internal schema. A prior voice-assisted claim-intimation initiative existed in this repo and was **deliberately deleted** (see `documents/notes/decision-log.md` §2/§6 for why) — do not treat its absence as an oversight, and do not recreate dependencies on it.
 
 Full reasoning for all three lives in the Constitution — see below. If a task seems to require relaxing one of these, that's a scope decision for the user to make explicitly, not something to infer from a single request.
 
@@ -21,11 +21,10 @@ Full reasoning for all three lives in the Constitution — see below. If a task 
 | Path | What it is |
 |---|---|
 | `documents/README.md` | Orientation for the whole initiative — goal, problem, boundaries, reading order. Start here (see above). |
-| `documents/initiatives/evidence-intelligence-module/` | Everything belonging to the initiative lives in this one directory, not scattered across sibling top-level folders |
-| ↳ `Constitution.md` → `HLD.md` → `Modeling-Approach.md` → `Evidence-Flow-Spec.md` | Non-negotiables → architecture → modeling science → pipeline detail, in reading order (after `documents/README.md`) |
-| ↳ `standards/YESTECH_Manual_2023.md` | External, verbatim government manual (DA&FW/MNCFC). Not our content — never edit it, only relocate/reference it. The modeling approach is designed to match and exceed its rigor. |
-| ↳ `research/` | Internal source white paper the initiative was derived from. Optional depth, not required reading. |
-| ↳ `notes/decision-log.md` | Running decision log — why the module is scoped the way it is, including why earlier material (baseline platform docs, the voice-agent initiative, an old root-level `implementation_plan.md`) was deleted, and why this directory itself is laid out this way. Read this before assuming something is "missing." |
+| `documents/Constitution.md` → `HLD.md` → `Modeling-Approach.md` → `Evidence-Flow-Spec.md` | Non-negotiables → architecture → modeling science → pipeline detail, in reading order (after `documents/README.md`). Everything lives directly under `documents/` — this repo has a single active initiative, so there's no per-initiative subdirectory. |
+| `documents/standards/YESTECH_Manual_2023.md` | External, verbatim government manual (DA&FW/MNCFC). Not our content — never edit it, only relocate/reference it. The modeling approach is designed to match and exceed its rigor. |
+| `documents/research/` | Internal source white paper the initiative was derived from. Optional depth, not required reading. |
+| `documents/notes/decision-log.md` | Running decision log — why the module is scoped the way it is, including why earlier material (baseline platform docs, the voice-agent initiative, an old root-level `implementation_plan.md`) was deleted, and why the documentation tree itself is laid out this way. Read this before assuming something is "missing." |
 
 **Engineering execution state** — Spec Kit's translation of the domain documentation above into a buildable plan; regenerated/updated via `/speckit-*` skills, not hand-authored prose:
 

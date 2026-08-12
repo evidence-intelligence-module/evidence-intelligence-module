@@ -4,7 +4,7 @@
 
 **Input**: Feature specification from `/specs/001-evidence-generation-pipeline/spec.md`
 
-**Implements**: [`documents/initiatives/evidence-intelligence-module/HLD.md`](../../documents/initiatives/evidence-intelligence-module/HLD.md) — that document is the architectural source of truth; this plan and its Phase 0/1 artifacts (`research.md`, `data-model.md`, `contracts/`) translate it into an executable build, they do not redesign it.
+**Implements**: [`documents/HLD.md`](../../documents/HLD.md) — that document is the architectural source of truth; this plan and its Phase 0/1 artifacts (`research.md`, `data-model.md`, `contracts/`) translate it into an executable build, they do not redesign it.
 
 ## Summary
 

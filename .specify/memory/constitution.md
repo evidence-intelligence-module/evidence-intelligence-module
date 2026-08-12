@@ -1,5 +1,5 @@
 # Evidence Intelligence Module Constitution
-<!-- Distilled for Spec Kit from the canonical source of truth: documents/initiatives/evidence-intelligence-module/Constitution.md. That document controls in case of conflict; amend it first, then sync this file. -->
+<!-- Distilled for Spec Kit from the canonical source of truth: documents/Constitution.md. That document controls in case of conflict; amend it first, then sync this file. -->
 
 ## Core Principles
 
@@ -16,7 +16,7 @@ Packaging must satisfy Indian Evidence Act, 1872 §65B (electronic record admiss
 This module does not ingest, validate, or dispute Crop Cutting Experiment data, does not implement CCE-blended yield determination, and never claims to replace CCE — it may produce a yield-loss *estimate* as supporting evidence only, clearly labeled as such. It reacts to a reported/claimed loss event; it does not run continuous proactive predictive alerting. These boundaries may only be relaxed by an explicit, recorded amendment to the canonical Constitution — never inferred from a single feature request.
 
 ### V. Standalone Interface, No Privileged Caller
-The module exposes a generic evidence-request contract (location, event date, peril type, optional external reference ID) and has no dependency on any specific claim-intimation channel's internal schema, message bus, or tooling. A voice-agent system, web portal, CSC-assisted workflow, or insurer's own claims system all integrate the same way; none is assumed or privileged. The module owns its own data model and does not read from or write to another initiative's tables, topics, or tool definitions. (A prior voice-assisted claim-intimation initiative was deliberately deleted from this repo for this reason — see `documents/initiatives/evidence-intelligence-module/notes/decision-log.md` — its absence is not an oversight.)
+The module exposes a generic evidence-request contract (location, event date, peril type, optional external reference ID) and has no dependency on any specific claim-intimation channel's internal schema, message bus, or tooling. A voice-agent system, web portal, CSC-assisted workflow, or insurer's own claims system all integrate the same way; none is assumed or privileged. The module owns its own data model and does not read from or write to another initiative's tables, topics, or tool definitions. (A prior voice-assisted claim-intimation initiative was deliberately deleted from this repo for this reason — see `documents/notes/decision-log.md` — its absence is not an oversight.)
 
 ## Additional Constraints
 
@@ -24,11 +24,11 @@ The module exposes a generic evidence-request contract (location, event date, pe
 
 **Data retention:** evidence artifacts (source imagery references, derived rasters, weather correlation results, generated reports) are retained for 10 years from generation, per IRDAI's *Minimum Information Required for Investigation and Inspection Regulations, 2020*. Raw source data may be referenced rather than duplicated where the source (e.g., Google Earth Engine, CHIRPS) guarantees long-term public archival access; derived analysis products and final reports are always retained directly.
 
-**Repo state:** `src/` holds the implementation of `specs/001-evidence-generation-pipeline/` (Python/FastAPI service + tests). Treat `documents/initiatives/evidence-intelligence-module/` (README → Constitution → HLD → Modeling-Approach → Evidence-Flow-Spec) as the required reading order before making further changes to it.
+**Repo state:** `src/` holds the implementation of `specs/001-evidence-generation-pipeline/` (Python/FastAPI service + tests). Treat `documents/` (README → Constitution → HLD → Modeling-Approach → Evidence-Flow-Spec) as the required reading order before making further changes to it.
 
 ## Development Workflow
 
-Cross-document references use `File.md §N — Section Title` or a markdown link, naming sections by actual heading text so references survive renumbering. This is a documentation-only repo today — there's no build/test/run step; correctness means internal consistency (cross-references resolve, no contradicted boundaries) and factual accuracy against cited sources. Read `documents/initiatives/evidence-intelligence-module/notes/decision-log.md` before assuming something is "missing" — it's the running decision log for why prior material was deliberately removed.
+Cross-document references use `File.md §N — Section Title` or a markdown link, naming sections by actual heading text so references survive renumbering. This is a documentation-only repo today — there's no build/test/run step; correctness means internal consistency (cross-references resolve, no contradicted boundaries) and factual accuracy against cited sources. Read `documents/notes/decision-log.md` before assuming something is "missing" — it's the running decision log for why prior material was deliberately removed.
 
 ## Governance
 

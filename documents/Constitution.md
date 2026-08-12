@@ -1,7 +1,7 @@
 # Evidence Intelligence Module — Constitution
 
 **Status:** Foundational — governs all design and implementation decisions for this initiative.
-**Applies to:** `initiatives/evidence-intelligence-module/` only.
+**Applies to:** this repo's single active initiative, the Evidence Intelligence Module (see `documents/README.md` / `CLAUDE.md`).
 
 ---
 

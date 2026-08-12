@@ -4,7 +4,7 @@
 
 **Goal, in one sentence:** turn heterogeneous satellite and weather observations into reproducible, spatially explicit, auditable technical evidence that supports crop-damage and yield-loss claims under PMFBY/RWBCIS — starting with satellite + weather only; CCE and any specific intimation channel are explicitly out of scope for now.
 
-For the governing rules, see [`initiatives/evidence-intelligence-module/Constitution.md`](initiatives/evidence-intelligence-module/Constitution.md); for the architecture, see [`HLD.md`](initiatives/evidence-intelligence-module/HLD.md); for the modeling science, see [`Modeling-Approach.md`](initiatives/evidence-intelligence-module/Modeling-Approach.md); for the step-by-step pipeline, see [`Evidence-Flow-Spec.md`](initiatives/evidence-intelligence-module/Evidence-Flow-Spec.md). Earlier platform material (a broader baseline platform design and a voice-assisted claim-intimation initiative) was removed as out of scope; it's recoverable from git history if ever needed.
+For the governing rules, see [`Constitution.md`](Constitution.md); for the architecture, see [`HLD.md`](HLD.md); for the modeling science, see [`Modeling-Approach.md`](Modeling-Approach.md); for the step-by-step pipeline, see [`Evidence-Flow-Spec.md`](Evidence-Flow-Spec.md). Earlier platform material (a broader baseline platform design and a voice-assisted claim-intimation initiative) was removed as out of scope; it's recoverable from git history if ever needed.
 
 ---
 
@@ -41,7 +41,7 @@ flowchart LR
     H --> I["Insurer / claim record"]
 ```
 
-This is deliberately a synthesis — see [`Evidence-Flow-Spec.md`](initiatives/evidence-intelligence-module/Evidence-Flow-Spec.md) for the actual step-by-step pipeline (imagery acquisition windows, classification thresholds, causation scoring, fallback paths).
+This is deliberately a synthesis — see [`Evidence-Flow-Spec.md`](Evidence-Flow-Spec.md) for the actual step-by-step pipeline (imagery acquisition windows, classification thresholds, causation scoring, fallback paths).
 
 ## 4. What This Fixes
 
@@ -59,24 +59,24 @@ This section is the point of this document: it maps each systemic evidence-gap f
 
 ## 5. Explicit Boundaries
 
-- **CCE is out of scope.** This module does not touch Crop Cutting Experiments or the CCE-based yield-determination process. See [Constitution.md](initiatives/evidence-intelligence-module/Constitution.md) §4.
+- **CCE is out of scope.** This module does not touch Crop Cutting Experiments or the CCE-based yield-determination process. See [Constitution.md](Constitution.md) §4.
 - **Prediction is out of scope, for now.** This module reacts to a reported event; it does not run standalone proactive/predictive alerting. See Constitution §3.
 - **Standalone by design.** This module exposes a generic evidence-request contract and integrates with no specific claim-intimation channel's internals. See Constitution §5.
 
 ## 6. Standards Alignment
 
-One line: this module targets at least [`YESTECH_Manual_2023.md`](initiatives/evidence-intelligence-module/standards/YESTECH_Manual_2023.md)'s modeling rigor, and exceeds it where practical (always-ensemble, per-field granularity, near-real-time cadence) — without adopting its CCE-blending formula or MITR/TIP governance, which govern a different, formally constituted program. Full posture and the adopted/not-adopted list live in [Constitution.md](initiatives/evidence-intelligence-module/Constitution.md) §6, not repeated here; the model-by-model mapping lives in [Modeling-Approach.md](initiatives/evidence-intelligence-module/Modeling-Approach.md).
+One line: this module targets at least [`YESTECH_Manual_2023.md`](standards/YESTECH_Manual_2023.md)'s modeling rigor, and exceeds it where practical (always-ensemble, per-field granularity, near-real-time cadence) — without adopting its CCE-blending formula or MITR/TIP governance, which govern a different, formally constituted program. Full posture and the adopted/not-adopted list live in [Constitution.md](Constitution.md) §6, not repeated here; the model-by-model mapping lives in [Modeling-Approach.md](Modeling-Approach.md).
 
 ## 7. Reading Order / Document Map
 
 1. **This document** — orientation and what's being fixed.
-2. **[Constitution.md](initiatives/evidence-intelligence-module/Constitution.md)** — the non-negotiables and scope boundaries everything else must respect.
-3. **[HLD.md](initiatives/evidence-intelligence-module/HLD.md)** — system architecture: components, data model, interface contract, tech stack.
-4. **[Modeling-Approach.md](initiatives/evidence-intelligence-module/Modeling-Approach.md)** — the modeling science: five components mirroring and exceeding YES-TECH's own model-family structure.
-5. **[Evidence-Flow-Spec.md](initiatives/evidence-intelligence-module/Evidence-Flow-Spec.md)** — the detailed pipeline, step by step, including fallback paths.
-6. **[`research/Evidence-Collection-Generation-White-Paper.md`](initiatives/evidence-intelligence-module/research/Evidence-Collection-Generation-White-Paper.md)** — the original research/business-case white paper this initiative is derived from (peril-specific evidence packages, legal admissibility detail, cost-benefit analysis). Optional deep-dive, not required to understand the goal.
-7. **[`research/Remote-Sensing-ML-Techniques-Reference.md`](initiatives/evidence-intelligence-module/research/Remote-Sensing-ML-Techniques-Reference.md)** — remote-sensing and ML techniques extracted from an external SaaS platform pitch that was evaluated and rejected on scope (CCE blending, predictive alerting, SaaS framing) but contained reusable technical ideas. Reference only, not a design spec.
-8. **[`notes/decision-log.md`](initiatives/evidence-intelligence-module/notes/decision-log.md)** — running decision log. Read only if you need the history behind a decision or why something that once existed no longer does.
+2. **[Constitution.md](Constitution.md)** — the non-negotiables and scope boundaries everything else must respect.
+3. **[HLD.md](HLD.md)** — system architecture: components, data model, interface contract, tech stack.
+4. **[Modeling-Approach.md](Modeling-Approach.md)** — the modeling science: five components mirroring and exceeding YES-TECH's own model-family structure.
+5. **[Evidence-Flow-Spec.md](Evidence-Flow-Spec.md)** — the detailed pipeline, step by step, including fallback paths.
+6. **[`research/Evidence-Collection-Generation-White-Paper.md`](research/Evidence-Collection-Generation-White-Paper.md)** — the original research/business-case white paper this initiative is derived from (peril-specific evidence packages, legal admissibility detail, cost-benefit analysis). Optional deep-dive, not required to understand the goal.
+7. **[`research/Remote-Sensing-ML-Techniques-Reference.md`](research/Remote-Sensing-ML-Techniques-Reference.md)** — remote-sensing and ML techniques extracted from an external SaaS platform pitch that was evaluated and rejected on scope (CCE blending, predictive alerting, SaaS framing) but contained reusable technical ideas. Reference only, not a design spec.
+8. **[`notes/decision-log.md`](notes/decision-log.md)** — running decision log. Read only if you need the history behind a decision or why something that once existed no longer does.
 
 ## 8. Roadmap Pointer
 
@@ -89,16 +89,16 @@ Indicative phasing (detail and dates to be owned by delivery planning, not resta
 
 ## Directory Guide
 
-Everything above lives under [`initiatives/evidence-intelligence-module/`](initiatives/evidence-intelligence-module/):
+Everything above lives directly under `documents/`:
 
 | Location | What's in it |
 |---|---|
 | `Constitution.md`, `HLD.md`, `Modeling-Approach.md`, `Evidence-Flow-Spec.md` | The design docs the Reading Order above walks through |
-| [`standards/`](initiatives/evidence-intelligence-module/standards/) | `YESTECH_Manual_2023.md` (verbatim, unedited) — an **external, authoritative** government manual, kept visibly separate from anything this team authored |
-| [`research/`](initiatives/evidence-intelligence-module/research/) | The original Evidence Collection & Generation white paper, plus a trimmed remote-sensing/ML technique reference — **internal** source research this initiative was derived from |
-| [`notes/decision-log.md`](initiatives/evidence-intelligence-module/notes/decision-log.md) | Running decision log |
+| [`standards/`](standards/) | `YESTECH_Manual_2023.md` (verbatim, unedited) — an **external, authoritative** government manual, kept visibly separate from anything this team authored |
+| [`research/`](research/) | The original Evidence Collection & Generation white paper, plus a trimmed remote-sensing/ML technique reference — **internal** source research this initiative was derived from |
+| [`notes/decision-log.md`](notes/decision-log.md) | Running decision log |
 
-This repo holds a single active initiative, so everything belonging to it lives together in one directory rather than scattered across sibling top-level folders.
+This repo holds a single active initiative, so everything belonging to it lives directly under `documents/` rather than nested in a per-initiative subdirectory.
 
 ## Turning This Into Code
 
