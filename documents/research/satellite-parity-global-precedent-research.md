@@ -2,7 +2,7 @@
 
 **Purpose:** internal source research, commissioned to ground a roadmap for pushing this module's satellite+weather evidence generation as close as technically achievable to Crop Cutting Experiment (CCE) — level verification confidence, without ingesting CCE data or any ground-crew inspection (Constitution §4 remains in force — this research informs *satellite-side* capability, it does not revisit the no-CCE boundary). Feeds [`specs/002-satellite-evidence-parity/`](../../specs/002-satellite-evidence-parity/).
 
-**Status:** Research/reference, like [`Evidence-Collection-Generation-White-Paper.md`](Evidence-Collection-Generation-White-Paper.md) and [`Remote-Sensing-ML-Techniques-Reference.md`](Remote-Sensing-ML-Techniques-Reference.md) — optional depth, not required reading, and not itself a design spec.
+**Status:** Research/reference, like [`evidence-collection-generation-white-paper.md`](evidence-collection-generation-white-paper.md) and [`remote-sensing-ml-techniques-reference.md`](remote-sensing-ml-techniques-reference.md) — optional depth, not required reading, and not itself a design spec.
 
 **Method note:** compiled from three parallel web-research passes (August 2026). Every claim below is sourced; where a source didn't specify a figure, it was omitted rather than estimated, per this repo's no-invented-figures convention (`CLAUDE.md` Working Conventions). Vendor marketing claims are explicitly flagged as unverified where found.
 

@@ -1,6 +1,6 @@
 # Phase 0 Research: Satellite Evidence Parity Roadmap
 
-Resolves the technical choices flagged in `plan.md`'s Technical Context. Every decision below traces to a specific finding in [`documents/research/Satellite-Parity-Global-Precedent-Research.md`](../../documents/research/Satellite-Parity-Global-Precedent-Research.md) (§ references below) rather than to an invented figure, per `CLAUDE.md`'s no-invented-figures convention.
+Resolves the technical choices flagged in `plan.md`'s Technical Context. Every decision below traces to a specific finding in [`documents/research/satellite-parity-global-precedent-research.md`](../../documents/research/satellite-parity-global-precedent-research.md) (§ references below) rather than to an invented figure, per `CLAUDE.md`'s no-invented-figures convention.
 
 ## 1. First foundation-model integration target
 
@@ -62,7 +62,7 @@ Resolves the technical choices flagged in `plan.md`'s Technical Context. Every d
 
 **Decision**: Compute NDRE (Normalized Difference Red-Edge) as the primary formalized index, with Chlorophyll Index Red-Edge and MTCI as secondary/disclosed alternatives, replacing the generic "red-edge index" placeholder in `Modeling-Approach.md` §3's Component 2 feature table.
 
-**Rationale**: `documents/research/Satellite-Parity-Global-Precedent-Research.md` §2.5a/§2.5a-quantitative documents NDRE detecting nitrogen deficiency 1–2 weeks earlier than NDVI and resisting NDVI's saturation in dense canopy, with sourced R²=0.74–0.94 (nitrogen/chlorophyll) against Sentinel-2's existing red-edge bands (705/740/783nm) — no new data source required, purely a feature-engineering formalization.
+**Rationale**: `documents/research/satellite-parity-global-precedent-research.md` §2.5a/§2.5a-quantitative documents NDRE detecting nitrogen deficiency 1–2 weeks earlier than NDVI and resisting NDVI's saturation in dense canopy, with sourced R²=0.74–0.94 (nitrogen/chlorophyll) against Sentinel-2's existing red-edge bands (705/740/783nm) — no new data source required, purely a feature-engineering formalization.
 
 **Alternatives considered**: Leaving "red-edge index" generic (status quo) — rejected, since naming and disclosing the specific index is required for the same Constitution Principle I/II provenance discipline every other feature in this module already follows.
 

@@ -27,7 +27,7 @@ The tier is the lowest ceiling any triggered rule imposes. Every assignment ther
 
 ## The question
 
-`research.md` §4 decides *three tiers* (High/Medium/Low) and says they are "computed as a deterministic function of the existing per-component and ensemble confidence figures." It does not say what that function is, and no cut points appear anywhere in `documents/`, `YESTECH_Manual_2023.md`, or `documents/research/Satellite-Parity-Global-Precedent-Research.md`.
+`research.md` §4 decides *three tiers* (High/Medium/Low) and says they are "computed as a deterministic function of the existing per-component and ensemble confidence figures." It does not say what that function is, and no cut points appear anywhere in `documents/`, `YESTECH_Manual_2023.md`, or `documents/research/satellite-parity-global-precedent-research.md`.
 
 Two questions, not one:
 

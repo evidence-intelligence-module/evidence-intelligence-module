@@ -1,6 +1,6 @@
 # Open Queries — Satellite Evidence Parity Roadmap
 
-Questions that genuinely have no answer in `documents/` (including `documents/research/Satellite-Parity-Global-Precedent-Research.md`) and are deliberately deferred rather than guessed at.
+Questions that genuinely have no answer in `documents/` (including `documents/research/satellite-parity-global-precedent-research.md`) and are deliberately deferred rather than guessed at.
 
 **Status vocabulary** (same in `specs/001-evidence-generation-pipeline/issue/`):
 

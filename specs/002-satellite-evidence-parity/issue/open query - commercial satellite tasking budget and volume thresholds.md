@@ -13,7 +13,7 @@ This roadmap's enhanced-tier sourcing (spec.md FR-002, FR-013) includes commerci
 
 ## What was checked
 
-`documents/research/Satellite-Parity-Global-Precedent-Research.md` §2.1/§2.2 documents indicative per-scene/tasking costs for reference (e.g., WorldView Legion "~$1,200+/scene") but these are vendor list-price data points, not a budget decision for this project. No document in `documents/` or `specs/001-evidence-generation-pipeline/` addresses commercial data spend — `001`'s own equivalent open question (`specs/001-evidence-generation-pipeline/issue/open query - expected request volume and concurrency target.md`) covers infrastructure concurrency, not data-sourcing budget, and doesn't resolve this either.
+`documents/research/satellite-parity-global-precedent-research.md` §2.1/§2.2 documents indicative per-scene/tasking costs for reference (e.g., WorldView Legion "~$1,200+/scene") but these are vendor list-price data points, not a budget decision for this project. No document in `documents/` or `specs/001-evidence-generation-pipeline/` addresses commercial data spend — `001`'s own equivalent open question (`specs/001-evidence-generation-pipeline/issue/open query - expected request volume and concurrency target.md`) covers infrastructure concurrency, not data-sourcing budget, and doesn't resolve this either.
 
 ## Options
 

@@ -74,8 +74,8 @@ One line: this module targets at least [`YESTECH_Manual_2023.md`](standards/YEST
 3. **[HLD.md](HLD.md)** — system architecture: components, data model, interface contract, tech stack.
 4. **[Modeling-Approach.md](Modeling-Approach.md)** — the modeling science: five components mirroring and exceeding YES-TECH's own model-family structure.
 5. **[Evidence-Flow-Spec.md](Evidence-Flow-Spec.md)** — the detailed pipeline, step by step, including fallback paths.
-6. **[`research/Evidence-Collection-Generation-White-Paper.md`](research/Evidence-Collection-Generation-White-Paper.md)** — the original research/business-case white paper this initiative is derived from (peril-specific evidence packages, legal admissibility detail, cost-benefit analysis). Optional deep-dive, not required to understand the goal.
-7. **[`research/Remote-Sensing-ML-Techniques-Reference.md`](research/Remote-Sensing-ML-Techniques-Reference.md)** — remote-sensing and ML techniques extracted from an external SaaS platform pitch that was evaluated and rejected on scope (CCE blending, predictive alerting, SaaS framing) but contained reusable technical ideas. Reference only, not a design spec.
+6. **[`research/evidence-collection-generation-white-paper.md`](research/evidence-collection-generation-white-paper.md)** — the original research/business-case white paper this initiative is derived from (peril-specific evidence packages, legal admissibility detail, cost-benefit analysis). Optional deep-dive, not required to understand the goal.
+7. **[`research/remote-sensing-ml-techniques-reference.md`](research/remote-sensing-ml-techniques-reference.md)** — remote-sensing and ML techniques extracted from an external SaaS platform pitch that was evaluated and rejected on scope (CCE blending, predictive alerting, SaaS framing) but contained reusable technical ideas. Reference only, not a design spec.
 8. **[`notes/decision-log.md`](notes/decision-log.md)** — running decision log. Read only if you need the history behind a decision or why something that once existed no longer does.
 
 ## 8. Roadmap Pointer
