@@ -64,7 +64,7 @@ specs/001-evidence-generation-pipeline/
 ### Source Code (repository root)
 
 ```text
-crop-insurance/code/evidence_intelligence/
+src/evidence_intelligence/
 ├── api/                  # Evidence Request Interface (HLD §3) — request intake, status/result retrieval
 ├── ingestion/
 │   ├── imagery.py        # Imagery Ingestion (HLD §3) — pre/post-event + historical baseline via GEE
@@ -82,7 +82,7 @@ crop-insurance/code/evidence_intelligence/
 └── store/
     └── evidence_store.py   # Evidence Store (HLD §4 data model) — persistence + retention
 
-crop-insurance/code/tests/
+src/tests/
 ├── contract/              # Validates api/ against contracts/evidence-request-api.md
 ├── integration/           # End-to-end: request → package, per spec.md User Stories 1-3
 └── unit/                  # Per-component tests (models/, causation/, packaging/)

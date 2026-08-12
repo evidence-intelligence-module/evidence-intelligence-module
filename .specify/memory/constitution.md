@@ -24,7 +24,7 @@ The module exposes a generic evidence-request contract (location, event date, pe
 
 **Data retention:** evidence artifacts (source imagery references, derived rasters, weather correlation results, generated reports) are retained for 10 years from generation, per IRDAI's *Minimum Information Required for Investigation and Inspection Regulations, 2020*. Raw source data may be referenced rather than duplicated where the source (e.g., Google Earth Engine, CHIRPS) guarantees long-term public archival access; derived analysis products and final reports are always retained directly.
 
-**Repo state:** `crop-insurance/code/` is currently empty — no implementation exists yet. Documentation is the current deliverable; treat `documents/initiatives/evidence-intelligence-module/` (README → Constitution → HLD → Modeling-Approach → Evidence-Flow-Spec) as the required reading order before planning implementation work.
+**Repo state:** `src/` holds the implementation of `specs/001-evidence-generation-pipeline/` (Python/FastAPI service + tests). Treat `documents/initiatives/evidence-intelligence-module/` (README → Constitution → HLD → Modeling-Approach → Evidence-Flow-Spec) as the required reading order before making further changes to it.
 
 ## Development Workflow
 

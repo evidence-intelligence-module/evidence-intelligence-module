@@ -47,5 +47,5 @@ Confirms required tools (git, the selected AI integration, script runtime) are p
 
 ## Notes
 
-- This is a documentation-only repo today (`crop-insurance/code/` is empty) — there's no build, test, install, or run step beyond the above.
+- `src/` holds the actual implementation (see `CLAUDE.md`'s directory map). It has its own `pyproject.toml` — `cd src && uv venv .venv && uv pip install -e ".[dev]" --python .venv && .venv/Scripts/python -m pytest tests/` (adjust the venv activation path for your shell) runs the test suite. `documents/` and `specs/` remain documentation-only with no build step of their own.
 - `.specify/memory/constitution.md` is a Spec-Kit-facing distillation of the canonical `Constitution.md` above; if that canonical doc is amended, re-sync this file too (see its own header comment).

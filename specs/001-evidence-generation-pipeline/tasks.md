@@ -19,7 +19,7 @@ description: "Task list for Evidence Generation Pipeline implementation"
 
 ## Path Conventions
 
-Single project (per `plan.md` Structure Decision): `crop-insurance/code/evidence_intelligence/` for source, `crop-insurance/code/tests/` for tests.
+Single project (per `plan.md` Structure Decision): `src/evidence_intelligence/` for source, `src/tests/` for tests.
 
 ## A note on scope not covered elsewhere in this repo's docs
 
@@ -33,10 +33,10 @@ Two items remain genuinely open from `spec.md`/`plan.md` and are called out inli
 
 **Purpose**: Project initialization and basic structure
 
-- [X] T001 Create project skeleton per `plan.md` Project Structure: `crop-insurance/code/evidence_intelligence/{api,ingestion,models,causation,packaging,store}/` and `crop-insurance/code/tests/{contract,integration,unit}/`, each with `__init__.py`
-- [X] T002 Initialize Python 3.11 project in `crop-insurance/code/pyproject.toml` with dependencies: `earthengine-api`, `fastapi`, `uvicorn`, `sqlalchemy`, `psycopg2`/`asyncpg`, `scikit-learn`, `reportlab`, `folium`, `matplotlib`, `pytest` (per `research.md`)
-- [X] T003 [P] Configure linting/formatting (ruff, black) in `crop-insurance/code/pyproject.toml`
-- [X] T004 [P] Add local dev PostgreSQL+PostGIS via `crop-insurance/code/docker-compose.yml` (per `research.md` §1)
+- [X] T001 Create project skeleton per `plan.md` Project Structure: `src/evidence_intelligence/{api,ingestion,models,causation,packaging,store}/` and `src/tests/{contract,integration,unit}/`, each with `__init__.py`
+- [X] T002 Initialize Python 3.11 project in `src/pyproject.toml` with dependencies: `earthengine-api`, `fastapi`, `uvicorn`, `sqlalchemy`, `psycopg2`/`asyncpg`, `scikit-learn`, `reportlab`, `folium`, `matplotlib`, `pytest` (per `research.md`)
+- [X] T003 [P] Configure linting/formatting (ruff, black) in `src/pyproject.toml`
+- [X] T004 [P] Add local dev PostgreSQL+PostGIS via `src/docker-compose.yml` (per `research.md` §1)
 
 ---
 
@@ -46,12 +46,12 @@ Two items remain genuinely open from `spec.md`/`plan.md` and are called out inli
 
 **CRITICAL**: No user story work can begin until this phase is complete
 
-- [X] T005 Implement database schema for all five `data-model.md` entities (`evidence_requests`, `satellite_analysis_results`, `model_component_results`, `weather_correlation_results`, `evidence_packages`) as SQLAlchemy models + Alembic migration in `crop-insurance/code/evidence_intelligence/store/schema.py`
-- [X] T006 [P] Implement `EvidenceStore` persistence layer (create/read/update for all five entities, enforcing the non-null provenance fields from `data-model.md`) in `crop-insurance/code/evidence_intelligence/store/evidence_store.py`
-- [X] T007 [P] Implement shared GEE client wrapper (auth via `GEE_SERVICE_ACCOUNT_CREDENTIALS`, query helpers) in `crop-insurance/code/evidence_intelligence/ingestion/gee_client.py`
-- [X] T008 Implement FastAPI app skeleton and router registration in `crop-insurance/code/evidence_intelligence/api/__init__.py`
-- [X] T009 [P] Implement structured logging and error-handling middleware in `crop-insurance/code/evidence_intelligence/api/middleware.py`
-- [X] T010 [P] Implement environment/config loader (`GEE_SERVICE_ACCOUNT_CREDENTIALS`, `DATABASE_URL`, `EVIDENCE_STORE_BUCKET`) in `crop-insurance/code/evidence_intelligence/config.py`
+- [X] T005 Implement database schema for all five `data-model.md` entities (`evidence_requests`, `satellite_analysis_results`, `model_component_results`, `weather_correlation_results`, `evidence_packages`) as SQLAlchemy models + Alembic migration in `src/evidence_intelligence/store/schema.py`
+- [X] T006 [P] Implement `EvidenceStore` persistence layer (create/read/update for all five entities, enforcing the non-null provenance fields from `data-model.md`) in `src/evidence_intelligence/store/evidence_store.py`
+- [X] T007 [P] Implement shared GEE client wrapper (auth via `GEE_SERVICE_ACCOUNT_CREDENTIALS`, query helpers) in `src/evidence_intelligence/ingestion/gee_client.py`
+- [X] T008 Implement FastAPI app skeleton and router registration in `src/evidence_intelligence/api/__init__.py`
+- [X] T009 [P] Implement structured logging and error-handling middleware in `src/evidence_intelligence/api/middleware.py`
+- [X] T010 [P] Implement environment/config loader (`GEE_SERVICE_ACCOUNT_CREDENTIALS`, `DATABASE_URL`, `EVIDENCE_STORE_BUCKET`) in `src/evidence_intelligence/config.py`
 
 **Checkpoint**: Foundation ready — user story implementation can now begin
 
@@ -65,24 +65,24 @@ Two items remain genuinely open from `spec.md`/`plan.md` and are called out inli
 
 ### Tests for User Story 1
 
-- [X] T011 [P] [US1] Contract test for `POST /evidence-requests` against `contracts/evidence-request-api.md` in `crop-insurance/code/tests/contract/test_evidence_requests_post.py`
-- [X] T012 [P] [US1] Contract test for `GET /evidence-requests/{request_id}` (complete-package shape) against `contracts/evidence-request-api.md` in `crop-insurance/code/tests/contract/test_evidence_requests_get.py`
-- [X] T013 [P] [US1] Integration test for `quickstart.md` Scenario 1 (submit → poll → complete package, including reproducibility re-run) in `crop-insurance/code/tests/integration/test_complete_package.py`
+- [X] T011 [P] [US1] Contract test for `POST /evidence-requests` against `contracts/evidence-request-api.md` in `src/tests/contract/test_evidence_requests_post.py`
+- [X] T012 [P] [US1] Contract test for `GET /evidence-requests/{request_id}` (complete-package shape) against `contracts/evidence-request-api.md` in `src/tests/contract/test_evidence_requests_get.py`
+- [X] T013 [P] [US1] Integration test for `quickstart.md` Scenario 1 (submit → poll → complete package, including reproducibility re-run) in `src/tests/integration/test_complete_package.py`
 
 ### Implementation for User Story 1
 
-- [X] T014 [P] [US1] Implement Imagery Ingestion (pre-event 30-day window, post-event 7-15 day window, 5-year historical baseline; phenology/crop-calendar sanity check) in `crop-insurance/code/evidence_intelligence/ingestion/imagery.py` per `Evidence-Flow-Spec.md` §3
-- [X] T015 [P] [US1] Implement Weather Correlation Engine (CHIRPS/ERA5-Land/GPM/SMAP query + historical baseline + IMD AWS corroboration) in `crop-insurance/code/evidence_intelligence/ingestion/weather.py` per `Evidence-Flow-Spec.md` §5 steps 1-3
-- [X] T016 [P] [US1] Implement Semi-Physical Damage Model (RUE-chain biomass estimate) in `crop-insurance/code/evidence_intelligence/models/semi_physical.py` per `Modeling-Approach.md` §2
-- [X] T017 [P] [US1] Implement AI/ML Damage & Yield-Loss Model (RF/DNN over documented feature set, with MAE/RMSE/NRMSE disclosure) in `crop-insurance/code/evidence_intelligence/models/ai_ml.py` per `Modeling-Approach.md` §3
-- [X] T018 [US1] Implement Ensemble Blending Engine (weighted by each component's own validation confidence) in `crop-insurance/code/evidence_intelligence/models/ensemble.py` (depends on T016, T017)
-- [X] T019 [US1] Implement Damage Severity Index Engine (entropy-weighted, Min-Max normalized) in `crop-insurance/code/evidence_intelligence/models/dsi.py` per `Modeling-Approach.md` §6 (depends on T014, T015)
-- [X] T020 [US1] Implement Causation Analysis Engine (temporal/spatial/magnitude/physiological weighted scoring) in `crop-insurance/code/evidence_intelligence/causation/scoring.py` per `Evidence-Flow-Spec.md` §5 (depends on T014, T015)
-- [X] T021 [US1] Implement Report/Package Generator (PDF via ReportLab, JSON, GeoTIFF/PNG maps via Folium/Matplotlib, with mandatory §65B fields: source attribution, methodology, accuracy statement, chain of custody, checksum) in `crop-insurance/code/evidence_intelligence/packaging/report_generator.py` per `HLD.md` §6 (depends on T018, T019, T020)
-- [X] T022 [US1] Implement `POST /evidence-requests` endpoint (validate input, persist `EvidenceRequest`, return `request_id` synchronously, enqueue pipeline) in `crop-insurance/code/evidence_intelligence/api/routes.py` (depends on T006, T008)
-- [X] T023 [US1] Implement `GET /evidence-requests/{request_id}` endpoint (status + completed package retrieval) in `crop-insurance/code/evidence_intelligence/api/routes.py` (depends on T006, T008)
-- [X] T024 [US1] Wire end-to-end pipeline orchestration (request → ingestion → models → causation → ensemble/DSI → packaging → store) in `crop-insurance/code/evidence_intelligence/pipeline.py` (depends on T014-T021)
-- [X] T025 [US1] Add request validation and `400` error handling per `contracts/evidence-request-api.md` in `crop-insurance/code/evidence_intelligence/api/routes.py` (depends on T022)
+- [X] T014 [P] [US1] Implement Imagery Ingestion (pre-event 30-day window, post-event 7-15 day window, 5-year historical baseline; phenology/crop-calendar sanity check) in `src/evidence_intelligence/ingestion/imagery.py` per `Evidence-Flow-Spec.md` §3
+- [X] T015 [P] [US1] Implement Weather Correlation Engine (CHIRPS/ERA5-Land/GPM/SMAP query + historical baseline + IMD AWS corroboration) in `src/evidence_intelligence/ingestion/weather.py` per `Evidence-Flow-Spec.md` §5 steps 1-3
+- [X] T016 [P] [US1] Implement Semi-Physical Damage Model (RUE-chain biomass estimate) in `src/evidence_intelligence/models/semi_physical.py` per `Modeling-Approach.md` §2
+- [X] T017 [P] [US1] Implement AI/ML Damage & Yield-Loss Model (RF/DNN over documented feature set, with MAE/RMSE/NRMSE disclosure) in `src/evidence_intelligence/models/ai_ml.py` per `Modeling-Approach.md` §3
+- [X] T018 [US1] Implement Ensemble Blending Engine (weighted by each component's own validation confidence) in `src/evidence_intelligence/models/ensemble.py` (depends on T016, T017)
+- [X] T019 [US1] Implement Damage Severity Index Engine (entropy-weighted, Min-Max normalized) in `src/evidence_intelligence/models/dsi.py` per `Modeling-Approach.md` §6 (depends on T014, T015)
+- [X] T020 [US1] Implement Causation Analysis Engine (temporal/spatial/magnitude/physiological weighted scoring) in `src/evidence_intelligence/causation/scoring.py` per `Evidence-Flow-Spec.md` §5 (depends on T014, T015)
+- [X] T021 [US1] Implement Report/Package Generator (PDF via ReportLab, JSON, GeoTIFF/PNG maps via Folium/Matplotlib, with mandatory §65B fields: source attribution, methodology, accuracy statement, chain of custody, checksum) in `src/evidence_intelligence/packaging/report_generator.py` per `HLD.md` §6 (depends on T018, T019, T020)
+- [X] T022 [US1] Implement `POST /evidence-requests` endpoint (validate input, persist `EvidenceRequest`, return `request_id` synchronously, enqueue pipeline) in `src/evidence_intelligence/api/routes.py` (depends on T006, T008)
+- [X] T023 [US1] Implement `GET /evidence-requests/{request_id}` endpoint (status + completed package retrieval) in `src/evidence_intelligence/api/routes.py` (depends on T006, T008)
+- [X] T024 [US1] Wire end-to-end pipeline orchestration (request → ingestion → models → causation → ensemble/DSI → packaging → store) in `src/evidence_intelligence/pipeline.py` (depends on T014-T021)
+- [X] T025 [US1] Add request validation and `400` error handling per `contracts/evidence-request-api.md` in `src/evidence_intelligence/api/routes.py` (depends on T022)
 
 **Checkpoint**: User Story 1 fully functional and independently testable — this is the MVP.
 
@@ -96,13 +96,13 @@ Two items remain genuinely open from `spec.md`/`plan.md` and are called out inli
 
 ### Tests for User Story 2
 
-- [X] T026 [P] [US2] Contract test confirming `POST /evidence-requests` returns synchronously with `status: IN_PROGRESS` before analysis finishes, in `crop-insurance/code/tests/contract/test_status_immediate.py`
-- [X] T027 [P] [US2] Integration test for `quickstart.md` Scenario 2 (poll before and after completion) in `crop-insurance/code/tests/integration/test_status_polling.py`
+- [X] T026 [P] [US2] Contract test confirming `POST /evidence-requests` returns synchronously with `status: IN_PROGRESS` before analysis finishes, in `src/tests/contract/test_status_immediate.py`
+- [X] T027 [P] [US2] Integration test for `quickstart.md` Scenario 2 (poll before and after completion) in `src/tests/integration/test_status_polling.py`
 
 ### Implementation for User Story 2
 
-- [X] T028 [US2] Persist `EvidenceRequest.status` transitions (`RECEIVED` → `IN_PROGRESS` → `COMPLETE`) synchronously at each pipeline stage in `crop-insurance/code/evidence_intelligence/pipeline.py` (depends on T024)
-- [X] T029 [US2] Add `estimated_completion` calculation to `GET /evidence-requests/{request_id}` in `crop-insurance/code/evidence_intelligence/api/routes.py` (depends on T023)
+- [X] T028 [US2] Persist `EvidenceRequest.status` transitions (`RECEIVED` → `IN_PROGRESS` → `COMPLETE`) synchronously at each pipeline stage in `src/evidence_intelligence/pipeline.py` (depends on T024)
+- [X] T029 [US2] Add `estimated_completion` calculation to `GET /evidence-requests/{request_id}` in `src/evidence_intelligence/api/routes.py` (depends on T023)
 
 **Checkpoint**: User Stories 1 and 2 both work independently.
 
@@ -116,16 +116,16 @@ Two items remain genuinely open from `spec.md`/`plan.md` and are called out inli
 
 ### Tests for User Story 3
 
-- [X] T030 [P] [US3] Integration test for `quickstart.md` Scenario 3 (no imagery, non-flood peril → weather-only preliminary, later superseded by complete package) in `crop-insurance/code/tests/integration/test_insufficient_data_fallback.py`
-- [X] T031 [P] [US3] Integration test for SAR flood-substitution path (peril=flood or optical unusable) in `crop-insurance/code/tests/integration/test_sar_flood_fallback.py`
+- [X] T030 [P] [US3] Integration test for `quickstart.md` Scenario 3 (no imagery, non-flood peril → weather-only preliminary, later superseded by complete package) in `src/tests/integration/test_insufficient_data_fallback.py`
+- [X] T031 [P] [US3] Integration test for SAR flood-substitution path (peril=flood or optical unusable) in `src/tests/integration/test_sar_flood_fallback.py`
 
 ### Implementation for User Story 3
 
-- [X] T032 [US3] Implement no-usable-imagery detection and `INSUFFICIENT_DATA` status transition in `crop-insurance/code/evidence_intelligence/ingestion/imagery.py` (depends on T014)
-- [X] T033 [US3] Implement Sentinel-1 SAR flood-extent substitution (VV backscatter, <-15dB threshold, >3dB drop) in `crop-insurance/code/evidence_intelligence/ingestion/imagery.py` per `Evidence-Flow-Spec.md` §4 step 3 (depends on T014)
-- [X] T034 [US3] Implement weather-only preliminary package generation (`package_tier=WEATHER_ONLY_PRELIMINARY`, retained alongside a later complete package per `data-model.md`) in `crop-insurance/code/evidence_intelligence/packaging/report_generator.py` (depends on T021)
-- [X] T035 [US3] Implement backoff-retry and `INSUFFICIENT_DATA` → `COMPLETE` re-queue logic once imagery becomes available in `crop-insurance/code/evidence_intelligence/pipeline.py` (depends on T024, T032)
-- [X] T036 [US3] Implement no-historical-baseline fallback (proceed from pre/post comparison alone; explicit "anomaly-vs-history scoring omitted" note in the package, never a fabricated baseline) in `crop-insurance/code/evidence_intelligence/ingestion/imagery.py` and `crop-insurance/code/evidence_intelligence/packaging/report_generator.py` (depends on T014, T021)
+- [X] T032 [US3] Implement no-usable-imagery detection and `INSUFFICIENT_DATA` status transition in `src/evidence_intelligence/ingestion/imagery.py` (depends on T014)
+- [X] T033 [US3] Implement Sentinel-1 SAR flood-extent substitution (VV backscatter, <-15dB threshold, >3dB drop) in `src/evidence_intelligence/ingestion/imagery.py` per `Evidence-Flow-Spec.md` §4 step 3 (depends on T014)
+- [X] T034 [US3] Implement weather-only preliminary package generation (`package_tier=WEATHER_ONLY_PRELIMINARY`, retained alongside a later complete package per `data-model.md`) in `src/evidence_intelligence/packaging/report_generator.py` (depends on T021)
+- [X] T035 [US3] Implement backoff-retry and `INSUFFICIENT_DATA` → `COMPLETE` re-queue logic once imagery becomes available in `src/evidence_intelligence/pipeline.py` (depends on T024, T032)
+- [X] T036 [US3] Implement no-historical-baseline fallback (proceed from pre/post comparison alone; explicit "anomaly-vs-history scoring omitted" note in the package, never a fabricated baseline) in `src/evidence_intelligence/ingestion/imagery.py` and `src/evidence_intelligence/packaging/report_generator.py` (depends on T014, T021)
 
 **Checkpoint**: All three user stories independently functional.
 
@@ -135,12 +135,12 @@ Two items remain genuinely open from `spec.md`/`plan.md` and are called out inli
 
 **Purpose**: Improvements that affect multiple user stories, plus the two deliberately-deferred spec items
 
-- [X] T037 [P] Unit tests for each model component (semi-physical, AI/ML, ensemble, DSI, causation scoring) in `crop-insurance/code/tests/unit/`
-- [X] T038 [P] Implement CSM Assimilation Engine (WOFOST/InfoCrop, Indian-calibrated) in `crop-insurance/code/evidence_intelligence/models/csm_assimilation.py` per `Modeling-Approach.md` §4, gated behind a configurable high-scrutiny trigger defaulting to **disabled** — trigger criteria not yet defined, see `issue/open query - CSM high-scrutiny trigger criteria (FR-011).md`
-- [X] T039 [P] Implement low-confidence labeling on `WeatherCorrelationResult.causation_confidence_score` using a configurable threshold (unset by default — package is never auto-rejected regardless) in `crop-insurance/code/evidence_intelligence/causation/scoring.py`, referencing `issue/open query - causation confidence low-confidence threshold (FR-024).md`
-- [X] T040 [P] Implement 10-year `retention_expiry_date` calculation and retention-tracking on package creation in `crop-insurance/code/evidence_intelligence/store/evidence_store.py` per Constitution §7
+- [X] T037 [P] Unit tests for each model component (semi-physical, AI/ML, ensemble, DSI, causation scoring) in `src/tests/unit/`
+- [X] T038 [P] Implement CSM Assimilation Engine (WOFOST/InfoCrop, Indian-calibrated) in `src/evidence_intelligence/models/csm_assimilation.py` per `Modeling-Approach.md` §4, gated behind a configurable high-scrutiny trigger defaulting to **disabled** — trigger criteria not yet defined, see `issue/open query - CSM high-scrutiny trigger criteria (FR-011).md`
+- [X] T039 [P] Implement low-confidence labeling on `WeatherCorrelationResult.causation_confidence_score` using a configurable threshold (unset by default — package is never auto-rejected regardless) in `src/evidence_intelligence/causation/scoring.py`, referencing `issue/open query - causation confidence low-confidence threshold (FR-024).md`
+- [X] T040 [P] Implement 10-year `retention_expiry_date` calculation and retention-tracking on package creation in `src/evidence_intelligence/store/evidence_store.py` per Constitution §7
 - [X] T041 Run `quickstart.md` end-to-end against a local environment and confirm all three scenarios pass — validated via automated integration tests (tests/integration/) using injected fakes for GEE/weather/IMD, since real credentials/Postgres+PostGIS aren't provisioned in this environment (quickstart.md Prerequisites); app startup and route registration independently verified live via TestClient
-- [X] T042 Manual review: confirm no CCE-related field/table exists anywhere in `crop-insurance/code/evidence_intelligence/`, and no endpoint or model accepts a caller-internal schema, per Constitution §4/§5 — grep-verified clean (see completion report)
+- [X] T042 Manual review: confirm no CCE-related field/table exists anywhere in `src/evidence_intelligence/`, and no endpoint or model accepts a caller-internal schema, per Constitution §4/§5 — grep-verified clean (see completion report)
 
 ---
 
@@ -170,15 +170,15 @@ Two items remain genuinely open from `spec.md`/`plan.md` and are called out inli
 
 ```bash
 # Tests together:
-Task: "Contract test for POST /evidence-requests in crop-insurance/code/tests/contract/test_evidence_requests_post.py"
-Task: "Contract test for GET /evidence-requests/{request_id} in crop-insurance/code/tests/contract/test_evidence_requests_get.py"
-Task: "Integration test for quickstart.md Scenario 1 in crop-insurance/code/tests/integration/test_complete_package.py"
+Task: "Contract test for POST /evidence-requests in src/tests/contract/test_evidence_requests_post.py"
+Task: "Contract test for GET /evidence-requests/{request_id} in src/tests/contract/test_evidence_requests_get.py"
+Task: "Integration test for quickstart.md Scenario 1 in src/tests/integration/test_complete_package.py"
 
 # Ingestion + models together:
-Task: "Implement Imagery Ingestion in crop-insurance/code/evidence_intelligence/ingestion/imagery.py"
-Task: "Implement Weather Correlation Engine in crop-insurance/code/evidence_intelligence/ingestion/weather.py"
-Task: "Implement Semi-Physical Damage Model in crop-insurance/code/evidence_intelligence/models/semi_physical.py"
-Task: "Implement AI/ML Damage & Yield-Loss Model in crop-insurance/code/evidence_intelligence/models/ai_ml.py"
+Task: "Implement Imagery Ingestion in src/evidence_intelligence/ingestion/imagery.py"
+Task: "Implement Weather Correlation Engine in src/evidence_intelligence/ingestion/weather.py"
+Task: "Implement Semi-Physical Damage Model in src/evidence_intelligence/models/semi_physical.py"
+Task: "Implement AI/ML Damage & Yield-Loss Model in src/evidence_intelligence/models/ai_ml.py"
 ```
 
 ---

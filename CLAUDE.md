@@ -26,7 +26,6 @@ Full reasoning for all three lives in the Constitution — see below. If a task 
 | ↳ `standards/YESTECH_Manual_2023.md` | External, verbatim government manual (DA&FW/MNCFC). Not our content — never edit it, only relocate/reference it. The modeling approach is designed to match and exceed its rigor. |
 | ↳ `research/` | Internal source white paper the initiative was derived from. Optional depth, not required reading. |
 | ↳ `notes/decision-log.md` | Running decision log — why the module is scoped the way it is, including why earlier material (baseline platform docs, the voice-agent initiative, an old root-level `implementation_plan.md`) was deleted, and why this directory itself is laid out this way. Read this before assuming something is "missing." |
-| `crop-insurance/code/` | Empty — no implementation exists yet, though `specs/001-evidence-generation-pipeline/tasks.md` (below) is a ready-to-execute plan for it. |
 
 **Engineering execution state** — Spec Kit's translation of the domain documentation above into a buildable plan; regenerated/updated via `/speckit-*` skills, not hand-authored prose:
 
@@ -36,8 +35,14 @@ Full reasoning for all three lives in the Constitution — see below. If a task 
 | `.specify/` | Spec Kit's own scaffolding — templates, PowerShell scripts, `memory/constitution.md` (a Spec-Kit-facing distillation of the domain Constitution, kept in sync with it, not an independent authority). Not hand-edited in normal use. |
 | `SETUP.md` | Machine/tooling setup for a fresh clone (Spec Kit CLI, PowerShell, the `brainstorming` skill's optional Node dependency). Separate from this file, which is orientation, not setup. |
 
+**Implementation** — executed from `specs/001-evidence-generation-pipeline/tasks.md`, not hand-designed independently of it:
+
+| Path | What it is |
+|---|---|
+| `src/` | The Evidence Generation Pipeline service (Python/FastAPI): `evidence_intelligence/` (the package — `api/`, `ingestion/`, `models/`, `causation/`, `packaging/`, `store/`, per `plan.md`'s Project Structure) and `tests/` (`contract/`, `integration/`, `unit/`). Has its own `pyproject.toml`/`.venv`/`docker-compose.yml` — see `SETUP.md` before running anything here. |
+
 ## Working conventions
 
 - Cross-document references use `File.md §N — Section Title` or a markdown link; when adding new cross-references, prefer linking to the file and naming the section by its actual heading text so references survive renumbering.
 - Every evidence-generation claim in the docs should be traceable to either a named public dataset or a specific section of `YESTECH_Manual_2023.md` — don't invent figures or citations.
-- This is a documentation-only repo today. There's no build, test, or run step to verify against — "correctness" here means internal consistency (cross-references resolve, no contradicted boundaries) and factual accuracy against the cited sources.
+- `src/` has a real build/test step (`pytest`, `ruff`) — see `SETUP.md`. Everything under `documents/` and `specs/` remains documentation: "correctness" there means internal consistency (cross-references resolve, no contradicted boundaries) and factual accuracy against the cited sources.
