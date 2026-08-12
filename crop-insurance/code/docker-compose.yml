@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: evidence_intelligence
+      POSTGRES_PASSWORD: evidence_intelligence
+      POSTGRES_DB: evidence_intelligence
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:

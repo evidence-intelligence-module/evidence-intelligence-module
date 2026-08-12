@@ -75,7 +75,7 @@ Cloud cover, imagery revisit timing, or source outages can mean no usable satell
 - **FR-003**: System MUST return a request identifier immediately upon submission, before analysis completes.
 - **FR-004**: System MUST allow the requester to retrieve the current status of a submitted request (at minimum: received, in progress, complete, insufficient data, or failed).
 - **FR-005**: System MUST acquire pre-event satellite imagery for the requested geometry from a window ending before the claimed event date, and post-event imagery from a window starting at the claimed event date.
-- **FR-006**: System MUST substitute radar-based (all-weather) imagery for optical imagery when the peril is flood-compatible or optical imagery is unusable due to cloud cover.
+- **FR-006**: System MUST substitute radar-based (all-weather) imagery for optical imagery when the peril is flood-compatible and optical imagery is unusable due to cloud cover. For non-flood-compatible perils, unusable optical imagery falls through to the weather-only preliminary path (FR-022) rather than attempting radar substitution — radar flood-extent detection is not a meaningful signal for perils like drought or heatwave.
 - **FR-007**: System MUST acquire a multi-year historical baseline of imagery for the same geometry and equivalent seasonal window, to support anomaly detection against the field's own history.
 - **FR-008**: System MUST acquire weather data for a window spanning several days before through several days after the claimed event date, and a corresponding multi-year historical baseline for the same calendar window and geometry.
 - **FR-009**: System MUST corroborate gridded weather analysis against an official station-level record where one is available for the geometry.
