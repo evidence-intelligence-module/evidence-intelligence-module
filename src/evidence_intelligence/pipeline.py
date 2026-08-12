@@ -53,9 +53,12 @@ def _load_ai_ml_model(settings: Settings) -> ai_ml.AiMlModel:
     return _ai_ml_model_cache[path]
 
 
-def _ndvi_to_fapar(ndvi: float | None) -> float:
+def _ndvi_to_fapar(ndvi: float | None) -> float | None:
+    """`None` in, `None` out — an absent NDVI has no fAPAR, and substituting
+    0.0 made "we could not see the field" indistinguishable from "the field
+    has no green vegetation left", i.e. total damage (tasks.md T0-02)."""
     if ndvi is None:
-        return 0.0
+        return None
     return max(0.0, min(1.0, 1.24 * ndvi - 0.168))
 
 
@@ -63,6 +66,12 @@ def _insolation_proxy_mj() -> float:
     """No dedicated insolation feed wired yet — a fixed regional-average
     proxy, disclosed as a known limitation (FR-019)."""
     return 18.0
+
+
+# Used only when ERA5-Land returns no reading for the window at all. Kept as an
+# explicit `is None` check rather than `or`, since 0 °C is a valid temperature
+# that `or` would silently replace with this default.
+FALLBACK_TEMPERATURE_C = 25.0
 
 
 def run_pipeline(
@@ -130,43 +139,84 @@ def run_pipeline(
 
     has_historical_baseline = len(imagery.historical) > 0
 
-    # -- Semi-physical model (Component 1) --------------------------------
-    # When SAR substituted for post-event optical (flood/cloud-cover case),
-    # there is no NDVI-equivalent post-event value — NDVI-based signals below
-    # fall back to 0 (a conservative "high apparent damage" default for a
-    # substituted-imagery case), disclosed in accuracy_statement below.
+    # -- Optical-derived signals, where an optical pair actually exists -----
+    # When SAR substituted for post-event optical (flood/cloud-cover case)
+    # there is no NDVI-equivalent post-event value. Every NDVI-derived signal
+    # below stays absent in that case rather than defaulting to 0, which
+    # previously made the apparent NDVI drop equal the whole pre-event NDVI —
+    # i.e. synthesized a maximum-damage reading out of missing data, in the
+    # claimant's favour, and reported it as measured (tasks.md T0-02).
     pre_ndvi = imagery.pre_event.index_value if imagery.pre_event else None
     post_ndvi = imagery.post_event.index_value if imagery.post_event else None
-    semi_physical_result = semi_physical.run(
-        pre_event_insolation_mj=_insolation_proxy_mj(),
-        pre_event_fapar=_ndvi_to_fapar(pre_ndvi),
-        pre_event_lswi=pre_ndvi or 0.0,
-        pre_event_temp_c=weather.reanalysis.observed_value or 25.0,
-        post_event_insolation_mj=_insolation_proxy_mj(),
-        post_event_fapar=_ndvi_to_fapar(post_ndvi),
-        post_event_lswi=post_ndvi or 0.0,
-        post_event_temp_c=weather.reanalysis.observed_value or 25.0,
+    pre_fapar = _ndvi_to_fapar(pre_ndvi)
+    post_fapar = _ndvi_to_fapar(post_ndvi)
+    optical_pair_available = pre_ndvi is not None and post_ndvi is not None
+
+    ndvi_drop = max(0.0, pre_ndvi - post_ndvi) if optical_pair_available else None
+    fapar_deviation = (
+        pre_fapar - post_fapar if pre_fapar is not None and post_fapar is not None else None
     )
-    store.add_component_result(
-        request_id=request_id,
-        component=ModelComponent.SEMI_PHYSICAL,
-        methodology_version=semi_physical.METHODOLOGY_VERSION,
-        point_estimate=semi_physical_result.damage_fraction,
-        confidence_or_accuracy={
-            "calibration_confidence": semi_physical_result.calibration_confidence
-        },
+    observed_temp_c = (
+        weather.reanalysis.observed_value
+        if weather.reanalysis.observed_value is not None
+        else FALLBACK_TEMPERATURE_C
     )
 
+    contributions: list[ensemble.ComponentContribution] = []
+
+    # -- Semi-physical model (Component 1) --------------------------------
+    # Runs only with a real pre/post optical pair — its RUE chain is entirely
+    # fAPAR/LSWI-driven, so without one it has no input to model and must be
+    # absent from the ensemble rather than contribute a fabricated estimate.
+    semi_physical_result = None
+    if optical_pair_available:
+        semi_physical_result = semi_physical.run(
+            pre_event_insolation_mj=_insolation_proxy_mj(),
+            pre_event_fapar=pre_fapar,
+            pre_event_lswi=pre_ndvi,
+            pre_event_temp_c=observed_temp_c,
+            post_event_insolation_mj=_insolation_proxy_mj(),
+            post_event_fapar=post_fapar,
+            post_event_lswi=post_ndvi,
+            post_event_temp_c=observed_temp_c,
+        )
+        store.add_component_result(
+            request_id=request_id,
+            component=ModelComponent.SEMI_PHYSICAL,
+            methodology_version=semi_physical.METHODOLOGY_VERSION,
+            point_estimate=semi_physical_result.damage_fraction,
+            confidence_or_accuracy={
+                "calibration_confidence": semi_physical_result.calibration_confidence,
+                "input_warnings": semi_physical_result.input_warnings,
+            },
+        )
+        contributions.append(
+            ensemble.ComponentContribution(
+                component="SEMI_PHYSICAL",
+                damage_fraction=semi_physical_result.damage_fraction,
+                weight=ensemble.semi_physical_weight(
+                    semi_physical_result.calibration_confidence
+                ),
+            )
+        )
+
     # -- AI/ML model (Component 2) -----------------------------------------
-    ndvi_drop = max(0.0, (pre_ndvi or 0.0) - (post_ndvi or 0.0))
-    feature_vector = {
-        "ndvi_deviation": ndvi_drop,
-        "lswi_deviation": ndvi_drop,
-        "rainfall_anomaly": weather.precipitation.anomaly_score or 0.0,
-        "temperature_anomaly": 0.0,
-        "fapar_deviation": _ndvi_to_fapar(pre_ndvi) - _ndvi_to_fapar(post_ndvi),
-        "soil_moisture_deviation": 0.0,
-    }
+    # Only features that were actually measured are passed. A feature the
+    # pipeline cannot compute is omitted, never defaulted to 0.0 — the model's
+    # 0.0 means "no deviation observed", which is a claim about the field, not
+    # about our coverage of it (tasks.md T0-03).
+    feature_vector: dict[str, float] = {}
+    if ndvi_drop is not None:
+        feature_vector["ndvi_deviation"] = ndvi_drop
+    if fapar_deviation is not None:
+        feature_vector["fapar_deviation"] = fapar_deviation
+    if weather.precipitation.anomaly_score is not None:
+        feature_vector["rainfall_anomaly"] = weather.precipitation.anomaly_score
+    if weather.reanalysis.anomaly_score is not None:
+        feature_vector["temperature_anomaly"] = weather.reanalysis.anomaly_score
+    if weather.soil_moisture.anomaly_score is not None:
+        feature_vector["soil_moisture_deviation"] = weather.soil_moisture.anomaly_score
+
     ai_ml_result = ai_ml_model.predict(feature_vector, harvest_index=0.4)
     store.add_component_result(
         request_id=request_id,
@@ -176,20 +226,16 @@ def run_pipeline(
         confidence_or_accuracy=ai_ml_result.confidence_or_accuracy,
     )
 
-    # -- CSM assimilation (Component 3, advanced tier) ----------------------
-    contributions = [
-        ensemble.ComponentContribution(
-            component="SEMI_PHYSICAL",
-            damage_fraction=semi_physical_result.damage_fraction,
-            weight=ensemble.semi_physical_weight(semi_physical_result.calibration_confidence),
-        ),
+    contributions.append(
         ensemble.ComponentContribution(
             component="AI_ML",
             damage_fraction=ai_ml_result.damage_fraction,
             weight=ensemble.ai_ml_weight(ai_ml_result.confidence_or_accuracy),
-        ),
-    ]
-    if settings.csm_high_scrutiny_enabled:
+        )
+    )
+
+    # -- CSM assimilation (Component 3, advanced tier) ----------------------
+    if settings.csm_high_scrutiny_enabled and ndvi_drop is not None:
         from evidence_intelligence.models import csm_assimilation
 
         csm_result = csm_assimilation.run(
@@ -225,17 +271,28 @@ def run_pipeline(
 
     # -- Damage Severity Index (Component 5) --------------------------------
     historical_ndvi = [c.index_value for c in imagery.historical if c.index_value is not None]
-    dsi_indicators = {
-        "ndvi_deviation": ndvi_drop,
-        "lswi_deviation": ndvi_drop,
-        "sar_vh_backscatter_deviation": imagery.sar.vv_drop_db if imagery.sar else 0.0,
-        "fapar_deviation": _ndvi_to_fapar(pre_ndvi) - _ndvi_to_fapar(post_ndvi),
-        "crop_condition_variability": 0.0,
+    # Indicators the pipeline cannot currently measure are omitted, not passed
+    # as 0.0 — `dsi.compute` already treats an absent indicator as neutral
+    # (0.5 normalized), whereas 0.0 asserts a measured zero deviation.
+    # `lswi_deviation` in particular was being fed the NDVI drop, a different
+    # physical quantity, in both this dict and the Component 2 feature vector
+    # (tasks.md T0-03). No LSWI source is wired yet, so it stays absent.
+    dsi_indicators: dict[str, float] = {
         "weather_anomaly_magnitude": weather_anomaly_normalized,
     }
+    if ndvi_drop is not None:
+        dsi_indicators["ndvi_deviation"] = ndvi_drop
+    if fapar_deviation is not None:
+        dsi_indicators["fapar_deviation"] = fapar_deviation
+    if imagery.sar is not None and imagery.sar.vv_drop_db is not None:
+        # Modeling-Approach.md §6 names VH backscatter deviation; `sar_composite`
+        # currently measures VV. Left as-is rather than widened here — the
+        # polarization question belongs with the SAR-semantics open query in
+        # specs/002-satellite-evidence-parity/issue/.
+        dsi_indicators["sar_vh_backscatter_deviation"] = imagery.sar.vv_drop_db
     dsi_historical = {
         "ndvi_deviation": historical_ndvi,
-        "lswi_deviation": historical_ndvi,
+        "lswi_deviation": [],
         "sar_vh_backscatter_deviation": [],
         "fapar_deviation": [],
         "crop_condition_variability": [],
@@ -255,7 +312,10 @@ def run_pipeline(
         days_between_event_and_ndvi_drop=1,
         distance_km_to_weather_anomaly=0.0,
         normalized_weather_anomaly=weather_anomaly_normalized,
-        normalized_ndvi_drop=min(1.0, ndvi_drop / 0.5) if ndvi_drop else 0.0,
+        # No optical pair means no observed damage magnitude to correlate the
+        # weather anomaly against — scored as 0 (uncorroborated), not as a
+        # synthesized drop.
+        normalized_ndvi_drop=min(1.0, ndvi_drop / 0.5) if ndvi_drop is not None else 0.0,
         peril_type=peril_type,
         phenology_flag=imagery.phenology_flag,
         low_confidence_threshold=causation_low_confidence_threshold,
@@ -271,15 +331,12 @@ def run_pipeline(
     )
 
     # -- Package assembly -----------------------------------------------------
-    notes = list(imagery.historical) and [] or [
-        "No historical baseline was available for this geometry; "
-        "anomaly-vs-history scoring was omitted (FR-023)."
-    ]
+    notes: list[str] = []
     if not has_historical_baseline:
-        notes = [
+        notes.append(
             "No historical baseline was available for this geometry; "
             "anomaly-vs-history scoring was omitted (FR-023)."
-        ]
+        )
     if imagery.phenology_flag:
         notes.append(imagery.phenology_flag)
     if causation_result.low_confidence:
@@ -288,16 +345,29 @@ def run_pipeline(
             "low-confidence threshold. This package is still delivered in full."
         )
 
+    supplied_features = ai_ml_result.confidence_or_accuracy.get("features_supplied") or []
     accuracy_statement = [
         "fAPAR and insolation are approximated from NDVI via a published linear "
         "relationship, not a dedicated fAPAR product (known limitation).",
         f"AI/ML model status: {ai_ml_result.confidence_or_accuracy.get('status')}.",
+        f"Component 2 features measured for this request: "
+        f"{', '.join(supplied_features) if supplied_features else 'none'} "
+        f"({len(supplied_features)} of {len(ai_ml.FEATURE_NAMES)} declared). "
+        "Features that could not be measured were omitted rather than defaulted.",
     ]
     if imagery.post_event is None and imagery.sar is not None:
         accuracy_statement.append(
             "Post-event optical imagery was unusable; Sentinel-1 SAR substituted for "
-            "flood-extent detection. NDVI-based damage signals default to a conservative "
-            "high-damage estimate in this case, as no NDVI-equivalent value exists from SAR."
+            "flood-extent detection. No NDVI-equivalent post-event value exists from "
+            "SAR, so the semi-physical model (Component 1) and all NDVI-derived "
+            "signals were omitted from this package rather than estimated from a "
+            "substituted value — the damage estimate here rests on the SAR flood "
+            "extent and the weather correlation alone."
+        )
+    if semi_physical_result is not None and semi_physical_result.input_warnings:
+        accuracy_statement.extend(
+            f"Semi-physical model input warning: {warning}."
+            for warning in semi_physical_result.input_warnings
         )
 
     package_content = PackageContent(

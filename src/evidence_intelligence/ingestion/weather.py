@@ -11,6 +11,8 @@ from datetime import date, timedelta
 import ee
 import httpx
 
+from evidence_intelligence.dates import shift_years
+
 CHIRPS_DAILY = "UCSB-CHG/CHIRPS/DAILY"
 ERA5_LAND_DAILY = "ECMWF/ERA5_LAND/DAILY_AGGR"
 GPM_IMERG = "NASA/GPM_L3/IMERG_V07"
@@ -19,6 +21,12 @@ SMAP_L3 = "NASA/SMAP/SPL4SMGP/007"
 EVENT_WINDOW_DAYS_BEFORE = 7
 EVENT_WINDOW_DAYS_AFTER = 3
 HISTORICAL_BASELINE_YEARS = 5
+
+# ERA5-Land distributes 2m air temperature in kelvin. Converting at this
+# boundary — where the source's unit is known — rather than at the call site
+# keeps every downstream consumer working in the celsius its parameter names
+# already claim (tasks.md T0-01).
+KELVIN_TO_CELSIUS_OFFSET = 273.15
 
 
 @dataclass
@@ -75,9 +83,18 @@ class WeatherClient:
         return self._window_mean(GPM_IMERG, "precipitationCal", geometry, start, end)
 
     def reanalysis_temperature(self, geometry: dict, start: date, end: date) -> float | None:
-        return self._window_mean(
-            ERA5_LAND_DAILY, "temperature_2m", geometry, start, end
-        )
+        """Mean 2m air temperature over the window, **in celsius**.
+
+        ERA5-Land serves this band in kelvin; the conversion happens here so
+        callers (`models/semi_physical.py`'s `*_temp_c` parameters, the
+        `temperature_anomaly` feature) receive the unit they document.
+        Returning kelvin put every real reading above `CropParameters.
+        temp_max_c`, which zeroed Component 1's biomass on every request while
+        still reporting high calibration confidence (tasks.md T0-01)."""
+        kelvin = self._window_mean(ERA5_LAND_DAILY, "temperature_2m", geometry, start, end)
+        if kelvin is None:
+            return None
+        return kelvin - KELVIN_TO_CELSIUS_OFFSET
 
     def soil_moisture(self, geometry: dict, start: date, end: date) -> float | None:
         return self._window_mean(SMAP_L3, "sm_surface", geometry, start, end)
@@ -116,10 +133,62 @@ class IMDClient:
             return None
 
 
-def _anomaly_score(observed: float | None, baseline: float | None) -> float | None:
-    if observed is None or baseline is None or baseline == 0:
+def _anomaly_score(
+    observed: float | None, baseline: float | None, relative: bool = True
+) -> float | None:
+    """Deviation of `observed` from `baseline`.
+
+    `relative=True` (precipitation, soil moisture) expresses it as a fraction
+    of the baseline, which is how a rainfall anomaly is conventionally read.
+    `relative=False` (temperature) returns the absolute deviation in the
+    source's own unit — a temperature baseline near 0 °C would otherwise make
+    the relative form diverge, and a temperature anomaly is conventionally
+    stated in degrees rather than as a ratio."""
+    if observed is None or baseline is None:
+        return None
+    if not relative:
+        return observed - baseline
+    if baseline == 0:
         return None
     return (observed - baseline) / abs(baseline)
+
+
+def _observe(
+    fetch,
+    geometry: dict,
+    window_start: date,
+    window_end: date,
+    source_dataset: str,
+    source_version: str,
+    relative_anomaly: bool = True,
+) -> WeatherObservation:
+    """Event-window observation plus a same-calendar-window baseline over the
+    previous `HISTORICAL_BASELINE_YEARS`, and the anomaly between them.
+
+    Every gridded source gets the same treatment — previously only
+    precipitation carried a baseline, so `temperature_anomaly` and
+    `soil_moisture_deviation` had nothing to be computed from and were
+    hardcoded to 0.0 at the pipeline's feature vector despite the underlying
+    data already being fetched (tasks.md T0-03)."""
+    observed = fetch(geometry, window_start, window_end)
+    baseline_values = [
+        fetch(
+            geometry,
+            shift_years(window_start, -offset),
+            shift_years(window_end, -offset),
+        )
+        for offset in range(1, HISTORICAL_BASELINE_YEARS + 1)
+    ]
+    baseline_values = [v for v in baseline_values if v is not None]
+    baseline = sum(baseline_values) / len(baseline_values) if baseline_values else None
+
+    return WeatherObservation(
+        source_dataset=source_dataset,
+        source_version=source_version,
+        observed_value=observed,
+        historical_baseline=baseline,
+        anomaly_score=_anomaly_score(observed, baseline, relative=relative_anomaly),
+    )
 
 
 def ingest_weather(
@@ -135,28 +204,13 @@ def ingest_weather(
     window_start = event_date - timedelta(days=EVENT_WINDOW_DAYS_BEFORE)
     window_end = event_date + timedelta(days=EVENT_WINDOW_DAYS_AFTER)
 
-    precip_observed = weather_client.precipitation(geometry, window_start, window_end)
-    precip_baseline_values = [
-        weather_client.precipitation(
-            geometry,
-            window_start.replace(year=window_start.year - offset),
-            window_end.replace(year=window_end.year - offset),
-        )
-        for offset in range(1, HISTORICAL_BASELINE_YEARS + 1)
-    ]
-    precip_baseline_values = [v for v in precip_baseline_values if v is not None]
-    precip_baseline = (
-        sum(precip_baseline_values) / len(precip_baseline_values)
-        if precip_baseline_values
-        else None
-    )
-
-    precipitation = WeatherObservation(
+    precipitation = _observe(
+        weather_client.precipitation,
+        geometry,
+        window_start,
+        window_end,
         source_dataset="CHIRPS Daily",
         source_version=CHIRPS_DAILY,
-        observed_value=precip_observed,
-        historical_baseline=precip_baseline,
-        anomaly_score=_anomaly_score(precip_observed, precip_baseline),
     )
 
     near_real_time = None
@@ -172,22 +226,23 @@ def ingest_weather(
             anomaly_score=None,
         )
 
-    temp_observed = weather_client.reanalysis_temperature(geometry, window_start, window_end)
-    reanalysis = WeatherObservation(
+    reanalysis = _observe(
+        weather_client.reanalysis_temperature,
+        geometry,
+        window_start,
+        window_end,
         source_dataset="ERA5-Land Daily Aggregated",
         source_version=ERA5_LAND_DAILY,
-        observed_value=temp_observed,
-        historical_baseline=None,
-        anomaly_score=None,
+        relative_anomaly=False,  # degrees celsius deviation, not a ratio
     )
 
-    soil_moisture_value = weather_client.soil_moisture(geometry, window_start, window_end)
-    soil_moisture = WeatherObservation(
+    soil_moisture = _observe(
+        weather_client.soil_moisture,
+        geometry,
+        window_start,
+        window_end,
         source_dataset="SMAP L4",
         source_version=SMAP_L3,
-        observed_value=soil_moisture_value,
-        historical_baseline=None,
-        anomaly_score=None,
     )
 
     station_record = imd_client.station_record(geometry, window_start, window_end)

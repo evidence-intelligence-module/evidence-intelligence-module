@@ -8,9 +8,19 @@ that reference table, not a locally-measured constant."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 METHODOLOGY_VERSION = "semi-physical-v1"
+
+# A unit-sanity bound, not an agronomic threshold: no 2m air temperature over
+# an Indian field is outside this range in any unit this model accepts, so a
+# reading outside it means the caller supplied something other than celsius
+# (ERA5-Land serves kelvin, ~300). Distinguished from `CropParameters.temp_max_c`,
+# which is a real agronomic limit a genuine heatwave can legitimately exceed —
+# the model must keep returning zero biomass in that case, but must not report
+# high calibration confidence when the input was never celsius at all
+# (tasks.md T0-01).
+TEMPERATURE_UNIT_SANITY_RANGE_C = (-90.0, 60.0)
 
 
 @dataclass(frozen=True)
@@ -33,6 +43,7 @@ class SemiPhysicalResult:
     observed_biomass: float
     damage_fraction: float
     calibration_confidence: float
+    input_warnings: list[str] = field(default_factory=list)
 
 
 def _water_stress_scalar(lswi: float, lswi_max: float) -> float:
@@ -89,13 +100,28 @@ def run(
         damage_fraction = max(0.0, min(1.0, (expected - observed) / expected))
 
     # Calibration confidence degrades if inputs sit outside the physically
-    # plausible fAPAR/LSWI range this model was parameterized against.
-    plausible = 0.0 <= pre_event_fapar <= 1.0 and 0.0 <= post_event_fapar <= 1.0
-    calibration_confidence = 0.85 if plausible else 0.5
+    # plausible fAPAR/LSWI range this model was parameterized against, or
+    # outside the range any celsius reading could occupy — the latter means
+    # the caller supplied the wrong unit, and reporting 0.85 confidence on a
+    # result derived from it would be a fabricated accuracy figure.
+    warnings: list[str] = []
+    if not (0.0 <= pre_event_fapar <= 1.0 and 0.0 <= post_event_fapar <= 1.0):
+        warnings.append("fAPAR input outside the physically plausible [0, 1] range")
+
+    lo, hi = TEMPERATURE_UNIT_SANITY_RANGE_C
+    for label, temp_c in (("pre-event", pre_event_temp_c), ("post-event", post_event_temp_c)):
+        if not lo <= temp_c <= hi:
+            warnings.append(
+                f"{label} temperature {temp_c} is outside the range any celsius reading "
+                f"can occupy ([{lo}, {hi}]) — check the source's unit"
+            )
+
+    calibration_confidence = 0.85 if not warnings else 0.5
 
     return SemiPhysicalResult(
         expected_biomass=expected,
         observed_biomass=observed,
         damage_fraction=damage_fraction,
         calibration_confidence=calibration_confidence,
+        input_warnings=warnings,
     )

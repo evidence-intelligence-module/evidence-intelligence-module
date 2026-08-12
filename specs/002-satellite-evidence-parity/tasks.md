@@ -17,6 +17,7 @@ description: "Task list for Satellite Evidence Parity Roadmap implementation"
 
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (US1, US2, US3, US4, US5)
+- **`T0-NN`**: Phase 0 base-pipeline corrections, added 2026-08-13 (see below). Numbered separately from the `TNNN` series so the original task numbering stays stable.
 
 ## Path Conventions
 
@@ -27,6 +28,47 @@ Single project (per `plan.md` Structure Decision, extending `001`): `src/evidenc
 PyTorch is used below to run Presto inference (`research.md` §1 names Presto but not a runtime) — a routine implementation choice, not a domain-specific figure, so it doesn't warrant an `issue/` entry, matching how `001-evidence-generation-pipeline/tasks.md` treated its own FastAPI choice.
 
 **Update (2026-08-12): commercial satellite tasking is resolved, not open.** `issue/open query - commercial satellite tasking budget and volume thresholds.md` is decided — Option A, free-only for this rollout. `T037` below still implements `commercial_tasking_client.py` as a disabled-by-default stub (`COMMERCIAL_TASKING_ENABLED=false`), but it now lives in Polish rather than the User Story 1 critical path, since building a paid-tasking client with no authorized budget isn't near-term work. The free enhanced tier for User Story 1 runs on Sentinel-1 SAR (existing) plus ISRO's Resourcesat-2A LISS-4/EOS-04 via a new Bhoonidhi client (T009) — not PlanetScope, which is commercial and deferred alongside the rest (see `research.md` §2's correction note).
+
+---
+
+## Phase 0: Base-Pipeline Corrections (BLOCKING — added 2026-08-13)
+
+**Purpose**: `002` was planned as an extension of a working measurement pipeline. A full re-evaluation of this feature's artifacts against the running code in `src/` on 2026-08-13 found that several of the figures `002` builds on are currently constant, hardcoded, or synthesized. Every one of these is a defect with an unambiguous right answer — they are **not** open queries, and are tracked here rather than in [`issue/`](./issue/README.md).
+
+**Why this blocks the rest of this feature**, concretely:
+
+- `models/ensemble.py`'s `combined_confidence` evaluates to exactly **0.50 on every request** in the shipped configuration (`total_weight / len(contributions)`, with Component 1 always at 0.85 and untrained Component 2 always at 0.15). FR-004 derives the entire confidence tier from that figure — so User Story 2 assigns one tier to 100% of packages, SC-003 is vacuous, SC-005 has nothing to track, and `quickstart.md` Scenario 2 cannot pass.
+- `pipeline.py` passes ERA5-Land `temperature_2m` (Kelvin) into `semi_physical.run`'s `*_temp_c` parameters. Every real reading exceeds `CropParameters.temp_max_c` (40), so `_temperature_stress_scalar` returns 0.0, expected biomass is 0, and Component 1 reports `damage_fraction = 0.0` — with `calibration_confidence` still at 0.85, because it only range-checks fAPAR. The ensemble is therefore `0.15 × placeholder`, which `_classify` rounds to **"negligible" on effectively every request**.
+- 55 of the causation score's 100 points come from `days_between_event_and_ndvi_drop=1` and `distance_km_to_weather_anomaly=0.0`, both hardcoded at the call site. The figure printed in every §65B package as "causation confidence" is a fixed 55 plus a small variable remainder.
+
+Until these hold, `002`'s new sources, embeddings and tiers change the provenance of the answer without changing the answer.
+
+**CRITICAL**: `T0-01` … `T0-05` block Phase 2 onward. `T0-06` … `T0-11` are strongly recommended before User Story 1, since they determine whether new sources improve anything measurable.
+
+### Correctness (blocking)
+
+- [ ] T0-01 Convert ERA5-Land `temperature_2m` from Kelvin to Celsius at the ingestion boundary, and add a plausibility guard so an out-of-range temperature degrades `calibration_confidence` instead of silently zeroing biomass, in `src/evidence_intelligence/ingestion/weather.py` and `src/evidence_intelligence/models/semi_physical.py`
+- [ ] T0-02 Stop synthesizing NDVI-derived features when post-event optical is absent — represent them as absent rather than `0.0`, and exclude Component 1 from the ensemble when its inputs are unavailable, rather than contributing a fabricated maximum-damage signal, in `src/evidence_intelligence/pipeline.py`
+- [ ] T0-03 Stop populating `lswi_deviation` with the NDVI drop (a different physical quantity), and populate the features already ingested and discarded — ERA5 temperature anomaly against a computed baseline, SMAP soil-moisture deviation — in `src/evidence_intelligence/pipeline.py` and `src/evidence_intelligence/ingestion/weather.py`
+- [ ] T0-04 Fix `_placeholder_estimate` to average over the features actually supplied rather than all 17 declared ones (11 of which are currently constant zeros, diluting every estimate toward zero), and preserve the sign convention its docstring asserts, in `src/evidence_intelligence/models/ai_ml.py`
+- [ ] T0-05 Replace the constant `combined_confidence` with a figure that varies with real input availability — **gated on** [`issue/open query - confidence tier threshold values (FR-004).md`](./issue/open%20query%20-%20confidence%20tier%20threshold%20values%20%28FR-004%29.md), since what it should be computed over is the same question as what the tier should be computed over — in `src/evidence_intelligence/models/ensemble.py`
+
+### Evidence quality (strongly recommended before User Story 1)
+
+- [ ] T0-06 Compute the causation engine's temporal and spatial terms from observed data (break-point date of the index time series; actual distance from the geometry to the weather anomaly) instead of passing hardcoded `1` and `0.0` at the call site, in `src/evidence_intelligence/pipeline.py` and `src/evidence_intelligence/causation/scoring.py`
+- [ ] T0-07 Add per-pixel cloud and cloud-shadow masking (SCL/QA60 or s2cloudless) and report a per-geometry `valid_pixel_fraction`, replacing the scene-level `CLOUDY_PIXEL_PERCENTAGE < 20` filter that lets a scene 19% cloudy be 100% cloudy over a 0.16 ha field, in `src/evidence_intelligence/ingestion/gee_client.py`
+- [ ] T0-08 Restructure `SatelliteAnalysisResult` to one row per source considered, not one row per request (today only the post-event source is persisted; pre-event and the five historical composites are dropped) — prerequisite for FR-009 and for `contracts/`'s `sources_used[]`/`sources_considered_not_used[]` arrays, in `src/evidence_intelligence/store/schema.py` and `pipeline.py`. **Fold into T004** rather than migrating twice
+- [ ] T0-09 Add a per-request evidence-inputs manifest recording every source and signal attempted, its outcome, and the reason on failure — the natural input to the confidence tier, and what a §65B chain-of-custody argument needs as one retrievable statement rather than spread across `considered_not_used` / `status` / `pass_available` / `discrepancy_flag` in four tables
+- [ ] T0-10 [P] Carry event-window precipitation as sum and 1-day maximum alongside the current 10-day mean (a `collection.mean()` over the window averages a cloudburst into insignificance — for the perils this module names as highest-value), and record the already-fetched IMD station corroboration in package provenance instead of discarding it, in `src/evidence_intelligence/ingestion/weather.py`
+- [ ] T0-11 [P] Filter Sentinel-1 by `relativeOrbitNumber_start` and `orbitProperties_pass` so pre/post backscatter comparisons use matching viewing geometry, in `src/evidence_intelligence/ingestion/gee_client.py`
+
+### Known smaller defects (fix opportunistically)
+
+- [ ] T0-12 [P] `.replace(year=…)` on arbitrary window dates raises on 29 February in `ingestion/gee_client.py` (`historical_composite`) and `ingestion/weather.py` — `store/evidence_store.py`'s `retention_expiry_date` already guards this exact case and is the pattern to follow
+- [ ] T0-13 [P] `str(body.geometry)` in `api/routes.py` and `str(imagery.sar.flood_extent_geojson)` in `pipeline.py` write a Python dict `repr()` into PostGIS `Geometry(srid=4326)` columns — verify against a real PostGIS instance before `002` relies on "`001` is already running"
+- [ ] T0-14 [P] Remove the dead `notes = list(imagery.historical) and [] or [...]` expression in `pipeline.py`, immediately overwritten by the `if not has_historical_baseline` block below it
+
+**Checkpoint**: the pipeline produces figures that vary with the evidence. Phases 1–8 below are measurable from here.
 
 ---
 
@@ -180,8 +222,9 @@ PyTorch is used below to run Presto inference (`research.md` §1 names Presto bu
 
 ### Phase Dependencies
 
-- **Setup (Phase 1)**: No dependencies — can start immediately once `001` is running
-- **Foundational (Phase 2)**: Depends on Setup completion — BLOCKS all user stories
+- **Base-Pipeline Corrections (Phase 0)**: No dependencies. `T0-01`–`T0-05` BLOCK Phase 2 onward; `T0-06`–`T0-11` should land before User Story 1. `T0-05` is itself gated on the confidence-tier query in [`issue/`](./issue/README.md)
+- **Setup (Phase 1)**: No dependencies — can start immediately once `001` is running; can run in parallel with Phase 0
+- **Foundational (Phase 2)**: Depends on Setup **and on Phase 0's blocking tasks** — BLOCKS all user stories
 - **User Stories (Phase 3-7)**: All depend on Foundational phase completion
   - Can proceed in parallel (if staffed) or sequentially in priority order (P1 → P2 → P3 → P4 → P5)
 - **Polish (Phase 8)**: Depends on all desired user stories being complete
@@ -229,9 +272,10 @@ Task: "Implement Bhoonidhi client in src/evidence_intelligence/ingestion/bhoonid
 
 ### MVP First (User Story 1 Only)
 
-1. Complete Phase 1: Setup
-2. Complete Phase 2: Foundational (CRITICAL — blocks all stories)
-3. Complete Phase 3: User Story 1
+1. Complete Phase 0's blocking tasks (`T0-01`–`T0-05`) — without them the pipeline reports "negligible" damage at confidence 0.50 on every request, and no later phase is measurable
+2. Complete Phase 1: Setup
+3. Complete Phase 2: Foundational (CRITICAL — blocks all stories)
+4. Complete Phase 3: User Story 1
 4. **STOP and VALIDATE**: Run `quickstart.md` Scenario 1 independently
 5. Deploy/demo if ready — this alone closes the largest capture-quality gap identified in `documents/research/Satellite-Parity-Global-Precedent-Research.md`
 

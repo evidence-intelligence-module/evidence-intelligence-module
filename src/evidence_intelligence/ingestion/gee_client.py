@@ -11,6 +11,8 @@ from datetime import date, timedelta
 
 import ee
 
+from evidence_intelligence.dates import shift_years
+
 SENTINEL2_SR = "COPERNICUS/S2_SR_HARMONIZED"
 LANDSAT89_SR = "LANDSAT/LC09/C02/T1_L2"
 SENTINEL1_GRD = "COPERNICUS/S1_GRD"
@@ -151,8 +153,8 @@ class GEEClient:
         anomaly-vs-history scoring (Evidence-Flow-Spec.md §3)."""
         composites: list[ImageryComposite] = []
         for offset in range(1, years + 1):
-            start = seasonal_window_start.replace(year=seasonal_window_start.year - offset)
-            end = seasonal_window_end.replace(year=seasonal_window_end.year - offset)
+            start = shift_years(seasonal_window_start, -offset)
+            end = shift_years(seasonal_window_end, -offset)
             composite = self.optical_composite(geometry, start, end)
             if composite is not None:
                 composites.append(composite)

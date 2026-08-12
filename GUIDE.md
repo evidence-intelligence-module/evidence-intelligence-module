@@ -102,9 +102,23 @@ export AI_ML_MODEL_PATH=models/ai_ml_v1.joblib
 
 ## Open Issues
 
-Four open questions have no sourced answer in `documents/` or `YESTECH_Manual_2023.md` and are deliberately deferred rather than guessed at. Each is deferred, not blocking. Full detail (what was checked, what task/FR it blocks) lives in [`specs/001-evidence-generation-pipeline/issue/README.md`](specs/001-evidence-generation-pipeline/issue/README.md):
+These questions have no sourced answer in `documents/` or `YESTECH_Manual_2023.md` and are deliberately deferred rather than guessed at. Full detail (what was checked, what task/FR each blocks) lives in each feature's own `issue/README.md`.
+
+**Evidence Generation Pipeline** — [`specs/001-evidence-generation-pipeline/issue/README.md`](specs/001-evidence-generation-pipeline/issue/README.md):
 
 - CSM high-scrutiny trigger criteria (FR-011) — the CSM assimilation tier is implemented but gated off by default until this is resolved.
 - Causation confidence low-confidence threshold (FR-024) — low-confidence labeling uses a configurable, currently-unset threshold.
 - Expected request volume and concurrency target — doesn't block Phase 0/1 design, matters at infra-sizing time.
-- AI/ML training data source and CCE-label question — the model ships transparently untrained today (see "Training the AI/ML Model" above); blocks any future move to train/calibrate it.
+- AI/ML training data source and CCE-label question — the model ships transparently untrained today (see "Training the AI/ML Model" above); blocks any future move to train/calibrate it, **and now blocks `002`'s User Story 3 and SC-001/SC-002**, which assume a labeled validation set exists.
+
+**Satellite Evidence Parity Roadmap** — [`specs/002-satellite-evidence-parity/issue/README.md`](specs/002-satellite-evidence-parity/issue/README.md):
+
+- Confidence tier threshold values (FR-004) — no sourced cut points exist, and the ensemble figure FR-004 derives them from is currently a constant. Blocks the tier classifier.
+- What the parity claim is validated against (SC-002, US3) — the `002`-side view of `001`'s label question above.
+- SAR damage semantics for non-flood perils (FR-001) — SAR is flood-only today; what it measures for a cloud-covered hailstorm is unspecified.
+- Crop cross-check accuracy floor and discrepancy-flag harm posture (FR-010) — the only capability whose failure mode harms an identifiable individual.
+- Supplementary evidence re-evaluation and package supersession (FR-006) — low-tier guidance promises an effect no specified capability delivers; package lineage is undefined.
+- Personal data in caller-supplied attachment metadata (FR-006) — governs what personal data the module durably holds under the 10-year retention floor.
+- Commercial satellite tasking budget — **resolved** 2026-08-12 (free-only for this rollout); retained for its rationale.
+
+Separately, [`specs/002-satellite-evidence-parity/tasks.md`](specs/002-satellite-evidence-parity/tasks.md) carries a **Phase 0** group of base-pipeline corrections. Those are defects with unambiguous right answers, not open questions — several block the rest of `002` from being measurable at all.

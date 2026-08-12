@@ -145,6 +145,7 @@ class AiMlModel:
 
     def predict(self, feature_vector: dict[str, float], harvest_index: float) -> AiMlResult:
         ordered = np.array([[feature_vector.get(name, 0.0) for name in FEATURE_NAMES]])
+        supplied = [name for name in FEATURE_NAMES if name in feature_vector]
 
         if self._is_trained:
             damage_fraction = float(np.clip(self._model.predict(ordered)[0], 0.0, 1.0))
@@ -153,14 +154,16 @@ class AiMlModel:
                 "mae": self._validation_metrics.get("mae"),
                 "rmse": self._validation_metrics.get("rmse"),
                 "nrmse": self._validation_metrics.get("nrmse"),
+                "features_supplied": supplied,
             }
         else:
-            damage_fraction = _placeholder_estimate(ordered[0])
+            damage_fraction = _placeholder_estimate(feature_vector)
             accuracy = {
                 "status": "untrained_placeholder",
                 "mae": None,
                 "rmse": None,
                 "nrmse": None,
+                "features_supplied": supplied,
                 "note": (
                     "No labeled training data available yet; this is a disclosed "
                     "fallback formula, not a calibrated model prediction."
@@ -174,8 +177,20 @@ class AiMlModel:
         )
 
 
-def _placeholder_estimate(feature_row: np.ndarray) -> float:
-    """Disclosed, deterministic fallback: mean of the deviation/anomaly
-    features (all designed to be signed, positive = more damage-consistent),
-    clipped to [0, 1]. Not a trained prediction — see `confidence_or_accuracy`."""
-    return float(np.clip(np.mean(np.abs(feature_row)) / 2.0, 0.0, 1.0))
+def _placeholder_estimate(feature_vector: dict[str, float]) -> float:
+    """Disclosed, deterministic fallback: mean magnitude of the
+    deviation/anomaly features **that were actually supplied**, clipped to
+    [0, 1]. Not a trained prediction — see `confidence_or_accuracy`.
+
+    Averaging over all 17 `FEATURE_NAMES` instead divided every estimate by
+    the count of features the pipeline never populates (11 of 17 today), which
+    pulled the fallback toward zero in proportion to how much of the declared
+    feature set was missing rather than to how much damage the supplied
+    features indicated (tasks.md T0-04). Only keys present in
+    `feature_vector` count — a caller that cannot measure a feature must omit
+    it rather than pass 0.0, which would be indistinguishable from a genuine
+    zero deviation."""
+    known = [value for name, value in feature_vector.items() if name in FEATURE_NAMES]
+    if not known:
+        return 0.0
+    return float(np.clip(np.mean(np.abs(known)) / 2.0, 0.0, 1.0))
