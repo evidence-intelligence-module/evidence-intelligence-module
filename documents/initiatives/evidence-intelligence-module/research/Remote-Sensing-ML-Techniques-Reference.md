@@ -1,7 +1,7 @@
 # Remote-Sensing & ML Techniques — Evaluated from an External Platform Pitch
 
 **Status:** Reference only — not a design spec.
-**Source:** Extracted and rewritten from an external SaaS platform pitch ("ACIS: ML-Powered Remote Sensing Platform for Crop Insurance Claim Verification", v1.0, August 2026) that was evaluated against this repo's active initiative and found to conflict with it on scope.
+**Source:** Extracted and rewritten from an external SaaS platform pitch ("ACIX: ML-Powered Remote Sensing Platform for Crop Insurance Claim Verification", v1.0, August 2026) that was evaluated against this repo's active initiative and found to conflict with it on scope.
 
 ---
 

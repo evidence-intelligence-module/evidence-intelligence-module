@@ -115,9 +115,10 @@ export AI_ML_MODEL_PATH=models/ai_ml_v1.joblib
 
 ## Current Status
 
-All 42 implementation tasks in [`tasks.md`](specs/001-evidence-generation-pipeline/tasks.md) are complete and tested (55/55 passing). Two things are honestly incomplete rather than papered over:
+All 42 implementation tasks in [`tasks.md`](specs/001-evidence-generation-pipeline/tasks.md) are complete and tested (55/55 passing).
 
+- **Postgres+PostGIS: verified working**, not just documented. `docker compose up -d` in `src/` was run for real; the PostGIS extension was enabled, `Base.metadata.create_all()` created all 5 tables exactly matching `data-model.md`, and a full round-trip through the real `EvidenceStore` (create request → add satellite result → update status → fetch back) succeeded against the live database — not the test fake.
+- **Google Earth Engine: still not exercised** — no service account credentials are available in this environment, so `gee_client.py` has never made a real API call. This is the one genuine infrastructure gap left; `docker`/Postgres is no longer one.
 - The AI/ML damage model ships **untrained** by default — see "Training the AI/ML Model" above for how to change that once labeled data exists.
-- Nothing has run against real Earth Engine or a real Postgres instance in this environment — only against injected fakes. See `src/tests/fakes.py` for what's simulated.
 
 Three things remain deliberately open (not blocking, all documented rather than guessed at): the CSM "high-scrutiny" trigger, the causation low-confidence numeric threshold, and the AI/ML training-data source (including whether historical CCE outcomes may be used as offline training labels) — see [`specs/001-evidence-generation-pipeline/issue/`](specs/001-evidence-generation-pipeline/issue/).
