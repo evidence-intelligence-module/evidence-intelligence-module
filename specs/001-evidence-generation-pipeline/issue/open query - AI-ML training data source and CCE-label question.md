@@ -1,7 +1,21 @@
 # Open Query: AI/ML training data source, and whether historical CCE outcomes may be used as offline training labels
 
 **Plan/Tasks**: [../plan.md](../plan.md), [../tasks.md](../tasks.md) T017 — `src/evidence_intelligence/models/ai_ml.py`
-**Status**: Deferred — not blocking today (the model already ships transparently untrained), but blocks any future move to actually train/calibrate it
+**Status**: **Open — root dependency of this repo's open-query tree** (re-assessed 2026-08-13). Still not blocking `001` today (the model ships transparently untrained), but every other numeric-threshold question across both features terminates here. If one decision gets made, make this one.
+
+## What this gates (added 2026-08-13)
+
+A cross-tracker evaluation on 2026-08-13 found this query sitting underneath most of the others, which none of the individual files stated:
+
+| Downstream | How it depends on this |
+|---|---|
+| `002` [`what the parity claim is validated against`](../../002-satellite-evidence-parity/issue/open%20query%20-%20what%20the%20parity%20claim%20is%20validated%20against%20%28SC-002%2C%20US3%29.md) | Same decision, viewed from `002`. Resolve together; **this file is authoritative** |
+| `002` User Story 3, SC-001, SC-002 | Cannot be evaluated without a labeled held-out split |
+| `002` [`SAR damage semantics`](../../002-satellite-evidence-parity/issue/open%20query%20-%20SAR%20damage%20semantics%20for%20non-flood%20perils%20%28FR-001%29.md), second half | "What magnitude of VH drop constitutes damage" is a calibration question, not a physics one |
+| [`causation confidence low-confidence threshold (FR-024)`](./open%20query%20-%20causation%20confidence%20low-confidence%20threshold%20%28FR-024%29.md) | Its own resolution defers to "empirical calibration against real claim outcomes" — which is this data |
+| `002` [`confidence tier threshold values (FR-004)`](../../002-satellite-evidence-parity/issue/open%20query%20-%20confidence%20tier%20threshold%20values%20%28FR-004%29.md) | Its provisional rule-table default ships without labels, but any later numeric calibration of tier boundaries needs them |
+
+The practical consequence: the two `002` gates previously described as "most urgent" are both downstream of this one.
 
 ## The question
 

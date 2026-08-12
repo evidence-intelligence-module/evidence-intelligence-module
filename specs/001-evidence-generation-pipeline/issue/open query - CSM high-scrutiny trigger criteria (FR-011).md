@@ -1,9 +1,21 @@
 # Open Query: CSM high-scrutiny trigger criteria (FR-011)
 
 **Spec**: [../spec.md](../spec.md) — FR-011
-**Status**: Deferred to planning — not a spec-blocking [NEEDS CLARIFICATION] marker
+**Status**: **Reframed 2026-08-13** — the trigger criteria below is a real question, but it is not what currently blocks Component 3. See "Reframing" first.
 
-## The question
+## Reframing (2026-08-13): the trigger is not the blocker
+
+A cross-tracker evaluation on 2026-08-13 checked this query against the code and found it asks the wrong question first.
+
+`models/csm_assimilation.py`'s `run()` is a placeholder. It returns `clip(damage_signal, 0, 1)` at a fixed `calibration_confidence` of 0.4 — no WOFOST, no InfoCrop, no assimilated LAI or soil-moisture state, which is the entire substance of `Modeling-Approach.md` §4. At the `pipeline.py` call site, `damage_signal` is `ndvi_drop`, the same quantity that drives Component 2's feature vector.
+
+So enabling the tier today would add a component that **re-reports an existing component's input as though it were an independent third estimate**. `models/ensemble.py` combines contributions by confidence-weighted average, which treats agreement between components as corroboration — so the effect is not a harmless no-op, it is manufactured corroboration in a figure that ends up in a legal evidence package. The 0.4 confidence limits the magnitude; it does not change the kind.
+
+The module's own header docstring asserted the opposite — *"This module is a real, callable implementation; only the decision of when to call it is unresolved"* — while `run()`'s docstring two lines below called itself a placeholder. That contradiction invited exactly the wrong action (flipping `CSM_HIGH_SCRUTINY_ENABLED` on the belief that only policy was missing) and was corrected on 2026-08-13.
+
+**Therefore**: the blocking item for Component 3 is *implementing* it — wiring a calibrated crop simulation model per `Modeling-Approach.md` §4. The trigger-criteria question below stays open and stays valid, but it is downstream of that work, not ahead of it, and there is no value in resolving it first.
+
+## The original question (still open, now correctly sequenced)
 
 `HLD.md` §3 and `Evidence-Flow-Spec.md` §4 both name a "high-scrutiny"/"high-value" tier of requests that additionally runs the CSM (crop-simulation-model) assimilation component, on top of the semi-physical and AI/ML models that run for every request. Neither document defines what makes a request "high-scrutiny."
 
@@ -29,3 +41,5 @@ No existing document defines this, and it reads as a product/business policy dec
 ## Resolution
 
 Recorded in `spec.md` Assumptions as an open item pending a planning-phase decision. FR-011 is worded to state the behavioral contract (CSM runs for requests meeting defined criteria) without asserting a specific, unsourced criterion.
+
+**Update 2026-08-13**: reframed, not resolved. The trigger question is correctly deferred and remains a product/business-policy call — but it sits behind the implementation of Component 3 itself, which the original filing treated as done. The tier stays disabled by default; that default is now load-bearing for a second reason (avoiding false corroboration in the ensemble), not only because the trigger is undefined. The misleading module docstring was corrected the same day. Note that the "Always run CSM" option in the table above would be actively harmful in the component's current state, and should not be selected until Component 3 is genuinely implemented.

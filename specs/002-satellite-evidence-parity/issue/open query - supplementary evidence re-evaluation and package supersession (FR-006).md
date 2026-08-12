@@ -1,7 +1,12 @@
 # Open Query: does attaching supplementary evidence re-evaluate a package, and how are superseded evidence packages versioned
 
 **Spec/Plan/Tasks**: [../spec.md](../spec.md) User Story 2, FR-006, [../contracts/evidence-request-api-extensions.md](../contracts/evidence-request-api-extensions.md), [../tasks.md](../tasks.md) T018 — `src/evidence_intelligence/api/routes.py`
-**Status**: Open — does not block T018's endpoint, but the guidance text T017 writes into low-tier packages promises something no specified capability delivers.
+**Status**: **Split 2026-08-13.** This file bundled a decision with a defect:
+
+- **Package lineage (Option D) — a defect, moved out.** `retry_insufficient_data` already produces a second `EvidencePackage` today, in shipped `001` code, with no `supersedes`, no version and no status recording the relationship — under a ten-year retention floor and §65B chain-of-custody requirements. There is no judgement call in "an evidence artifact that replaces another should say so." Moved to `tasks.md` `T0-16` and `data-model.md`; it applies whether or not any option below is chosen.
+- **Whether attaching evidence re-evaluates anything (Options A/B/C) — the genuine decision, still open.** Unchanged below.
+
+Does not block `T018`'s endpoint, but the guidance text `T017` writes into low-tier packages promises something no specified capability delivers — which is what Option A would fix in a sentence.
 
 ## The question
 

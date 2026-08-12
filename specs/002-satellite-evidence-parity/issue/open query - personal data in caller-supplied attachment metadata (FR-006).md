@@ -1,7 +1,15 @@
 # Open Query: what personal data may enter the module via opaque attachment metadata, and what governs its retention
 
 **Spec/Plan/Tasks**: [../spec.md](../spec.md) FR-006, [../data-model.md](../data-model.md) `supplementary_evidence_attachments`, [../contracts/evidence-request-api-extensions.md](../contracts/evidence-request-api-extensions.md), [../tasks.md](../tasks.md) T018/T019 — `src/evidence_intelligence/api/routes.py`
-**Status**: Open — should be settled before T018 ships, since the endpoint's shape determines what data the module durably holds.
+**Status**: **Provisional default adopted 2026-08-13 (Options C + A) — no longer blocking `T018`.** Option B (reconciling Constitution §7's retention floor with DPDP obligations in `documents/`) remains open and is larger than this endpoint.
+
+## Provisional default (2026-08-13)
+
+**Adopted — drop `caller_supplied_metadata`.** The decisive fact is that the field has no reader: nothing in `data-model.md`, `contracts/`, `Modeling-Approach.md`, or any model consumes it. It is a write-only personal-data ingress into a store with a ten-year retention floor, and `external_reference_id` already covers the legitimate correlation need with the same opacity and a bounded shape. Removing it costs no capability, so no trade-off decision was required — which is why this did not need to stay open. Recorded in `data-model.md`.
+
+**Adopted — constrain the `uri` and state the non-dereference property.** The endpoint accepts a reference to an already-stored object rather than an upload. That means `uri` must be restricted to the module's own object store (or an explicit allowlist), and the contract must state plainly that the module never dereferences it. If nothing fetches the URI, that is a security property worth asserting rather than leaving as an accident of current implementation; if something ever does, an unconstrained caller-supplied URI is a server-side request forgery vector and a route to reading objects the caller should not reach through this service.
+
+**Still open — Option B, the data-protection posture in `documents/`.** Constitution §7 sets a ten-year evidentiary retention floor; India's DPDP Act 2023 attaches purpose-limitation and erasure obligations to personal data. Nothing in `documents/` reconciles them, and no section addresses data protection at all. This matters beyond this endpoint: `geometry` plus event date plus peril type already identifies a specific farm, so the module processes personal data today, before any photograph is attached. That belongs in `documents/`, on its own timeline, and is not a `002` change.
 
 ## The question
 

@@ -1,7 +1,29 @@
 # Open Query: what threshold values separate the HIGH / MEDIUM / LOW confidence tiers, and what are they computed over
 
 **Spec/Plan/Tasks**: [../spec.md](../spec.md) FR-004/FR-005, [../research.md](../research.md) §4, [../tasks.md](../tasks.md) T016 — `src/evidence_intelligence/models/confidence_tier.py`
-**Status**: Open — blocks T016. The tier cannot be implemented without either a threshold value or a rule table, and neither exists in any source document.
+**Status**: **Provisional default adopted 2026-08-13 (Option B + C) — no longer blocking `T016`.** Reversible; recorded rather than assumed. See "Provisional default" below.
+
+## Provisional default (2026-08-13)
+
+A re-assessment on 2026-08-13 concluded this was over-classified as blocking. Option B needs no unsourced figure — that was the point of proposing it — so it can be adopted as a documented default now and revised when evidence justifies it, exactly as `001` handled FR-024's threshold (ship the mechanism, leave the number unset) and as this feature handled commercial tasking (decide a reversible default rather than block).
+
+**Adopted**: the tier is assigned by a rule table over the per-request evidence-inputs manifest (`tasks.md` `T0-09`), not by a cut point on a float. Each rule states an observable fact about the inputs and the ceiling it imposes:
+
+| Rule — observable input fact | Tier ceiling |
+|---|---|
+| No valid post-event pixels over the geometry | `LOW` |
+| Post-event optical unavailable; SAR substituted | `MEDIUM` |
+| No historical baseline available for the geometry | `MEDIUM` |
+| Component 2 running on its untrained placeholder | `MEDIUM` |
+| Phenology check flagged (no plausible standing crop pre-event) | `MEDIUM` |
+| Package is `WEATHER_ONLY_PRELIMINARY` | `LOW` |
+| No rule triggered | `HIGH` |
+
+The tier is the lowest ceiling any triggered rule imposes. Every assignment therefore traces to a stated, checkable fact rather than to a threshold nobody can source — which is also what makes it defensible in a forum hearing, where "the field was not visible on any post-event pass" is an argument and "confidence was 0.63" is not.
+
+**What remains open**: whether to add a numeric component once `T0-05` makes ensemble confidence vary and the Pilot phase supplies calibration data. Per Option C, any such value ships configurable and unset by default. The table above is a starting point, not a finding — the rules were chosen because each is individually defensible, not because their combination has been validated against outcomes.
+
+**Consequences for the spec**: FR-004 currently reads as though the tier derives from confidence *figures*. Adopting this default means it derives from the evidence-inputs manifest, of which the confidence figures are one input. FR-004's wording should be reconciled at the next spec pass, and `T016` depends on `T0-09` rather than only on `T0-05`.
 
 ## The question
 

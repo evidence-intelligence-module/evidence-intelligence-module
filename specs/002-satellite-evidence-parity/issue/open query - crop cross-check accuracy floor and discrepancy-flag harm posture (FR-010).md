@@ -1,7 +1,19 @@
 # Open Query: what accuracy floor justifies raising a crop-type discrepancy flag against an individual claim, and how must that flag be framed
 
 **Spec/Plan/Tasks**: [../spec.md](../spec.md) User Story 4, FR-010, [../data-model.md](../data-model.md) `crop_calendar_cross_checks`, [../tasks.md](../tasks.md) T027–T029 — `src/evidence_intelligence/ingestion/crop_calendar_crosscheck.py`
-**Status**: Open — should block T028/T029. This is the only capability in `002` whose failure mode harms an identifiable individual rather than degrading an estimate.
+**Status**: **Provisional default adopted 2026-08-13 (Options A + C) — the schema half is a defect and moved to `data-model.md`.** The accuracy-floor question (Option B) and whether to ship User Story 4 at all (Option D) remain open, and User Story 4 is last in the delivery sequence regardless.
+
+## Provisional default (2026-08-13)
+
+Two of the three sub-questions do not need a decision to be answered safely:
+
+**Adopted — three-state outcome.** `discrepancy_flag` as a boolean is not a policy choice, it is a schema defect: with `observed_crop_type` non-nullable and no "no answer" state, a crop outside the reference product's class set can only be represented as a mismatch. That converts "WorldCereal does not cover this crop" into "the farmer's declaration disagrees with satellite evidence," and for a large share of Indian claims that is the common case, not an edge case. Replaced with `CONSISTENT` / `INCONCLUSIVE` / `DISCREPANT`, where a crop outside the reference class set, or a field below a minimum pure-pixel count, resolves to `INCONCLUSIVE` and can never resolve to `DISCREPANT`. Recorded in `data-model.md`; applies whether or not User Story 4 ships.
+
+**Adopted — mandatory framing.** Any `DISCREPANT` result carries the reference dataset, its version, its published accuracy for that crop and region, an explicit statement that it is not a fraud determination, and a statement that it did not alter the damage estimate. This is the same provenance discipline Constitution Principle I/II already requires of every other satellite-derived figure in the module; the flag was the one output escaping it.
+
+**Still open — the accuracy floor (Option B).** No sourced per-parcel accuracy figure for WorldCereal over Indian smallholdings exists, so no floor can be set without inventing one. Until it is, `INCONCLUSIVE` is the safe default for any case where the reference product's reliability at that granularity is unestablished.
+
+**Still open — whether to ship User Story 4 (Option D).** Unchanged, and worth revisiting on its merits: this remains the only capability in the roadmap whose failure mode harms an identifiable individual, and the roadmap values it least. The defaults above reduce the harm; they do not make the case for building it.
 
 ## The question
 

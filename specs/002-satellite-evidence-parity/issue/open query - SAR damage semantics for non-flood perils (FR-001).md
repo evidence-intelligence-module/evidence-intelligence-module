@@ -1,7 +1,17 @@
 # Open Query: what does SAR actually measure for a non-flood peril, and what damage signal does it produce
 
 **Spec/Plan/Tasks**: [../spec.md](../spec.md) User Story 1, FR-001, [../research.md](../research.md) §2, [../tasks.md](../tasks.md) T008/T010 — `src/evidence_intelligence/ingestion/source_registry.py`, `imagery.py`
-**Status**: **Narrowed 2026-08-13** — the polarization half was a defect, not a decision, and is fixed (`tasks.md` T0-15); see "Partially addressed" below. Still open, and still blocking User Story 1 from delivering its stated value: whether SAR is reached for non-flood perils at all. Not blocking T008's catalog work, but blocking any claim that a SAR-sourced package for a hailstorm or cloudburst carries a real damage signal.
+**Status**: **Narrowed twice (2026-08-13).** Of the three questions originally bundled here, one was a defect and is fixed (`tasks.md` T0-15), one belongs to a different query, and one is genuinely open:
+
+| Sub-question | Where it stands |
+|---|---|
+| Which polarization the structural indicator uses | **Fixed** — a defect, not a decision. VH is now measured; see "Partially addressed" below |
+| **Whether SAR is reached for non-flood perils at all** | **Open — the live question in this file.** Decidable now; needs no new data, only a scope decision |
+| What magnitude of backscatter change constitutes damage | **Moved** — this is a calibration question, not a physics one, and it resolves with [`001`'s label query](../../001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md), not here |
+
+The split matters for sequencing: the peril-scope decision can unblock User Story 1 **without** waiting on the label decision, provided the package does not assert a damage magnitude from SAR that no calibration supports. Bundled together, they made US1 look blocked on `001`'s oldest open question; separated, it is not.
+
+Still blocking any claim that a SAR-sourced package for a hailstorm or cloudburst carries a real damage signal. Not blocking `T008`'s catalog work.
 
 ## The question
 

@@ -36,6 +36,11 @@ New columns, added to the table `001` already defines:
 | `confidence_tier` | enum | `HIGH` \| `MEDIUM` \| `LOW` — derived from `model_component_results` (`ENSEMBLE` row, `001`) per research.md §4; never independently overridden |
 | `confidence_tier_guidance` | string, nullable | Populated only for `MEDIUM`/`LOW` — plain-language statement of what could improve confidence (spec.md FR-005); `null` for `HIGH` |
 | `cce_non_equivalence_statement` | boolean, must be `true` when `confidence_tier = LOW` | Enforces spec.md FR-005/FR-012 at the schema level — a `LOW`-tier package cannot be persisted without this flag set |
+| `supersedes_package_id` | FK → EvidencePackage, nullable | **Added 2026-08-13 (`tasks.md` T0-16).** The package this one replaces, if any |
+| `package_version` | integer, default `1` | Monotonic per request |
+| `package_status` | enum | `CURRENT` \| `SUPERSEDED` |
+
+**Package lineage (added 2026-08-13)**: `001`'s `retry_insufficient_data` already writes a second `EvidencePackage` for a request once imagery becomes available, and `api/routes.py` describes the earlier one as "superseded" — but nothing in the schema records that relationship, so supersession exists only as an ordering by `generated_at`. Under a ten-year retention floor and §65B chain-of-custody requirements, and once `002` attaches a `confidence_tier` that a regenerated package can *change*, an artifact that silently replaces another is a real gap: a claim can be actioned on a `LOW`-tier package that later becomes `HIGH`, with no record tying the two together. Writing a new package MUST set the previous one's `package_status` to `SUPERSEDED` and the new one's `supersedes_package_id` to its `package_id`, in one transaction. Superseded packages are never deleted or mutated — `001`'s never-overwrite-in-place rule is unchanged.
 
 **Validation rules**: `confidence_tier` is required on every package, at every tier, including `WEATHER_ONLY_PRELIMINARY` packages inherited from `001` (a preliminary package still gets a tier, typically `LOW`, since it's generated with reduced input availability). `cce_non_equivalence_statement` is enforced `true` whenever `confidence_tier = LOW` — this is spec.md FR-005 written as a data constraint, not just a narrative convention, so it can't be silently dropped by a future code change without the write failing.
 
@@ -47,11 +52,16 @@ New columns, added to the table `001` already defines:
 | `request_id` | FK → EvidenceRequest | |
 | `source_dataset`, `source_version` | string, string | e.g. WorldCereal v2 (research.md §3) |
 | `declared_crop_type` | string, nullable | From the claim, if provided at request time |
-| `observed_crop_type` | string | Independently derived from the cross-check source |
+| `observed_crop_type` | string, **nullable** | Independently derived from the cross-check source. `null` where the reference product has no class covering this field |
 | `declared_calendar_window`, `observed_calendar_window` | date range, date range, nullable | Sowing/harvest window comparison |
-| `discrepancy_flag` | boolean | `true` when declared and observed materially disagree |
+| `outcome` | enum | **Replaces the original boolean `discrepancy_flag`, 2026-08-13.** `CONSISTENT` \| `INCONCLUSIVE` \| `DISCREPANT` |
+| `reference_accuracy`, `pure_pixel_count` | float nullable, integer | The reference product's published accuracy for this crop/region, and how many pixels fell wholly inside the geometry — the two facts that determine whether `DISCREPANT` is defensible for this request |
 
-**Validation rules**: A row is generated for every request where a declared crop type is available to compare against (spec.md User Story 4); `discrepancy_flag` is a first-class, always-computed field — the module MUST NOT silently reconcile a mismatch into the observed value (spec.md FR-010).
+**Validation rules**: A row is generated for every request where a declared crop type is available to compare against (spec.md User Story 4). The outcome is always computed — the module MUST NOT silently reconcile a mismatch into the observed value (spec.md FR-010).
+
+**Why this is an enum and not a boolean** (changed 2026-08-13, per [`issue/open query - crop cross-check accuracy floor and discrepancy-flag harm posture (FR-010).md`](./issue/open%20query%20-%20crop%20cross-check%20accuracy%20floor%20and%20discrepancy-flag%20harm%20posture%20%28FR-010%29.md)): with a non-nullable `observed_crop_type` and a boolean flag, a crop outside the reference product's class set has no representable outcome except "mismatch" — turning "the reference product does not cover this crop" into an adverse finding against a named claimant. WorldCereal's class set does not span the crops insured under PMFBY, so that is the common case, not an edge case. `INCONCLUSIVE` is required whenever `observed_crop_type` is `null`, or `pure_pixel_count` is below the configured minimum, or `reference_accuracy` is unestablished for that crop/region; `DISCREPANT` MUST NOT be reachable in any of those states.
+
+A `DISCREPANT` outcome MUST be surfaced with `source_dataset`, `source_version`, `reference_accuracy`, an explicit statement that it is not a fraud determination, and a statement that it did not alter the damage estimate — the same provenance discipline Constitution Principle I/II requires of every other satellite-derived figure, which this output was the one exception to.
 
 ## New: SupplementaryEvidenceAttachment (`supplementary_evidence_attachments`)
 
@@ -60,11 +70,14 @@ New columns, added to the table `001` already defines:
 | `attachment_id` | string, PK | |
 | `request_id` | FK → EvidenceRequest | |
 | `attachment_type` | enum | `PHOTO` \| `OTHER` |
-| `uri` | string | Object storage reference |
+| `uri` | string | Object storage reference, restricted to the module's own store or a configured allowlist. Never dereferenced by the module |
 | `submitted_at` | timestamp | |
-| `caller_supplied_metadata` | opaque JSON, nullable | Never validated or interpreted against any specific channel's schema — mirrors `external_reference_id`'s opacity in `001`'s `EvidenceRequest` (Constitution §5) |
 
 **Validation rules**: Attachable to a request at any confidence tier, but only surfaced as tier-improvement guidance for `MEDIUM`/`LOW` packages (`evidence_packages.confidence_tier_guidance`). The module never requires this table to be populated — it exists purely as an optional channel-agnostic input (spec.md FR-006).
+
+**`caller_supplied_metadata` removed 2026-08-13**, per [`issue/open query - personal data in caller-supplied attachment metadata (FR-006).md`](./issue/open%20query%20-%20personal%20data%20in%20caller-supplied%20attachment%20metadata%20%28FR-006%29.md). It was an unvalidated opaque JSON field with no reader anywhere in this design — callers would predictably have placed farmer identifiers in it, importing personal data into a store with a ten-year retention floor, which is precisely what Constitution §5's boundary exists to prevent. `external_reference_id` on `EvidenceRequest` already covers the legitimate correlation need with the same opacity and a bounded shape. Removing a field nothing reads costs no capability.
+
+**On `uri`**: the endpoint takes a reference to an already-stored object, not an upload. That the module never fetches it is a security property worth asserting in the contract rather than leaving as an accident of the current implementation — an unconstrained caller-supplied URI that anything downstream dereferences is a server-side request forgery vector.
 
 ## New: ThermalStressSignal (`thermal_stress_signals`)
 

@@ -106,19 +106,19 @@ These questions have no sourced answer in `documents/` or `YESTECH_Manual_2023.m
 
 **Evidence Generation Pipeline** — [`specs/001-evidence-generation-pipeline/issue/README.md`](specs/001-evidence-generation-pipeline/issue/README.md):
 
-- CSM high-scrutiny trigger criteria (FR-011) — the CSM assimilation tier is implemented but gated off by default until this is resolved.
-- Causation confidence low-confidence threshold (FR-024) — low-confidence labeling uses a configurable, currently-unset threshold.
-- Expected request volume and concurrency target — doesn't block Phase 0/1 design, matters at infra-sizing time.
-- AI/ML training data source and CCE-label question — the model ships transparently untrained today (see "Training the AI/ML Model" above); blocks any future move to train/calibrate it, **and now blocks `002`'s User Story 3 and SC-001/SC-002**, which assume a labeled validation set exists.
+- **Open — root** — AI/ML training data source and CCE-label question. The model ships transparently untrained today (see "Training the AI/ML Model" above). Re-assessed 2026-08-13 as the root of both trackers: every numeric-threshold question across `001` and `002` terminates here, including `002`'s User Story 3, SC-001/SC-002, the SAR magnitude question, and the causation threshold below. **If one decision gets made, make this one.**
+- **Open — reframed** — CSM high-scrutiny trigger criteria (FR-011). The trigger is not what blocks Component 3: `csm_assimilation.run()` is a placeholder that echoes its input, so enabling the tier would add false corroboration to a confidence-weighted ensemble. **Leave `CSM_HIGH_SCRUTINY_ENABLED` off** until the component is genuinely implemented.
+- **Open — narrowed** — Causation confidence low-confidence threshold (FR-024). Cannot be calibrated until `002`'s `T0-06` lands; 55 of the score's 100 points are currently hardcoded, so there is no distribution to calibrate against.
+- **Open — narrowed** — Expected request volume and concurrency target. Now capacity sizing only; the durability/architecture half is settled on other grounds (`002` `T05-06`).
 
 **Satellite Evidence Parity Roadmap** — [`specs/002-satellite-evidence-parity/issue/README.md`](specs/002-satellite-evidence-parity/issue/README.md):
 
-- **Open** — Confidence tier threshold values (FR-004): no sourced cut points exist, and the ensemble figure FR-004 derives them from is currently a constant. Blocks the tier classifier.
-- **Open** — What the parity claim is validated against (SC-002, US3): the `002`-side view of `001`'s label question above.
-- **Open** — Crop cross-check accuracy floor and discrepancy-flag harm posture (FR-010): the only capability whose failure mode harms an identifiable individual.
-- **Open** — Supplementary evidence re-evaluation and package supersession (FR-006): low-tier guidance promises an effect no specified capability delivers; package lineage is undefined.
-- **Open** — Personal data in caller-supplied attachment metadata (FR-006): governs what personal data the module durably holds under the 10-year retention floor.
-- **Narrowed** 2026-08-13 — SAR damage semantics for non-flood perils (FR-001): the VV-for-VH polarization substitution was a defect and is fixed (T0-15); still open is whether SAR is reached for non-flood perils at all.
+- **Open** — What the parity claim is validated against (SC-002, US3): the `002`-side view of `001`'s root label question above. Resolve there.
+- **Narrowed** ×2 — SAR damage semantics for non-flood perils (FR-001): polarization half fixed as a defect (T0-15), magnitude-calibration half moved to the label question. Live: whether SAR is reached for non-flood perils — decidable now, and separating it means US1 no longer waits on the label decision.
+- **Split** — Supplementary evidence re-evaluation and package supersession (FR-006): package lineage was a defect → `T0-16`. Live: whether attaching evidence re-evaluates anything.
+- **Provisional default** — Confidence tier threshold values (FR-004): tier assigned by a rule table over the evidence-inputs manifest, needing no unsourced cut point. No longer blocks `T016`.
+- **Provisional default** — Crop cross-check harm posture (FR-010): three-state `outcome` + mandatory framing adopted. Open: the accuracy floor, and whether to ship User Story 4 at all.
+- **Provisional default** — Personal data in caller-supplied attachment metadata (FR-006): `caller_supplied_metadata` dropped (nothing read it), `uri` constrained. Open: reconciling the 10-year retention floor with DPDP obligations, which is a `documents/` change.
 - **Resolved** 2026-08-12 — Commercial satellite tasking budget: free-only for this rollout; retained for its rationale.
 
 Each tracker's `README.md` carries the same Open / Narrowed / Resolved status per entry. The `open query - ` filename prefix is a naming convention, not a status — files aren't renamed when they close, because `spec.md`/`plan.md`/`tasks.md` link them by path.
