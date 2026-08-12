@@ -1,4 +1,4 @@
-# ACIX — Crop Insurance
+# Evidence Intelligence Module — Crop Insurance
 
 ## What this repo is, right now
 

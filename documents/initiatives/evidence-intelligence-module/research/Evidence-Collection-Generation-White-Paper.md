@@ -1,6 +1,6 @@
 # Satellite-Based Evidence Collection & Generation for Crop Insurance Claims in India
 
-**White Paper — ACIX Platform | Evidence Intelligence Module**
+**White Paper — Evidence Intelligence Module**
 **Date:** 10 August 2026
 **Version:** 1.0
 **Region:** India (PMFBY / RWBCIS)
@@ -1108,7 +1108,7 @@ flowchart LR
 
 *End of Evidence Collection & Generation White Paper*
 
-*Prepared by: ACIX Platform Architecture Team*
+*Prepared by: Evidence Intelligence Module Architecture Team*
 *Date: 10 August 2026*
 *Region: India (PMFBY / RWBCIS)*
 *Next Review: Prior to Phase 1 Evidence Intelligence Module Development*
