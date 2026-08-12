@@ -184,7 +184,34 @@ class FakeGEEClient:
             # so the VH-derived DSI indicator and cross-pol feature must stay
             # absent rather than falling back to the VV measurement.
             vh_drop_db=None if self.scenario == "flood_single_pol" else 8.0,
-            flood_extent_geojson={"type": "FeatureCollection", "features": []},
+            # A *populated* FeatureCollection, matching what
+            # `reduceToVectors().getInfo()` actually returns once `vv_drop_db`
+            # clears the flood threshold. The previous empty collection was an
+            # internally inconsistent fixture — "flood detected, zero flooded
+            # pixels" — and an empty collection is the one shape that never
+            # exercises the FeatureCollection-to-geometry conversion the real
+            # pipeline needs (tasks.md T0-13).
+            flood_extent_geojson={
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {"label": 1},
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [77.0, 20.0],
+                                    [77.005, 20.0],
+                                    [77.005, 20.005],
+                                    [77.0, 20.005],
+                                    [77.0, 20.0],
+                                ]
+                            ],
+                        },
+                    }
+                ],
+            },
         )
 
     def historical_composite(self, geometry, start, end, years=5):

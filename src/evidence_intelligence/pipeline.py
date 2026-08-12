@@ -14,6 +14,7 @@ from datetime import date, datetime
 
 from evidence_intelligence.causation import scoring as causation_scoring
 from evidence_intelligence.config import Settings
+from evidence_intelligence.geometry import to_ewkt
 from evidence_intelligence.ingestion.gee_client import GEEClient
 from evidence_intelligence.ingestion.imagery import ingest_imagery
 from evidence_intelligence.ingestion.weather import IMDClient, WeatherClient, ingest_weather
@@ -148,10 +149,13 @@ def run_pipeline(
         acquisition_date=post_event_source.acquisition_date,
         pre_event_index_value=imagery.pre_event.index_value if imagery.pre_event else None,
         post_event_index_value=imagery.post_event.index_value if imagery.post_event else None,
+        # Earth Engine's reduceToVectors returns a GeoJSON FeatureCollection,
+        # which PostGIS rejects outright — `str()` of it was never a storable
+        # value, and this path runs only when SAR actually detects flooding
+        # (tasks.md T0-13). Normalised to EWKT; a FeatureCollection with no
+        # features stores NULL rather than an empty geometry.
         flood_extent_geometry=(
-            str(imagery.sar.flood_extent_geojson)
-            if imagery.sar and imagery.sar.flood_extent_geojson
-            else None
+            to_ewkt(imagery.sar.flood_extent_geojson) if imagery.sar else None
         ),
     )
 

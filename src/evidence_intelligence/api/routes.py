@@ -13,6 +13,7 @@ from shapely.geometry import shape
 
 from evidence_intelligence.api.dependencies import get_settings, get_store
 from evidence_intelligence.config import Settings
+from evidence_intelligence.geometry import to_ewkt
 from evidence_intelligence.pipeline import run_pipeline_background
 from evidence_intelligence.store.evidence_store import EvidenceStore
 from evidence_intelligence.store.schema import PerilType, RequestStatus
@@ -74,7 +75,11 @@ def create_evidence_request(
     returns a request identifier immediately, before analysis completes —
     the pipeline runs in the background, after the response is sent."""
     request = store.create_request(
-        geometry=str(body.geometry),
+        # EWKT, not `str(dict)`. The bare-GeoJSON form happened to parse —
+        # `ST_GeomFromEWKT` is lenient about geometries — but relying on that
+        # leniency is what hid the FeatureCollection failure elsewhere
+        # (tasks.md T0-13). Stored form is now explicit at both call sites.
+        geometry=to_ewkt(body.geometry),
         event_date=body.event_date,
         peril_type=body.peril_type,
         external_reference_id=body.external_reference_id,
