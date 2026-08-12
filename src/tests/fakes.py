@@ -154,11 +154,13 @@ class FakeGEEClient:
         self.pre_event_ndvi = 0.75
         self.post_event_ndvi = 0.30
 
+    FLOOD_SCENARIOS = ("flood", "flood_single_pol")
+
     def optical_composite(self, geometry, start, end):
-        if self.scenario in ("no_imagery", "flood"):
-            # "flood" simulates the monsoon cloud-cover case: post-event
-            # optical is blocked, forcing the SAR substitution path.
-            if self.scenario == "flood" and end < self.event_date:
+        if self.scenario in ("no_imagery", *self.FLOOD_SCENARIOS):
+            # The flood scenarios simulate the monsoon cloud-cover case:
+            # post-event optical is blocked, forcing the SAR substitution path.
+            if self.scenario in self.FLOOD_SCENARIOS and end < self.event_date:
                 pass  # pre-event window still has usable optical
             else:
                 return None
@@ -171,13 +173,17 @@ class FakeGEEClient:
         )
 
     def sar_composite(self, geometry, pre_event_end, post_event_start, post_event_end):
-        if self.scenario != "flood":
+        if self.scenario not in ("flood", "flood_single_pol"):
             return None
         return SarComposite(
             source_dataset="Sentinel-1 GRD (fake)",
             source_version="fake-v1",
             acquisition_date=post_event_end,
             vv_drop_db=5.0,
+            # "flood_single_pol" simulates acquisitions that carried VV only,
+            # so the VH-derived DSI indicator and cross-pol feature must stay
+            # absent rather than falling back to the VV measurement.
+            vh_drop_db=None if self.scenario == "flood_single_pol" else 8.0,
             flood_extent_geojson={"type": "FeatureCollection", "features": []},
         )
 

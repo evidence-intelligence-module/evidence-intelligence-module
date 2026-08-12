@@ -47,10 +47,11 @@ Until these hold, `002`'s new sources, embeddings and tiers change the provenanc
 
 ### Correctness (blocking)
 
-- [ ] T0-01 Convert ERA5-Land `temperature_2m` from Kelvin to Celsius at the ingestion boundary, and add a plausibility guard so an out-of-range temperature degrades `calibration_confidence` instead of silently zeroing biomass, in `src/evidence_intelligence/ingestion/weather.py` and `src/evidence_intelligence/models/semi_physical.py`
-- [ ] T0-02 Stop synthesizing NDVI-derived features when post-event optical is absent — represent them as absent rather than `0.0`, and exclude Component 1 from the ensemble when its inputs are unavailable, rather than contributing a fabricated maximum-damage signal, in `src/evidence_intelligence/pipeline.py`
-- [ ] T0-03 Stop populating `lswi_deviation` with the NDVI drop (a different physical quantity), and populate the features already ingested and discarded — ERA5 temperature anomaly against a computed baseline, SMAP soil-moisture deviation — in `src/evidence_intelligence/pipeline.py` and `src/evidence_intelligence/ingestion/weather.py`
-- [ ] T0-04 Fix `_placeholder_estimate` to average over the features actually supplied rather than all 17 declared ones (11 of which are currently constant zeros, diluting every estimate toward zero), and preserve the sign convention its docstring asserts, in `src/evidence_intelligence/models/ai_ml.py`
+- [x] T0-01 Convert ERA5-Land `temperature_2m` from Kelvin to Celsius at the ingestion boundary, and add a plausibility guard so an out-of-range temperature degrades `calibration_confidence` instead of silently zeroing biomass, in `src/evidence_intelligence/ingestion/weather.py` and `src/evidence_intelligence/models/semi_physical.py`
+- [x] T0-02 Stop synthesizing NDVI-derived features when post-event optical is absent — represent them as absent rather than `0.0`, and exclude Component 1 from the ensemble when its inputs are unavailable, rather than contributing a fabricated maximum-damage signal, in `src/evidence_intelligence/pipeline.py`
+- [x] T0-03 Stop populating `lswi_deviation` with the NDVI drop (a different physical quantity), and populate the features already ingested and discarded — ERA5 temperature anomaly against a computed baseline, SMAP soil-moisture deviation — in `src/evidence_intelligence/pipeline.py` and `src/evidence_intelligence/ingestion/weather.py`
+- [x] T0-04 Fix `_placeholder_estimate` to average over the features actually supplied rather than all 17 declared ones (11 of which are currently constant zeros, diluting every estimate toward zero), and preserve the sign convention its docstring asserts, in `src/evidence_intelligence/models/ai_ml.py`
+- [x] T0-15 Measure Sentinel-1 **VH** alongside VV so `Modeling-Approach.md` §6's `sar_vh_backscatter_deviation` indicator carries the cross-polarized canopy-structure measurement it names, rather than the co-polarized flood detector's VV. Populates `vh_vv_backscatter_deviation` (Component 2's declared cross-pol feature) as `vh_drop − vv_drop`, since a dB ratio is a difference; both signals stay absent where the acquisitions were single-polarization, in `src/evidence_intelligence/ingestion/gee_client.py` and `pipeline.py`
 - [ ] T0-05 Replace the constant `combined_confidence` with a figure that varies with real input availability — **gated on** [`issue/open query - confidence tier threshold values (FR-004).md`](./issue/open%20query%20-%20confidence%20tier%20threshold%20values%20%28FR-004%29.md), since what it should be computed over is the same question as what the tier should be computed over — in `src/evidence_intelligence/models/ensemble.py`
 
 ### Evidence quality (strongly recommended before User Story 1)
@@ -64,11 +65,29 @@ Until these hold, `002`'s new sources, embeddings and tiers change the provenanc
 
 ### Known smaller defects (fix opportunistically)
 
-- [ ] T0-12 [P] `.replace(year=…)` on arbitrary window dates raises on 29 February in `ingestion/gee_client.py` (`historical_composite`) and `ingestion/weather.py` — `store/evidence_store.py`'s `retention_expiry_date` already guards this exact case and is the pattern to follow
+- [x] T0-12 [P] `.replace(year=…)` on arbitrary window dates raises on 29 February in `ingestion/gee_client.py` (`historical_composite`) and `ingestion/weather.py` — `store/evidence_store.py`'s `retention_expiry_date` already guards this exact case and is the pattern to follow
 - [ ] T0-13 [P] `str(body.geometry)` in `api/routes.py` and `str(imagery.sar.flood_extent_geojson)` in `pipeline.py` write a Python dict `repr()` into PostGIS `Geometry(srid=4326)` columns — verify against a real PostGIS instance before `002` relies on "`001` is already running"
-- [ ] T0-14 [P] Remove the dead `notes = list(imagery.historical) and [] or [...]` expression in `pipeline.py`, immediately overwritten by the `if not has_historical_baseline` block below it
+- [x] T0-14 [P] Remove the dead `notes = list(imagery.historical) and [] or [...]` expression in `pipeline.py`, immediately overwritten by the `if not has_historical_baseline` block below it
 
 **Checkpoint**: the pipeline produces figures that vary with the evidence. Phases 1–8 below are measurable from here.
+
+---
+
+## Phase 0.5: Evidence-Processing Improvements (added 2026-08-13)
+
+**Purpose**: work on the imagery *already ingested* that improves evidence quality more, per unit of effort, than acquiring new sources does. The same 2026-08-13 re-evaluation that produced Phase 0 found that this roadmap reaches for new sensors (User Story 1) and new model features (User Story 3) before extracting what the existing Sentinel-2/Sentinel-1 archive already supports. These tasks cost no new data licence, no new vendor integration, and no labeled training set — which is what makes them worth sequencing ahead of the stories that do.
+
+**Not blocking**, unlike Phase 0. But `T05-01` and `T05-02` directly determine whether User Story 1's enhanced sourcing has anything measurable to improve on, and `T05-04` is the strongest single move toward this feature's stated parity goal.
+
+- [ ] T05-01 [P] Mask boundary pixels before reducing a geometry: negative-buffer the field by one pixel of the selected source and/or weight by each pixel's contained fraction, so a per-field index value comes from pixels actually inside the field. India's ~0.16 ha median field size means boundary pixels dominate an unbuffered 10 m reduction — this addresses the mixed-pixel problem User Story 1 buys resolution to solve, on data already in hand, in `src/evidence_intelligence/ingestion/gee_client.py`
+- [ ] T05-02 [P] Replace `_reduce_mean`'s single mean with a distribution over the field (p10/p50/p90 plus coefficient of variation), so "half the field is destroyed" is distinguishable from "the whole field is mildly stressed" — currently indistinguishable, since both reduce to the same mean. Also populates `crop_condition_variability`, a `Modeling-Approach.md` §6 DSI indicator that has never been computed, in `src/evidence_intelligence/ingestion/gee_client.py` and `pipeline.py`
+- [ ] T05-03 [P] Make the historical baseline robust to prior loss years: use a median or trimmed mean over the archive rather than a mean, and record which seasons contributed (`spec.md` Edge Cases, added 2026-08-13). A 5-year mean that includes damaged seasons encodes damage as normal and suppresses the very anomaly the module is looking for, in `src/evidence_intelligence/ingestion/gee_client.py` and `ingestion/weather.py`
+- [ ] T05-04 Add a spatial control comparison: score the field's index change against the contemporaneous distribution of statistically similar neighbouring fields (same crop where known, same agro-climatic zone, same acquisition), rather than only against its own history. "This field declined while comparable neighbouring fields under the same weather did not" is a materially stronger causal argument than "this field declined", it is computable from imagery already ingested, and it attacks the causation weakness `T0-06` only partly addresses. Closest analogue to what the Check-by-Monitoring precedent in `documents/research/Satellite-Parity-Global-Precedent-Research.md` actually does
+- [ ] T05-05 Move Component 2's input from two-point pre/post differencing to a per-field index time series compared against its own multi-year phenological curve. Yields a break-point *date* (the observable `T0-06`'s temporal causation term needs, rather than the hardcoded `1`), is robust to a single bad composite, and produces the pixel-timeseries shape Presto consumes natively — so it de-risks User Story 3 rather than competing with it
+- [ ] T05-06 [P] Replace the in-process `BackgroundTasks` execution with a durable job runner (queue + retry + restart survival), and schedule `retry_insufficient_data`, which exists and is tested but is called by nothing. `002` adds four external dependencies (Bhoonidhi, openEO/WorldCereal, ECOSTRESS via S3, Presto inference) to a path that currently loses a request on any process restart — each new source is otherwise a new way to lose one, and SC-001's latency target is unverifiable without it, in `src/evidence_intelligence/api/routes.py`
+- [ ] T05-07 [P] Replace deprecated `datetime.utcnow()` with timezone-aware `datetime.now(UTC)` across `api/routes.py`, `pipeline.py`, `store/schema.py`, and `tests/fakes.py` — currently ~2,400 deprecation warnings per test run, and removed in a future Python
+
+**Checkpoint**: the existing archive is fully exploited. User Story 1's new sources now have a real baseline to improve on.
 
 ---
 
@@ -95,7 +114,9 @@ Until these hold, `002`'s new sources, embeddings and tiers change the provenanc
 
 ---
 
-## Phase 3: User Story 1 - Trustworthy Evidence During Monsoon Cloud Cover (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1 - Trustworthy Evidence During Monsoon Cloud Cover (Priority: P1)
+
+> **Sequencing note (2026-08-13)**: this was the MVP. It is now 2nd in the Wave 3 order — gated on **D3**, and preceded by `T05-01`/`T05-02` so its new sources have a baseline worth beating. Still the larger capture-quality win; just not the shortest path to a demonstrable one.
 
 **Goal**: Prioritize cloud-penetrating SAR and, where in scope, higher-resolution sources so monsoon-season and small-field claims produce a usable evidence package instead of going dark from sensor blindness.
 
@@ -118,7 +139,9 @@ Until these hold, `002`'s new sources, embeddings and tiers change the provenanc
 
 ---
 
-## Phase 4: User Story 2 - Tiered Confidence With an Explicit Fallback Path (Priority: P2)
+## Phase 4: User Story 2 - Tiered Confidence With an Explicit Fallback Path (Priority: P2) 🎯 MVP
+
+> **Sequencing note (2026-08-13)**: now 1st in the Wave 3 order and the MVP. Gated only on **D1**, where the other stories each wait on a decision *and* on preparatory work — and a plain-language tier is what makes every other figure in the package usable by a non-technical reviewer.
 
 **Goal**: Classify every evidence package into a plain-language confidence tier (High/Medium/Low), derived from existing ensemble confidence, with an explicit non-equivalence-to-CCE statement and optional supplementary-evidence attachment for the lowest tier.
 
@@ -218,24 +241,90 @@ Until these hold, `002`'s new sources, embeddings and tiers change the provenanc
 
 ---
 
+## Delivery Sequence (added 2026-08-13)
+
+The phases above are grouped by *what* they change. This section is the ordering across them — three waves, ordered by dependency rather than by priority label, plus the decisions that gate each.
+
+### Gates — decisions, not code
+
+Three entries in [`issue/`](./issue/README.md) block work below. None can be resolved by inference from existing documents, which is why they're tracked rather than implemented.
+
+| Gate | Decision | Unblocks |
+|---|---|---|
+| **D1** | How the confidence tier is defined ([`confidence tier threshold values`](./issue/open%20query%20-%20confidence%20tier%20threshold%20values%20%28FR-004%29.md)) | `T0-05`, `T016`, User Story 2 in full. **Most urgent** — the longest dependency chain runs through it |
+| **D2** | Where validation labels come from ([`what the parity claim is validated against`](./issue/open%20query%20-%20what%20the%20parity%20claim%20is%20validated%20against%20%28SC-002%2C%20US3%29.md)) | User Story 3 (`T020`–`T025`), SC-001, SC-002 — and any measurable meaning for "parity" |
+| **D3** | Whether SAR is reached for non-flood perils ([`SAR damage semantics`](./issue/open%20query%20-%20SAR%20damage%20semantics%20for%20non-flood%20perils%20%28FR-001%29.md)) | `T010` and User Story 1's stated value; without it US1 ships better provenance on the same coverage |
+
+Three further decisions are filed but off the critical path: crop cross-check harm posture (before US4), package supersession (before US2's guidance text ships), and attachment metadata handling (before `T018`).
+
+### Wave 1 — make the instrument measure (Phase 0, blocking)
+
+`T0-13` first: it's cheap and it tests the premise everything else rests on, that `001` actually runs. Then `T0-07` → `T0-09` on the critical path. `T0-10`, `T0-11` in parallel. `T0-05` waits on **D1**. `T0-06` splits — its spatial term is independent, its temporal term wants the break-point date `T05-05` produces, so either split the task or sequence that half after Wave 2.
+
+**Exit criterion**: two requests with materially different evidence quality produce materially different confidence figures. They currently cannot — `combined_confidence` is a constant 0.50.
+
+### Wave 2 — extract what the archive already holds (Phase 0.5, not blocking)
+
+`T05-06` leads: every Wave 3 story adds an external dependency to an execution path that loses requests on restart. `T05-01`/`T05-02` before US1, so its new sources have a real baseline to beat. `T05-04` is the highest-leverage item in the whole roadmap. `T05-03`, `T05-07` anytime.
+
+**Exit criterion**: a partially-damaged field is distinguishable from a uniformly-stressed one in the package. Today both reduce to the same mean.
+
+### Wave 3 — the feature stories, reordered
+
+Phases 1 and 2 run first and unchanged. The story order below differs from `spec.md`'s P1–P5, which were assigned before the base-pipeline state was known:
+
+| Order | Story | Moved because | Gate |
+|---|---|---|---|
+| 1st | **US2** — confidence tiers (`T013`–`T019`) | Was P2. Tiering makes every other output legible to a reviewer, and it's the only story whose value depends on neither new sources nor labels | D1 |
+| 2nd | **US1** — SAR-priority sourcing (`T006`–`T012`) | Was P1. Still high value, but `T05-01`/`T05-02` should land first, and D3 decides whether it reaches its headline hailstorm/cloudburst cases at all | D3 |
+| 3rd | **US5** — thermal + red-edge (`T030`–`T036`) | Was P5. Genuinely independent of every other story, so it moves up freely. Ship with FR-023's overpass-time handling, not without it | — |
+| 4th | **US3** — foundation-model features (`T020`–`T025`) | Was P3. Cannot be evaluated without labels; adding embedding dimensions to a model with none changes nothing measurable. Follows D2 and `T05-05` | D2 |
+| 5th | **US4** — crop cross-check (`T026`–`T029`) | Was P4, stays last. The only capability whose failure mode harms an identifiable individual, and the roadmap values it least — a poor trade to ship early | Harm posture |
+
+**Exit criterion**: `quickstart.md` Scenarios 1–6, as already written.
+
+### Critical path
+
+```
+D1 ──→ T0-07 ──→ T0-09 ──→ T0-05 ──→ US2
+       (cloud     (evidence   (real      (tiers in
+        masking)   manifest)   confidence) every package)
+```
+
+Everything else parallelises around this. `T0-07` does not strictly wait on D1 and should start immediately — it's the one item on the chain that is unambiguously correct work however D1 resolves.
+
+### Start here
+
+1. **Raise D1** — longest chain behind it, needs no engineering input to decide
+2. `T0-13` — verify PostGIS
+3. `T0-07` — cloud masking, regardless of D1
+4. `T05-07` — deprecation cleanup, as filler
+
+Then `T0-09` once coverage figures exist to put in a manifest; `T0-10`/`T0-11` in parallel; `T05-06` before any external dependency lands; and raise **D2**/**D3** in time not to stall Waves 2 and 3.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
 
 - **Base-Pipeline Corrections (Phase 0)**: No dependencies. `T0-01`–`T0-05` BLOCK Phase 2 onward; `T0-06`–`T0-11` should land before User Story 1. `T0-05` is itself gated on the confidence-tier query in [`issue/`](./issue/README.md)
+- **Evidence-Processing Improvements (Phase 0.5)**: Not blocking, but `T05-01`/`T05-02` should precede User Story 1 (they determine what its new sources are improving *on*), and `T05-05` should precede User Story 3 (it produces the timeseries shape Presto consumes). `T05-06` should precede any user story that adds an external dependency — i.e. all of them
 - **Setup (Phase 1)**: No dependencies — can start immediately once `001` is running; can run in parallel with Phase 0
 - **Foundational (Phase 2)**: Depends on Setup **and on Phase 0's blocking tasks** — BLOCKS all user stories
 - **User Stories (Phase 3-7)**: All depend on Foundational phase completion
-  - Can proceed in parallel (if staffed) or sequentially in priority order (P1 → P2 → P3 → P4 → P5)
+  - Can proceed in parallel (if staffed) or sequentially — sequential order is the Wave 3 order above (US2 → US1 → US5 → US3 → US4), not the original P1–P5 labels
 - **Polish (Phase 8)**: Depends on all desired user stories being complete
 
 ### User Story Dependencies
 
-- **User Story 1 (P1)**: No dependencies on other stories in this feature
-- **User Story 2 (P2)**: No dependencies on other stories — confidence-tier computation reads existing `001` ensemble confidence, not US1's new sources
-- **User Story 3 (P3)**: No dependencies on other stories — Component 2 augmentation is independent of source selection and confidence tiering
-- **User Story 4 (P4)**: No dependencies on other stories
-- **User Story 5 (P5)**: No dependencies on other stories — red-edge/thermal signals are independent of source selection (US1), confidence tiering (US2), foundation-model features (US3), and crop cross-check (US4)
+No user story depends on another user story — that remains true, and is what makes them independently testable. What the 2026-08-13 sequencing review added is that several depend on things *outside* this feature's story set: a gate decision, a Phase 0 correction, or a Phase 0.5 improvement. Those are what reorder them.
+
+- **User Story 1 (P1)**: No story dependencies. Depends on **D3** for its headline cases, and on `T05-01`/`T05-02` for a baseline worth improving on
+- **User Story 2 (P2)**: No story dependencies — confidence-tier computation reads existing `001` ensemble confidence, not US1's new sources. Depends on **D1**, and on `T0-05` for that confidence figure to vary at all
+- **User Story 3 (P3)**: No story dependencies — Component 2 augmentation is independent of source selection and confidence tiering. Depends on **D2** (no labeled validation set exists) and benefits from `T05-05`
+- **User Story 4 (P4)**: No story dependencies. Depends on the crop cross-check harm-posture decision
+- **User Story 5 (P5)**: No story dependencies — red-edge/thermal signals are independent of source selection (US1), confidence tiering (US2), foundation-model features (US3), and crop cross-check (US4). No gate; ship with FR-023's overpass-time handling
 
 ### Within Each User Story
 
@@ -270,24 +359,30 @@ Task: "Implement Bhoonidhi client in src/evidence_intelligence/ingestion/bhoonid
 
 ## Implementation Strategy
 
-### MVP First (User Story 1 Only)
+**Superseded 2026-08-13 by the Delivery Sequence section above**, which supplies the ordering these two strategies originally carried. Both are kept below because their *shape* still holds — ship one story, validate it standalone, deploy, repeat — only the entry conditions and the story order changed. Where they disagree with the Delivery Sequence, the Delivery Sequence wins.
 
-1. Complete Phase 0's blocking tasks (`T0-01`–`T0-05`) — without them the pipeline reports "negligible" damage at confidence 0.50 on every request, and no later phase is measurable
-2. Complete Phase 1: Setup
-3. Complete Phase 2: Foundational (CRITICAL — blocks all stories)
-4. Complete Phase 3: User Story 1
-4. **STOP and VALIDATE**: Run `quickstart.md` Scenario 1 independently
-5. Deploy/demo if ready — this alone closes the largest capture-quality gap identified in `documents/research/Satellite-Parity-Global-Precedent-Research.md`
+### MVP First — now User Story 2, not User Story 1
+
+1. Resolve **D1** (confidence tier definition) — nothing in US2 is implementable without it
+2. Complete Wave 1's blocking tasks (`T0-05`, `T0-07`, `T0-08`, `T0-09`) — without them the pipeline reports "negligible" damage at a constant confidence of 0.50 on every request, and no later phase is measurable
+3. Complete Phase 1: Setup
+4. Complete Phase 2: Foundational (CRITICAL — blocks all stories; fold `T0-08` into `T004`)
+5. Complete Phase 4: User Story 2
+6. **STOP and VALIDATE**: run `quickstart.md` Scenario 2 independently
+7. Deploy/demo if ready
+
+The MVP moved from US1 to US2 because US1's value is gated on **D3** and on Wave 2's baseline work, while US2's is gated only on D1 — and because a tier is what makes every other figure in the package usable by a non-technical reviewer. US1 remains the larger capture-quality win; it is simply not the shortest path to a demonstrable one.
 
 ### Incremental Delivery
 
-1. Complete Setup + Foundational → Foundation ready
-2. Add User Story 1 → Validate independently → Deploy/Demo (MVP!)
-3. Add User Story 2 → Validate independently → Deploy/Demo
-4. Add User Story 3 → Validate independently → Deploy/Demo
-5. Add User Story 4 → Validate independently → Deploy/Demo
-6. Add User Story 5 → Validate independently → Deploy/Demo
-7. Each story adds value without breaking previous stories or `001`'s existing behavior
+1. Wave 1 blocking tasks + Setup + Foundational → foundation ready, figures vary with the evidence
+2. Add User Story 2 → validate independently → deploy/demo (MVP)
+3. Add Wave 2's `T05-01`/`T05-02`/`T05-06` → the archive is properly exploited and the run path is durable
+4. Add User Story 1 → validate independently → deploy/demo
+5. Add User Story 5 → validate independently → deploy/demo
+6. Add `T05-05`, then User Story 3 once **D2** lands → validate → deploy/demo
+7. Add User Story 4 once the harm-posture decision lands → validate → deploy/demo
+8. Each story still adds value without breaking previous stories or `001`'s existing behavior
 
 ---
 

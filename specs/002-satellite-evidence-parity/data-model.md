@@ -74,9 +74,13 @@ New columns, added to the table `001` already defines:
 | `request_id` | FK → EvidenceRequest | |
 | `source_dataset`, `source_version` | string, string | e.g. ECOSTRESS L2 LSTE, collection version (research.md §6.2) |
 | `land_surface_temperature`, `historical_baseline`, `deviation` | float, float, float | Canopy-temperature deviation from the field's own historical baseline, mirroring the deviation-from-baseline pattern `WeatherCorrelationResult` (`001`) and the DSI (`Modeling-Approach.md` §6) already use |
+| `overpass_local_solar_time` | time, nullable | **Added 2026-08-13 (spec.md FR-023).** Local solar time of the acquisition. Required for the deviation above to mean anything: land surface temperature swings through the day, and ECOSTRESS is deliberately non-sun-synchronous (that irregular sampling is the point of the mission), so a deviation taken against a baseline observed at a different time of day measures the diurnal cycle rather than crop stress. `null` only where `pass_available = false` |
+| `baseline_overpass_window` | string, nullable | The local-solar-time window the `historical_baseline` was drawn from, so a reader can check that observation and baseline are time-comparable rather than having to assume it |
 | `pass_available` | boolean | `false` when no usable ECOSTRESS pass existed within the analysis window — row still persisted so "we checked and none was available" is distinguishable from "we never checked" |
 
-**Validation rules**: A row is generated for every `drought`/`heatwave` peril-type request (spec.md FR-016) — `pass_available = false` rows carry null measurement fields but non-null provenance fields, so the attempt itself is always auditable. Never generated for other peril types (scope per FR-016).
+**Validation rules**: A row is generated for every `drought`/`heatwave` peril-type request (spec.md FR-016) — `pass_available = false` rows carry null measurement fields but non-null provenance fields, so the attempt itself is always auditable. Never generated for other peril types (scope per FR-016). Where `pass_available = true`, `overpass_local_solar_time` is required, and `deviation` MUST be computed only against baseline observations within `baseline_overpass_window` (spec.md FR-023).
+
+**Known spatial constraint, disclosed rather than designed around**: ECOSTRESS resolves to ~70 m, so one pixel covers roughly 0.49 ha against the ~0.16 ha median Indian field size this roadmap targets elsewhere (`research.md` §2) — a worse mixed-pixel ratio than the 10–30 m problem User Story 1 exists to address. The signal is therefore a field-neighbourhood measurement, not a per-field one, and packages MUST present it as such. A relative anomaly against surrounding pixels carries more information here than an absolute per-field temperature, since the mixing affects observation and baseline alike.
 
 ## Extension: DamageAssessmentComponentResult (`model_component_results`) — red-edge disclosure
 

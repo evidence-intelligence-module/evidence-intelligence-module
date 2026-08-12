@@ -74,6 +74,24 @@ def _insolation_proxy_mj() -> float:
 FALLBACK_TEMPERATURE_C = 25.0
 
 
+def _cross_pol_ratio_deviation(sar) -> float | None:
+    """`vh_vv_backscatter_deviation` (Modeling-Approach.md §3's Component 2
+    feature table) — how much the cross-polarized ratio changed over the event.
+
+    In dB the ratio is a difference, so the change in (VH − VV) between the
+    pre- and post-event composites reduces exactly to `vh_drop − vv_drop`; no
+    additional acquisition is needed beyond the two `sar_composite` already
+    measures. Positive means VH fell further than VV — canopy volume
+    scattering lost relative to surface return — matching the
+    positive-to-damage direction the rest of the feature set uses.
+
+    `None` unless both polarizations were measured; the feature is omitted
+    rather than defaulted in that case."""
+    if sar.vh_drop_db is None or sar.vv_drop_db is None:
+        return None
+    return sar.vh_drop_db - sar.vv_drop_db
+
+
 def run_pipeline(
     request_id: str,
     geometry: dict,
@@ -216,6 +234,10 @@ def run_pipeline(
         feature_vector["temperature_anomaly"] = weather.reanalysis.anomaly_score
     if weather.soil_moisture.anomaly_score is not None:
         feature_vector["soil_moisture_deviation"] = weather.soil_moisture.anomaly_score
+    if imagery.sar is not None:
+        cross_pol = _cross_pol_ratio_deviation(imagery.sar)
+        if cross_pol is not None:
+            feature_vector["vh_vv_backscatter_deviation"] = cross_pol
 
     ai_ml_result = ai_ml_model.predict(feature_vector, harvest_index=0.4)
     store.add_component_result(
@@ -284,12 +306,13 @@ def run_pipeline(
         dsi_indicators["ndvi_deviation"] = ndvi_drop
     if fapar_deviation is not None:
         dsi_indicators["fapar_deviation"] = fapar_deviation
-    if imagery.sar is not None and imagery.sar.vv_drop_db is not None:
-        # Modeling-Approach.md §6 names VH backscatter deviation; `sar_composite`
-        # currently measures VV. Left as-is rather than widened here — the
-        # polarization question belongs with the SAR-semantics open query in
-        # specs/002-satellite-evidence-parity/issue/.
-        dsi_indicators["sar_vh_backscatter_deviation"] = imagery.sar.vv_drop_db
+    if imagery.sar is not None and imagery.sar.vh_drop_db is not None:
+        # Modeling-Approach.md §6's indicator is cross-polarized VH, which
+        # tracks canopy volume scattering. VV — the flood detector's
+        # polarization — was standing in for it, which reported a surface-water
+        # measurement as a crop-structure one. Absent VH now leaves the
+        # indicator absent (tasks.md T0-15).
+        dsi_indicators["sar_vh_backscatter_deviation"] = imagery.sar.vh_drop_db
     dsi_historical = {
         "ndvi_deviation": historical_ndvi,
         "lswi_deviation": [],

@@ -113,12 +113,14 @@ These questions have no sourced answer in `documents/` or `YESTECH_Manual_2023.m
 
 **Satellite Evidence Parity Roadmap** — [`specs/002-satellite-evidence-parity/issue/README.md`](specs/002-satellite-evidence-parity/issue/README.md):
 
-- Confidence tier threshold values (FR-004) — no sourced cut points exist, and the ensemble figure FR-004 derives them from is currently a constant. Blocks the tier classifier.
-- What the parity claim is validated against (SC-002, US3) — the `002`-side view of `001`'s label question above.
-- SAR damage semantics for non-flood perils (FR-001) — SAR is flood-only today; what it measures for a cloud-covered hailstorm is unspecified.
-- Crop cross-check accuracy floor and discrepancy-flag harm posture (FR-010) — the only capability whose failure mode harms an identifiable individual.
-- Supplementary evidence re-evaluation and package supersession (FR-006) — low-tier guidance promises an effect no specified capability delivers; package lineage is undefined.
-- Personal data in caller-supplied attachment metadata (FR-006) — governs what personal data the module durably holds under the 10-year retention floor.
-- Commercial satellite tasking budget — **resolved** 2026-08-12 (free-only for this rollout); retained for its rationale.
+- **Open** — Confidence tier threshold values (FR-004): no sourced cut points exist, and the ensemble figure FR-004 derives them from is currently a constant. Blocks the tier classifier.
+- **Open** — What the parity claim is validated against (SC-002, US3): the `002`-side view of `001`'s label question above.
+- **Open** — Crop cross-check accuracy floor and discrepancy-flag harm posture (FR-010): the only capability whose failure mode harms an identifiable individual.
+- **Open** — Supplementary evidence re-evaluation and package supersession (FR-006): low-tier guidance promises an effect no specified capability delivers; package lineage is undefined.
+- **Open** — Personal data in caller-supplied attachment metadata (FR-006): governs what personal data the module durably holds under the 10-year retention floor.
+- **Narrowed** 2026-08-13 — SAR damage semantics for non-flood perils (FR-001): the VV-for-VH polarization substitution was a defect and is fixed (T0-15); still open is whether SAR is reached for non-flood perils at all.
+- **Resolved** 2026-08-12 — Commercial satellite tasking budget: free-only for this rollout; retained for its rationale.
+
+Each tracker's `README.md` carries the same Open / Narrowed / Resolved status per entry. The `open query - ` filename prefix is a naming convention, not a status — files aren't renamed when they close, because `spec.md`/`plan.md`/`tasks.md` link them by path.
 
 Separately, [`specs/002-satellite-evidence-parity/tasks.md`](specs/002-satellite-evidence-parity/tasks.md) carries a **Phase 0** group of base-pipeline corrections. Those are defects with unambiguous right answers, not open questions — several block the rest of `002` from being measurable at all.

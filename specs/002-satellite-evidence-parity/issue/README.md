@@ -1,16 +1,24 @@
 # Open Queries — Satellite Evidence Parity Roadmap
 
-Questions that genuinely have no answer in `documents/` (including `documents/research/Satellite-Parity-Global-Precedent-Research.md`) and are deliberately deferred rather than guessed at. Each is deferred, not blocking — see the referenced plan section for how it's handled in the meantime.
+Questions that genuinely have no answer in `documents/` (including `documents/research/Satellite-Parity-Global-Precedent-Research.md`) and are deliberately deferred rather than guessed at.
 
-| File | Surfaced during | Blocks |
-|---|---|---|
-| [`open query - commercial satellite tasking budget and volume thresholds.md`](./open%20query%20-%20commercial%20satellite%20tasking%20budget%20and%20volume%20thresholds.md) | `/speckit-plan` | `plan.md` Scale/Scope, `research.md` §5 — **resolved 2026-08-12** (free-only); retained for its rationale |
-| [`open query - confidence tier threshold values (FR-004).md`](./open%20query%20-%20confidence%20tier%20threshold%20values%20%28FR-004%29.md) | scope re-evaluation | `spec.md` FR-004/FR-005, `tasks.md` T016 — the tier cannot be implemented without a threshold or a rule table, and the figure FR-004 names is currently a constant |
-| [`open query - what the parity claim is validated against (SC-002, US3).md`](./open%20query%20-%20what%20the%20parity%20claim%20is%20validated%20against%20%28SC-002%2C%20US3%29.md) | scope re-evaluation | `spec.md` User Story 3, SC-001/SC-002, `tasks.md` T020–T025 — same underlying question as `001`'s AI/ML label query, now a live blocker rather than a deferred one |
-| [`open query - SAR damage semantics for non-flood perils (FR-001).md`](./open%20query%20-%20SAR%20damage%20semantics%20for%20non-flood%20perils%20%28FR-001%29.md) | scope re-evaluation | `spec.md` User Story 1, FR-001, `tasks.md` T008/T010 — SAR is flood-only today; what it measures for hail/cloudburst is unspecified |
-| [`open query - crop cross-check accuracy floor and discrepancy-flag harm posture (FR-010).md`](./open%20query%20-%20crop%20cross-check%20accuracy%20floor%20and%20discrepancy-flag%20harm%20posture%20%28FR-010%29.md) | scope re-evaluation | `spec.md` User Story 4, FR-010, `tasks.md` T027–T029 — the only capability here whose failure mode harms an identifiable individual |
-| [`open query - supplementary evidence re-evaluation and package supersession (FR-006).md`](./open%20query%20-%20supplementary%20evidence%20re-evaluation%20and%20package%20supersession%20%28FR-006%29.md) | scope re-evaluation | `spec.md` FR-006, `tasks.md` T017/T018 — low-tier guidance promises an effect no specified capability delivers; package lineage is undefined |
-| [`open query - personal data in caller-supplied attachment metadata (FR-006).md`](./open%20query%20-%20personal%20data%20in%20caller-supplied%20attachment%20metadata%20%28FR-006%29.md) | scope re-evaluation | `spec.md` FR-006, `tasks.md` T018/T019 — governs what personal data the module durably holds, under Constitution §7's 10-year floor |
+**Status vocabulary** (same in `specs/001-evidence-generation-pipeline/issue/`):
+
+- **Open** — no answer yet. Blocks whatever the last column names.
+- **Narrowed** — part of the question turned out to have an unambiguous right answer and was fixed; the part needing a decision is still live.
+- **Resolved** — decided and recorded. Kept in this directory for the audit trail, not because it's still live.
+
+Every filename starts `open query - ` because that was the convention when the tracker was created. It is a naming prefix, not a status — read the Status column, not the filename. Several files are linked by path from `spec.md`, `plan.md`, and `tasks.md`, so they aren't renamed when their status changes.
+
+| Status | File | Surfaced during | Blocks / what it gates |
+|---|---|---|---|
+| **Resolved** 2026-08-12 | [`open query - commercial satellite tasking budget and volume thresholds.md`](./open%20query%20-%20commercial%20satellite%20tasking%20budget%20and%20volume%20thresholds.md) | `/speckit-plan` | Nothing — decided free-only (Option A). `plan.md` Scale/Scope and `research.md` §5 are written against that decision; `commercial_tasking_client.py` ships as a disabled stub (T037) |
+| **Narrowed** 2026-08-13 | [`open query - SAR damage semantics for non-flood perils (FR-001).md`](./open%20query%20-%20SAR%20damage%20semantics%20for%20non-flood%20perils%20%28FR-001%29.md) | scope re-evaluation | `spec.md` User Story 1, FR-001, `tasks.md` T008/T010. The VV-for-VH polarization substitution was a defect, not a decision, and is fixed (T0-15). Still open: whether SAR is reached for non-flood perils at all, and what magnitude of backscatter change licenses a damage claim |
+| **Open** | [`open query - confidence tier threshold values (FR-004).md`](./open%20query%20-%20confidence%20tier%20threshold%20values%20%28FR-004%29.md) | scope re-evaluation | `spec.md` FR-004/FR-005, `tasks.md` T016 — the tier cannot be implemented without a threshold or a rule table, and the figure FR-004 names is currently a constant |
+| **Open** | [`open query - what the parity claim is validated against (SC-002, US3).md`](./open%20query%20-%20what%20the%20parity%20claim%20is%20validated%20against%20%28SC-002%2C%20US3%29.md) | scope re-evaluation | `spec.md` User Story 3, SC-001/SC-002, `tasks.md` T020–T025 — same underlying question as `001`'s AI/ML label query, now a live blocker rather than a deferred one |
+| **Open** | [`open query - crop cross-check accuracy floor and discrepancy-flag harm posture (FR-010).md`](./open%20query%20-%20crop%20cross-check%20accuracy%20floor%20and%20discrepancy-flag%20harm%20posture%20%28FR-010%29.md) | scope re-evaluation | `spec.md` User Story 4, FR-010, `tasks.md` T027–T029 — the only capability here whose failure mode harms an identifiable individual |
+| **Open** | [`open query - supplementary evidence re-evaluation and package supersession (FR-006).md`](./open%20query%20-%20supplementary%20evidence%20re-evaluation%20and%20package%20supersession%20%28FR-006%29.md) | scope re-evaluation | `spec.md` FR-006, `tasks.md` T017/T018 — low-tier guidance promises an effect no specified capability delivers; package lineage is undefined |
+| **Open** | [`open query - personal data in caller-supplied attachment metadata (FR-006).md`](./open%20query%20-%20personal%20data%20in%20caller-supplied%20attachment%20metadata%20%28FR-006%29.md) | scope re-evaluation | `spec.md` FR-006, `tasks.md` T018/T019 — governs what personal data the module durably holds, under Constitution §7's 10-year floor |
 
 The six entries marked "scope re-evaluation" were surfaced on 2026-08-13 by a full re-reading of this feature's artifacts against the running code in `src/`, rather than during `/speckit-specify` or `/speckit-plan`. That pass also found defects with unambiguous right answers — those are not open queries and are tracked as Phase 0 tasks in [`../tasks.md`](../tasks.md), not here.
 

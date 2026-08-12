@@ -97,6 +97,24 @@ A claims reviewer handling a drought or heatwave claim needs stress evidence bey
 - What happens when ECOSTRESS's irregular revisit doesn't produce a pass within a drought/heatwave claim's analysis window? The module MUST fall back to red-edge and existing baseline signals and MUST NOT fail the request solely because thermal coverage was unavailable — this is expected, disclosed per-package data availability, not a pipeline failure.
 - What happens when even the best available combination of sources cannot resolve a case above the lowest confidence tier (the structural ceiling documented in research §2.6 — sub-canopy conditions, actual harvested yield, pre-symptom pest/disease onset)? The package MUST be delivered at the lowest tier with an explicit statement of what remains unresolved, and MUST NOT claim or imply CCE-equivalent confidence regardless of how much sourcing/modeling effort was applied.
 
+### Edge Cases — coverage and geometry (added 2026-08-13)
+
+- What happens when the field is *partially* visible — some valid pixels, but not enough for a confident reading? Coverage is not binary. The module MUST record the proportion of the geometry that was actually observable for each source and window, and MUST reflect it in the confidence tier, rather than treating any non-empty composite as full coverage.
+- What happens when the submitted geometry is smaller than a single pixel of the selected source, or is a sliver whose pixels are all boundary pixels? The module MUST record that no pure pixel was available and MUST NOT report a per-field index value as if it were measured on that field alone.
+- What happens when the submitted geometry contains non-crop land (a road, a homestead, a water body)? Those pixels bias every index computed over the geometry. The module MUST either exclude them or disclose that the geometry was used unmasked.
+- What happens when the claimed event date falls outside any plausible crop calendar for that field — a claim against a fallow field? The existing phenology check flags this today but does not affect any output figure. The flag MUST reach the confidence tier rather than sitting only in the notes.
+- What happens when two requests are submitted over overlapping geometries, or the same geometry is claimed twice in one season? The module MUST NOT silently produce independent, potentially contradictory packages with no record that they describe the same ground.
+- What happens when the geometry submitted is not the claimant's field — a polygon drawn over a genuinely damaged neighbouring field? The module cannot verify land tenure and MUST NOT imply that it has; the package MUST state that the geometry is caller-asserted.
+
+### Edge Cases — sources, history, and package lifetime (added 2026-08-13)
+
+- What happens when an enhanced source offers higher resolution but a narrower spectral band set than the baseline it replaces (e.g. a source with no SWIR or red-edge bands)? Resolution and spectral coverage trade against each other. The module MUST NOT compute an index under its established name from bands that do not support it, and MUST fall back per FR-003 rather than silently substituting a different index.
+- What happens when the field's multi-year historical baseline includes seasons that were themselves loss years? The baseline then encodes damage as normal, suppressing the anomaly. The module MUST use a baseline statistic robust to this and MUST disclose which historical seasons contributed.
+- What happens when the claimed event predates the archive of every available source, or the geometry falls outside a source's coverage or latitude band? This is distinct from a transient gap and MUST be reported as a structural coverage limit, not as a retryable insufficient-data state.
+- What happens when a data source is reprocessed, re-versioned, or retired *after* a package citing it was issued? Constitution Principle I's reproducibility claim ("the same request re-run later yields the same result") does not survive this on a version string alone. The module MUST record enough to distinguish "the method changed" from "the underlying data changed."
+- What happens when many requests arrive for one district at once, as they will during any real regional catastrophe? This is both a load condition and a correlated-failure condition — the same cloud cover or source outage affects every request in the batch simultaneously.
+- What happens when a package delivered at the lowest confidence tier is later superseded by a higher-tier package, after the insurer has already acted on the first? Both packages are §65B artifacts under a 10-year retention rule. The relationship between them MUST be explicit in the record, not inferable only from timestamps.
+
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
@@ -121,6 +139,13 @@ A claims reviewer handling a drought or heatwave claim needs stress evidence bey
 - **FR-018**: Every red-edge index and ECOSTRESS-derived signal included in a package MUST carry source/version provenance, per the same discipline Constitution Principle I/II requires of every other satellite-derived figure in this module.
 - **FR-019**: Commercial satellite tasking (paid VHR optical, commercial SAR) is **not authorized** for this rollout — the Satellite Source Registry's commercial tier remains disabled by default; enhanced-tier sourcing is limited to free/open sources (existing baseline plus ISRO sovereign sources via a dedicated access client, since these are not available through the existing GEE integration).
 
+The following four were added on 2026-08-13. FR-020–FR-022 close capture-quality factors this spec's own Input paragraph names — cross-sensor harmonization, mixed-pixel effects on India's small field sizes, atmospheric/BRDF correction, SAR speckle/decorrelation — which had no requirement behind them; FR-023 closes a reproducibility gap in the thermal signal added by User Story 5.
+
+- **FR-020**: Where a single evidence package draws index values from more than one sensor, the module MUST record which sensor produced each value, and MUST NOT present values from different sensors as directly comparable unless a documented harmonization was applied. Where no harmonization exists for a given sensor pair, the module MUST either confine the comparison to one sensor or disclose it as cross-sensor and unharmonized.
+- **FR-021**: Every source in the Satellite Source Registry MUST declare the spectral bands it provides, and the module MUST NOT compute a named index from a source lacking the bands that index requires. A source that improves spatial resolution while removing bands the baseline provided is a partial substitute, not a replacement, and MUST be treated as such in source selection (FR-001, FR-003).
+- **FR-022**: SAR change detection MUST compare acquisitions of matching viewing geometry — same relative orbit and same pass direction — since backscatter varies systematically with incidence angle independently of any ground change. Any speckle filtering or terrain correction applied MUST be disclosed with the resulting figure, per the same discipline FR-018 requires of every other satellite-derived value.
+- **FR-023**: Every thermal (canopy-temperature) measurement MUST record the acquisition's local solar time, and MUST be compared only against baseline observations at a comparable local solar time. Land surface temperature varies strongly through the day, and ECOSTRESS's ISS orbit is deliberately non-sun-synchronous, so a deviation computed across mismatched overpass times is not reproducible in the sense Constitution Principle I requires.
+
 ### Key Entities
 
 - **Confidence Tier**: A plain-language classification (e.g., High / Medium / Low) attached to an evidence package, derived from existing component/ensemble confidence figures, with tier-specific guidance text and, for the lowest tier, an explicit non-equivalence-to-CCE statement.
@@ -140,6 +165,7 @@ A claims reviewer handling a drought or heatwave claim needs stress evidence bey
 - **SC-004**: 0% of evidence packages, across all confidence tiers and all source combinations, present output as equivalent to or a replacement for CCE-based determination (verified via package-content audit).
 - **SC-005**: The proportion of claims resolving to the lowest confidence tier is tracked and reported as a visible baseline metric, so later roadmap phases have a concrete number to measure improvement against.
 - **SC-006**: For drought and heatwave claims specifically, the evidence package includes a dedicated stress signal (red-edge and/or thermal) distinct from the generic vegetation-index baseline, whenever a usable red-edge or ECOSTRESS source exists for the claim window.
+- **SC-007** (added 2026-08-13): The lowest-tier rate from SC-005 is reported **stratified** by field-size band, agro-climatic zone, and season — not only as a single aggregate. Both drivers of a low tier, small fields and monsoon cloud cover, correlate with the smallholder population this module exists to serve, so an aggregate figure can stay flat while the tier systematically disadvantages that group. Stratified reporting is what makes that visible; this criterion asserts the measurement, not a target value for it.
 
 ## Assumptions
 
