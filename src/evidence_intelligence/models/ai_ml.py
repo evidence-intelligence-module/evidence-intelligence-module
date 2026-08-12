@@ -1,4 +1,4 @@
-"""Component 2 — AI/ML Damage & Yield-Loss Model (Modeling-Approach.md §3).
+"""Component 2 — AI/ML Damage & Yield-Loss Model (modeling-approach.md §3).
 Random Forest over the documented multi-source feature set, with mandatory
 hyperparameter and MAE/RMSE/NRMSE disclosure (Constitution §2.2).
 
@@ -28,7 +28,7 @@ from sklearn.ensemble import RandomForestRegressor
 
 METHODOLOGY_VERSION = "ai-ml-rf-v1"
 
-# Modeling-Approach.md §3 Table — fixed feature order for reproducibility (FR-021).
+# modeling-approach.md §3 Table — fixed feature order for reproducibility (FR-021).
 FEATURE_NAMES: list[str] = [
     "ndvi_deviation",
     "evi_deviation",
@@ -49,7 +49,7 @@ FEATURE_NAMES: list[str] = [
     "soil_moisture_deviation",
 ]
 
-# Disclosed per Modeling-Approach.md §3's mandated disclosure discipline
+# Disclosed per modeling-approach.md §3's mandated disclosure discipline
 # (matching YES-TECH §2.3): number of trees, features per split, min leaf size.
 HYPERPARAMETERS = {
     "n_estimators": 200,

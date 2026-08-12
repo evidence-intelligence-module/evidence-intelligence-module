@@ -39,7 +39,7 @@ Resolves the technical choices flagged in `plan.md`'s Technical Context. Every d
 
 ## 4. Confidence tier structure
 
-**Decision**: Three tiers — High / Medium / Low — computed as a deterministic function of the existing per-component and ensemble confidence figures (`Modeling-Approach.md` §5, §7), with the Low tier carrying a mandatory non-equivalence-to-CCE statement and optional-evidence guidance text.
+**Decision**: Three tiers — High / Medium / Low — computed as a deterministic function of the existing per-component and ensemble confidence figures (`modeling-approach.md` §5, §7), with the Low tier carrying a mandatory non-equivalence-to-CCE statement and optional-evidence guidance text.
 
 **Rationale**: Every credible global precedent reviewed uses a small, named tier set with an explicit lowest-tier fallback path rather than a raw score or a binary pass/fail (research §1.10, citing EU CAP Check-by-Monitoring's green/yellow/red as the clearest regulatory precedent). Three tiers is the minimum needed to distinguish "trust this," "this needs more evidence," and "this is genuinely uncertain" — matching CbM's structure without inventing a finer-grained scheme no reviewed precedent uses.
 
@@ -60,7 +60,7 @@ Resolves the technical choices flagged in `plan.md`'s Technical Context. Every d
 
 ### 6.1 Red-edge index formalization
 
-**Decision**: Compute NDRE (Normalized Difference Red-Edge) as the primary formalized index, with Chlorophyll Index Red-Edge and MTCI as secondary/disclosed alternatives, replacing the generic "red-edge index" placeholder in `Modeling-Approach.md` §3's Component 2 feature table.
+**Decision**: Compute NDRE (Normalized Difference Red-Edge) as the primary formalized index, with Chlorophyll Index Red-Edge and MTCI as secondary/disclosed alternatives, replacing the generic "red-edge index" placeholder in `modeling-approach.md` §3's Component 2 feature table.
 
 **Rationale**: `documents/research/satellite-parity-global-precedent-research.md` §2.5a/§2.5a-quantitative documents NDRE detecting nitrogen deficiency 1–2 weeks earlier than NDVI and resisting NDVI's saturation in dense canopy, with sourced R²=0.74–0.94 (nitrogen/chlorophyll) against Sentinel-2's existing red-edge bands (705/740/783nm) — no new data source required, purely a feature-engineering formalization.
 

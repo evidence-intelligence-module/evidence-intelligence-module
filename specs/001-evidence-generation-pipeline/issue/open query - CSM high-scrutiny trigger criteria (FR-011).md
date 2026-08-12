@@ -7,21 +7,21 @@
 
 A cross-tracker evaluation on 2026-08-13 checked this query against the code and found it asks the wrong question first.
 
-`models/csm_assimilation.py`'s `run()` is a placeholder. It returns `clip(damage_signal, 0, 1)` at a fixed `calibration_confidence` of 0.4 — no WOFOST, no InfoCrop, no assimilated LAI or soil-moisture state, which is the entire substance of `Modeling-Approach.md` §4. At the `pipeline.py` call site, `damage_signal` is `ndvi_drop`, the same quantity that drives Component 2's feature vector.
+`models/csm_assimilation.py`'s `run()` is a placeholder. It returns `clip(damage_signal, 0, 1)` at a fixed `calibration_confidence` of 0.4 — no WOFOST, no InfoCrop, no assimilated LAI or soil-moisture state, which is the entire substance of `modeling-approach.md` §4. At the `pipeline.py` call site, `damage_signal` is `ndvi_drop`, the same quantity that drives Component 2's feature vector.
 
 So enabling the tier today would add a component that **re-reports an existing component's input as though it were an independent third estimate**. `models/ensemble.py` combines contributions by confidence-weighted average, which treats agreement between components as corroboration — so the effect is not a harmless no-op, it is manufactured corroboration in a figure that ends up in a legal evidence package. The 0.4 confidence limits the magnitude; it does not change the kind.
 
 The module's own header docstring asserted the opposite — *"This module is a real, callable implementation; only the decision of when to call it is unresolved"* — while `run()`'s docstring two lines below called itself a placeholder. That contradiction invited exactly the wrong action (flipping `CSM_HIGH_SCRUTINY_ENABLED` on the belief that only policy was missing) and was corrected on 2026-08-13.
 
-**Therefore**: the blocking item for Component 3 is *implementing* it — wiring a calibrated crop simulation model per `Modeling-Approach.md` §4. The trigger-criteria question below stays open and stays valid, but it is downstream of that work, not ahead of it, and there is no value in resolving it first.
+**Therefore**: the blocking item for Component 3 is *implementing* it — wiring a calibrated crop simulation model per `modeling-approach.md` §4. The trigger-criteria question below stays open and stays valid, but it is downstream of that work, not ahead of it, and there is no value in resolving it first.
 
 ## The original question (still open, now correctly sequenced)
 
-`HLD.md` §3 and `Evidence-Flow-Spec.md` §4 both name a "high-scrutiny"/"high-value" tier of requests that additionally runs the CSM (crop-simulation-model) assimilation component, on top of the semi-physical and AI/ML models that run for every request. Neither document defines what makes a request "high-scrutiny."
+`hld.md` §3 and `evidence-flow-spec.md` §4 both name a "high-scrutiny"/"high-value" tier of requests that additionally runs the CSM (crop-simulation-model) assimilation component, on top of the semi-physical and AI/ML models that run for every request. Neither document defines what makes a request "high-scrutiny."
 
 ## What was checked
 
-Searched `YESTECH_Manual_2023.md` for a transferable precedent. The closest analog is not a per-claim escalation rule — it's a district/season-level statistical-audit rule: "at least 10 CCEs per IU covering 5–10% of IUs" get deeper ground-truth verification each season, plus a graded weightage table tied to how many CCEs a district records (Table 4). That mechanism is explicitly CCE-based, which this module is barred from touching (Constitution §4), so it doesn't transfer directly to a per-request trigger.
+Searched `yestech_manual_2023.md` for a transferable precedent. The closest analog is not a per-claim escalation rule — it's a district/season-level statistical-audit rule: "at least 10 CCEs per IU covering 5–10% of IUs" get deeper ground-truth verification each season, plus a graded weightage table tied to how many CCEs a district records (Table 4). That mechanism is explicitly CCE-based, which this module is barred from touching (Constitution §4), so it doesn't transfer directly to a per-request trigger.
 
 ## Options considered (presented to user 2026-08-12)
 

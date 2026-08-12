@@ -1,4 +1,4 @@
-"""Component 4 — Ensemble Blending Engine (Modeling-Approach.md §5). Always
+"""Component 4 — Ensemble Blending Engine (modeling-approach.md §5). Always
 combines every component that ran for a request, weighted by each one's own
 validation confidence — recomputed per request, never a fixed a-priori split
 (spec.md FR-013)."""

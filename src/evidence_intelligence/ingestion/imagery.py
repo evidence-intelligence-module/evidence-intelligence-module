@@ -1,6 +1,6 @@
 """Imagery Ingestion (HLD §3). Pre/post-event acquisition, historical
 baseline, SAR flood substitution, and the phenology sanity check
-(Evidence-Flow-Spec.md §3-4)."""
+(evidence-flow-spec.md §3-4)."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ class ImageryIngestionResult:
 
 
 def _phenology_sanity_check(pre_event: ImageryComposite | None) -> str | None:
-    """Evidence-Flow-Spec.md §3: flagged, not blocked, if the pre-event NDVI
+    """evidence-flow-spec.md §3: flagged, not blocked, if the pre-event NDVI
     doesn't plausibly indicate a standing crop before the claimed event."""
     if pre_event is None or pre_event.index_value is None:
         return None

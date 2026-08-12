@@ -4,7 +4,7 @@
 
 **Input**: Feature specification from `/specs/002-satellite-evidence-parity/spec.md`
 
-**Extends**: [`specs/001-evidence-generation-pipeline/`](../001-evidence-generation-pipeline/) — this is a second feature against the same running service, not a new service. It extends the existing data model (`../001-evidence-generation-pipeline/data-model.md`), API contract (`../001-evidence-generation-pipeline/contracts/evidence-request-api.md`), and `Modeling-Approach.md` Component 2, rather than redesigning them. Where this plan doesn't override 001's decisions, 001's decisions still apply.
+**Extends**: [`specs/001-evidence-generation-pipeline/`](../001-evidence-generation-pipeline/) — this is a second feature against the same running service, not a new service. It extends the existing data model (`../001-evidence-generation-pipeline/data-model.md`), API contract (`../001-evidence-generation-pipeline/contracts/evidence-request-api.md`), and `modeling-approach.md` Component 2, rather than redesigning them. Where this plan doesn't override 001's decisions, 001's decisions still apply.
 
 **Grounded in**: [`documents/research/satellite-parity-global-precedent-research.md`](../../documents/research/satellite-parity-global-precedent-research.md) — every source-selection and confidence-tiering decision below traces to a cited finding there, not to an invented figure.
 

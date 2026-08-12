@@ -1,5 +1,5 @@
 # Evidence Intelligence Module Constitution
-<!-- Distilled for Spec Kit from the canonical source of truth: documents/Constitution.md. That document controls in case of conflict; amend it first, then sync this file. -->
+<!-- Distilled for Spec Kit from the canonical source of truth: documents/constitution.md. That document controls in case of conflict; amend it first, then sync this file. -->
 
 ## Core Principles
 
@@ -7,7 +7,7 @@
 Every evidence artifact must be re-derivable: the same source imagery and parameters must yield the same result. Source dataset name, version, and acquisition timestamp are recorded with every output. The methodology (thresholds, models, regression coefficients) used to produce a given package is pinned and recorded so it can be explained and re-derived years later, even after the methodology has since changed.
 
 ### II. Event-Causal, Independently Verifiable
-Every evidence package ties to a specific location, a specific claimed event date, and a specific peril type — generic regional monitoring is not evidence for an individual claim. An insurer, auditor, or court must be able to trace any figure back to a named, dated, publicly identifiable satellite/weather data source. Every evidence-generation claim in project documentation must cite a named public dataset or a specific section of `YESTECH_Manual_2023.md` — never invented figures or citations.
+Every evidence package ties to a specific location, a specific claimed event date, and a specific peril type — generic regional monitoring is not evidence for an individual claim. An insurer, auditor, or court must be able to trace any figure back to a named, dated, publicly identifiable satellite/weather data source. Every evidence-generation claim in project documentation must cite a named public dataset or a specific section of `yestech_manual_2023.md` — never invented figures or citations.
 
 ### III. Legally Admissible by Construction (NON-NEGOTIABLE)
 Packaging must satisfy Indian Evidence Act, 1872 §65B (electronic record admissibility): source attribution, processing methodology, accuracy statement, and chain of custody are mandatory fields on every output, not optional extras.
@@ -20,7 +20,7 @@ The module exposes a generic evidence-request contract (location, event date, pe
 
 ## Additional Constraints
 
-**YES-TECH alignment posture:** align with `YESTECH_Manual_2023.md`'s modeling rigor and evidentiary discipline (five-model-family ensemble structure, disclosed hyperparameters and MAE/RMSE/NRMSE reporting, documented SOPs/versioning, entropy-weighted composite scoring, wall-to-wall per-field coverage) without adopting its governance or CCE-blending machinery (no CCE+modelled-yield blending formula, no MITR/TIP empanelment or Tripartite Agreements, no claim that this module's output is Threshold-Yield-grade).
+**YES-TECH alignment posture:** align with `yestech_manual_2023.md`'s modeling rigor and evidentiary discipline (five-model-family ensemble structure, disclosed hyperparameters and MAE/RMSE/NRMSE reporting, documented SOPs/versioning, entropy-weighted composite scoring, wall-to-wall per-field coverage) without adopting its governance or CCE-blending machinery (no CCE+modelled-yield blending formula, no MITR/TIP empanelment or Tripartite Agreements, no claim that this module's output is Threshold-Yield-grade).
 
 **Data retention:** evidence artifacts (source imagery references, derived rasters, weather correlation results, generated reports) are retained for 10 years from generation, per IRDAI's *Minimum Information Required for Investigation and Inspection Regulations, 2020*. Raw source data may be referenced rather than duplicated where the source (e.g., Google Earth Engine, CHIRPS) guarantees long-term public archival access; derived analysis products and final reports are always retained directly.
 
@@ -32,6 +32,6 @@ Cross-document references use `File.md §N — Section Title` or a markdown link
 
 ## Governance
 
-This Constitution may be amended only by an explicit, recorded decision — never silently superseded by a later document that merely contradicts it. Any proposal to integrate this module more tightly with a specific intimation channel (relaxing Principle V), add predictive alerting (relaxing Principle IV), or touch CCE data (relaxing Principle IV) must amend the canonical Constitution first, with rationale stated, before implementation. `HLD.md` and `Evidence-Flow-Spec.md` implement this Constitution; where they appear to conflict with it, the canonical document controls. This file is a Spec-Kit-facing distillation kept in sync with it, not an independent authority.
+This Constitution may be amended only by an explicit, recorded decision — never silently superseded by a later document that merely contradicts it. Any proposal to integrate this module more tightly with a specific intimation channel (relaxing Principle V), add predictive alerting (relaxing Principle IV), or touch CCE data (relaxing Principle IV) must amend the canonical Constitution first, with rationale stated, before implementation. `hld.md` and `evidence-flow-spec.md` implement this Constitution; where they appear to conflict with it, the canonical document controls. This file is a Spec-Kit-facing distillation kept in sync with it, not an independent authority.
 
 **Version**: 1.0.0 | **Ratified**: 2026-08-12 | **Last Amended**: 2026-08-12

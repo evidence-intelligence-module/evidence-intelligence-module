@@ -40,7 +40,7 @@ This does not close the decision — per Constitution §8 it remains the boundar
 
 ## The question
 
-`ai_ml.py` (Modeling-Approach.md §3, Component 2) currently ships **untrained**: no labeled `(feature vector → verified damage outcome)` pairs exist anywhere in this repo or its source documents, so `predict()` uses a disclosed placeholder formula and `confidence_or_accuracy` honestly reports `"untrained_placeholder"` rather than a fabricated MAE/RMSE/NRMSE (Constitution §2.2, and the same no-invented-figures rule `CLAUDE.md` applies to documentation).
+`ai_ml.py` (modeling-approach.md §3, Component 2) currently ships **untrained**: no labeled `(feature vector → verified damage outcome)` pairs exist anywhere in this repo or its source documents, so `predict()` uses a disclosed placeholder formula and `confidence_or_accuracy` honestly reports `"untrained_placeholder"` rather than a fabricated MAE/RMSE/NRMSE (Constitution §2.2, and the same no-invented-figures rule `CLAUDE.md` applies to documentation).
 
 Two questions, not one:
 1. Where does real labeled training data come from at all?
@@ -48,7 +48,7 @@ Two questions, not one:
 
 ## What was checked
 
-`Constitution.md` §4: *"Does not ingest, validate, or dispute Crop Cutting Experiment data... Does not implement the YES-TECH blended-yield formula... or claim to replace CCE."* This reads naturally as governing the module's **live, per-request behavior** — what a running evidence-generation call is allowed to touch. It does not explicitly address whether CCE data may be used **historically and offline**, purely to calibrate a model that itself never touches CCE at runtime. No document (`Constitution.md`, `HLD.md`, `Modeling-Approach.md`) resolves this either way — it's a genuine gap, not a settled "no."
+`constitution.md` §4: *"Does not ingest, validate, or dispute Crop Cutting Experiment data... Does not implement the YES-TECH blended-yield formula... or claim to replace CCE."* This reads naturally as governing the module's **live, per-request behavior** — what a running evidence-generation call is allowed to touch. It does not explicitly address whether CCE data may be used **historically and offline**, purely to calibrate a model that itself never touches CCE at runtime. No document (`constitution.md`, `hld.md`, `modeling-approach.md`) resolves this either way — it's a genuine gap, not a settled "no."
 
 `documents/README.md` §8 Roadmap already names the intended path: **"Pilot & validation — run against real claims in a small number of districts, validate outputs against ground truth, calibrate thresholds before wider rollout."** That phase hasn't started; it's the most direct route to real labels regardless of the CCE question below.
 

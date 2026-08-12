@@ -25,7 +25,7 @@ This roadmap's enhanced-tier sourcing (spec.md FR-002, FR-013) includes commerci
 
 ## Recommendation
 
-Not resolved unilaterally here. Leaning toward A/C as the safer default for the near-term phase (`plan.md`/`research.md` §5 already assume this — the Satellite Source Registry and commercial tasking client are designed so a `false`/unauthorized default requires no code change later), with B as the natural target once a budget figure exists. Per Constitution §8-equivalent governance (canonical `documents/Constitution.md` §8), this needs an explicit, recorded decision from whoever owns delivery-planning budget, not an inference from vendor list prices.
+Not resolved unilaterally here. Leaning toward A/C as the safer default for the near-term phase (`plan.md`/`research.md` §5 already assume this — the Satellite Source Registry and commercial tasking client are designed so a `false`/unauthorized default requires no code change later), with B as the natural target once a budget figure exists. Per Constitution §8-equivalent governance (canonical `documents/constitution.md` §8), this needs an explicit, recorded decision from whoever owns delivery-planning budget, not an inference from vendor list prices.
 
 ## Resolution
 

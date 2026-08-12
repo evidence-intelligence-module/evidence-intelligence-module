@@ -48,18 +48,18 @@ This module does not assume, depend on, or reference any specific claim-intimati
 
 - It exposes a **generic evidence-request contract**: given a location (geometry), an event date, a peril type, and an optional external reference ID, it returns an evidence package (or a status while one is being generated).
 - Any consumer — a voice-agent system, a web portal, a CSC-assisted workflow, an insurer's own claims system — integrates the same way, through that contract. None of them is a privileged or assumed caller.
-- This module owns its own data model (Section 4 of `HLD.md`). It does not read from or write to another initiative's tables, topics, or tool definitions.
+- This module owns its own data model (Section 4 of `hld.md`). It does not read from or write to another initiative's tables, topics, or tool definitions.
 
 ## 6. YES-TECH Alignment Posture
 
-[`YESTECH_Manual_2023.md`](./standards/YESTECH_Manual_2023.md) is the government's own standard for technology-based yield estimation under PMFBY. This module aligns with its **modeling rigor and evidentiary discipline** without adopting its **governance or CCE-blending machinery** — and, per direct instruction, is designed to at least match that rigor and exceed it where practical.
+[`yestech_manual_2023.md`](./standards/yestech_manual_2023.md) is the government's own standard for technology-based yield estimation under PMFBY. This module aligns with its **modeling rigor and evidentiary discipline** without adopting its **governance or CCE-blending machinery** — and, per direct instruction, is designed to at least match that rigor and exceed it where practical.
 
-**Adopted as a concrete design pattern, not just in spirit** (full detail in [Modeling-Approach.md](./Modeling-Approach.md)):
+**Adopted as a concrete design pattern, not just in spirit** (full detail in [modeling-approach.md](./modeling-approach.md)):
 - The same five-model-family structure YES-TECH mandates — a semi-physical (RUE-based) model, AI/ML models with disclosed hyperparameters and MAE/RMSE/NRMSE accuracy reporting, crop simulation model assimilation, ensemble blending, and an entropy-weighted composite index — re-purposed for per-field damage/evidence scoring rather than IU-level yield determination.
 - Reproducibility and methodology documentation as a hard requirement for every model/output (YES-TECH mandates SOPs, model versioning, and documented accuracy per Section 4–6 and Appendix 1 of the manual).
-- Transparent, auditable conversion of a satellite-observed anomaly into a severity/loss estimate — the Damage Severity Index (Modeling-Approach.md §6) plays the same structural role as YES-TECH's Crop Health Factor (entropy-weighted, Min-Max normalized), without the CCE-blending step.
+- Transparent, auditable conversion of a satellite-observed anomaly into a severity/loss estimate — the Damage Severity Index (modeling-approach.md §6) plays the same structural role as YES-TECH's Crop Health Factor (entropy-weighted, Min-Max normalized), without the CCE-blending step.
 - Preference for wall-to-wall, per-field coverage over sparse sampling or IU-group aggregation, consistent with YES-TECH's own critique of CCE's statistical inadequacy — and going further than YES-TECH's own IU-level granularity.
-- Ensembling as the **default** behavior for every request, rather than a single model family selected once per season — see Modeling-Approach.md §8 for the full robustness comparison.
+- Ensembling as the **default** behavior for every request, rather than a single model family selected once per season — see modeling-approach.md §8 for the full robustness comparison.
 
 **Not adopted:**
 - The CCE + modelled-yield blending formula and its mandated weightages.
@@ -76,4 +76,4 @@ This module does not assume, depend on, or reference any specific claim-intimati
 
 - This Constitution may be amended only by an explicit, recorded decision — not silently superseded by a later document that merely contradicts it.
 - Any proposal to integrate this module more tightly with a specific intimation channel (relaxing Section 5), to add predictive alerting (relaxing Section 3), or to touch CCE data (relaxing Section 4) must amend this document first, with the rationale stated, before implementation.
-- `HLD.md` and `Evidence-Flow-Spec.md` in this same folder implement this Constitution; where they appear to conflict with it, this document controls.
+- `hld.md` and `evidence-flow-spec.md` in this same folder implement this Constitution; where they appear to conflict with it, this document controls.

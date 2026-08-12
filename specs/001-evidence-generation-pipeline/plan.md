@@ -4,17 +4,17 @@
 
 **Input**: Feature specification from `/specs/001-evidence-generation-pipeline/spec.md`
 
-**Implements**: [`documents/HLD.md`](../../documents/HLD.md) — that document is the architectural source of truth; this plan and its Phase 0/1 artifacts (`research.md`, `data-model.md`, `contracts/`) translate it into an executable build, they do not redesign it.
+**Implements**: [`documents/hld.md`](../../documents/hld.md) — that document is the architectural source of truth; this plan and its Phase 0/1 artifacts (`research.md`, `data-model.md`, `contracts/`) translate it into an executable build, they do not redesign it.
 
 ## Summary
 
-A standalone backend service that accepts a generic evidence-request (field geometry, event date, peril type, optional external reference ID), acquires satellite imagery and weather data for the event window, runs three independent damage/yield-loss assessment approaches (semi-physical, AI/ML, and — for high-scrutiny requests — crop-simulation assimilation) plus a causation-confidence scorer, blends the results into an ensemble estimate and a Damage Severity Index, and assembles everything into a §65B-admissible evidence package (PDF + JSON + maps). Built as a Python service on top of Google Earth Engine, following the architecture already fixed in `HLD.md` — this plan implements that architecture, it does not redesign it.
+A standalone backend service that accepts a generic evidence-request (field geometry, event date, peril type, optional external reference ID), acquires satellite imagery and weather data for the event window, runs three independent damage/yield-loss assessment approaches (semi-physical, AI/ML, and — for high-scrutiny requests — crop-simulation assimilation) plus a causation-confidence scorer, blends the results into an ensemble estimate and a Damage Severity Index, and assembles everything into a §65B-admissible evidence package (PDF + JSON + maps). Built as a Python service on top of Google Earth Engine, following the architecture already fixed in `hld.md` — this plan implements that architecture, it does not redesign it.
 
 ## Technical Context
 
-**Language/Version**: Python 3.11 — matches every dependency below (GEE Python API, scikit-learn, ReportLab); no other language appears anywhere in `HLD.md` §7.
+**Language/Version**: Python 3.11 — matches every dependency below (GEE Python API, scikit-learn, ReportLab); no other language appears anywhere in `hld.md` §7.
 
-**Primary Dependencies**: Google Earth Engine Python API (satellite/weather data access); scikit-learn (Random Forest) and/or a DNN framework (AI/ML damage model, Modeling-Approach.md §3); WOFOST or InfoCrop, Indian-calibrated (CSM assimilation, advanced tier, Modeling-Approach.md §4); Matplotlib/Folium (GIS map generation); ReportLab (PDF report generation).
+**Primary Dependencies**: Google Earth Engine Python API (satellite/weather data access); scikit-learn (Random Forest) and/or a DNN framework (AI/ML damage model, modeling-approach.md §3); WOFOST or InfoCrop, Indian-calibrated (CSM assimilation, advanced tier, modeling-approach.md §4); Matplotlib/Folium (GIS map generation); ReportLab (PDF report generation).
 
 **Storage**: S3-compatible object storage for evidence packages and imagery derivatives (HLD §7, explicit). A relational store is required for the structured data model (`evidence_requests`, `satellite_analysis_results`, `model_component_results`, `weather_correlation_results`, `evidence_packages` — HLD §4) but no specific engine is named in existing docs — resolved in [research.md](./research.md).
 
@@ -70,13 +70,13 @@ src/evidence_intelligence/
 │   ├── imagery.py        # Imagery Ingestion (HLD §3) — pre/post-event + historical baseline via GEE
 │   └── weather.py        # Weather Correlation Engine (HLD §3) — CHIRPS/ERA5/GPM/SMAP + IMD AWS corroboration
 ├── models/
-│   ├── semi_physical.py  # Component 1 — Modeling-Approach.md §2
-│   ├── ai_ml.py          # Component 2 — Modeling-Approach.md §3
-│   ├── csm_assimilation.py # Component 3 (advanced tier) — Modeling-Approach.md §4
-│   ├── ensemble.py       # Component 4 — Modeling-Approach.md §5
-│   └── dsi.py             # Component 5 (Damage Severity Index) — Modeling-Approach.md §6
+│   ├── semi_physical.py  # Component 1 — modeling-approach.md §2
+│   ├── ai_ml.py          # Component 2 — modeling-approach.md §3
+│   ├── csm_assimilation.py # Component 3 (advanced tier) — modeling-approach.md §4
+│   ├── ensemble.py       # Component 4 — modeling-approach.md §5
+│   └── dsi.py             # Component 5 (Damage Severity Index) — modeling-approach.md §6
 ├── causation/
-│   └── scoring.py         # Causation Analysis Engine — Evidence-Flow-Spec.md §5
+│   └── scoring.py         # Causation Analysis Engine — evidence-flow-spec.md §5
 ├── packaging/
 │   └── report_generator.py # Report/Package Generator (HLD §3, §6) — PDF/JSON/maps + §65B fields
 └── store/

@@ -5,7 +5,7 @@ Known limitation, disclosed in every package's accuracy statement: fAPAR and
 insolation are approximated from NDVI via a published linear relationship
 (fAPAR ≈ clip(1.24×NDVI − 0.168, 0, 1)) rather than a dedicated fAPAR product,
 since a wired MODIS/Sentinel-3 OLIC fAPAR feed is not yet integrated
-(Modeling-Approach.md §2 names MODIS/Sentinel-3 OLCI as the intended source)."""
+(modeling-approach.md §2 names MODIS/Sentinel-3 OLCI as the intended source)."""
 
 from __future__ import annotations
 
@@ -75,7 +75,7 @@ FALLBACK_TEMPERATURE_C = 25.0
 
 
 def _cross_pol_ratio_deviation(sar) -> float | None:
-    """`vh_vv_backscatter_deviation` (Modeling-Approach.md §3's Component 2
+    """`vh_vv_backscatter_deviation` (modeling-approach.md §3's Component 2
     feature table) — how much the cross-polarized ratio changed over the event.
 
     In dB the ratio is a difference, so the change in (VH − VV) between the
@@ -307,7 +307,7 @@ def run_pipeline(
     if fapar_deviation is not None:
         dsi_indicators["fapar_deviation"] = fapar_deviation
     if imagery.sar is not None and imagery.sar.vh_drop_db is not None:
-        # Modeling-Approach.md §6's indicator is cross-polarized VH, which
+        # modeling-approach.md §6's indicator is cross-polarized VH, which
         # tracks canopy volume scattering. VV — the flood detector's
         # polarization — was standing in for it, which reported a surface-water
         # measurement as a crop-structure one. Absent VH now leaves the
@@ -513,7 +513,7 @@ def retry_insufficient_data(
     settings: Settings,
     **clients,
 ) -> bool:
-    """Evidence-Flow-Spec.md §8: re-processed on a backoff schedule once
+    """evidence-flow-spec.md §8: re-processed on a backoff schedule once
     imagery becomes available. Returns True if it completed this attempt."""
     request = store.get_request(request_id)
     if request is None or request.status != RequestStatus.INSUFFICIENT_DATA:

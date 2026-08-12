@@ -5,7 +5,7 @@
 
 ## The question
 
-No document in this repo (`README.md`, `Constitution.md`, `HLD.md`, `Modeling-Approach.md`, `Evidence-Flow-Spec.md`) states an expected number of evidence requests per day/season, a target number of concurrent in-flight requests, or a claims-volume figure to size against. `HLD.md` §8's Non-Functional Requirements cover latency and availability qualitatively but not volume.
+No document in this repo (`README.md`, `constitution.md`, `hld.md`, `modeling-approach.md`, `evidence-flow-spec.md`) states an expected number of evidence requests per day/season, a target number of concurrent in-flight requests, or a claims-volume figure to size against. `hld.md` §8's Non-Functional Requirements cover latency and availability qualitatively but not volume.
 
 ## Why it matters
 

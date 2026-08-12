@@ -1,5 +1,5 @@
 """Component 3 — Crop Simulation Model Assimilation, advanced tier
-(Modeling-Approach.md §4). Gated behind `settings.csm_high_scrutiny_enabled`,
+(modeling-approach.md §4). Gated behind `settings.csm_high_scrutiny_enabled`,
 defaulting to disabled.
 
 **Do not enable this tier yet.** `run()` below is a placeholder, not an
@@ -13,7 +13,7 @@ package. The 0.4 calibration confidence bounds how much, not whether.
 
 Two separate things are outstanding, in this order:
 1. Implement Component 3 — wire a calibrated WOFOST/InfoCrop run with
-   remote-sensing-assimilated LAI/soil-moisture state (Modeling-Approach.md §4).
+   remote-sensing-assimilated LAI/soil-moisture state (modeling-approach.md §4).
 2. Then define what makes a request "high-scrutiny" — see
    specs/001-evidence-generation-pipeline/issue/open query - CSM high-scrutiny
    trigger criteria (FR-011).md, reframed 2026-08-13.
@@ -37,7 +37,7 @@ class CsmResult:
 
 def run(geometry: dict, damage_signal: float) -> CsmResult:
     """Placeholder for a WOFOST/InfoCrop run with remote-sensing-assimilated
-    LAI/soil-moisture state (Modeling-Approach.md §4). A real deployment
+    LAI/soil-moisture state (modeling-approach.md §4). A real deployment
     wires this to a calibrated crop simulation model; until then this
     reflects the same damage_signal the other components observed, at a
     reduced confidence to avoid overstating this tier's current maturity."""

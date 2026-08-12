@@ -78,7 +78,7 @@ curl http://localhost:8000/evidence-requests/EIM-...
 
 ## Training the AI/ML Model
 
-The AI/ML damage model (`evidence_intelligence/models/ai_ml.py`, Modeling-Approach.md §3) ships **untrained** by default — no labeled data exists in this repo (see the open question below), so it falls back to a disclosed placeholder formula and every prediction honestly reports `confidence_or_accuracy.status == "untrained_placeholder"` rather than a fabricated MAE/RMSE/NRMSE.
+The AI/ML damage model (`evidence_intelligence/models/ai_ml.py`, modeling-approach.md §3) ships **untrained** by default — no labeled data exists in this repo (see the open question below), so it falls back to a disclosed placeholder formula and every prediction honestly reports `confidence_or_accuracy.status == "untrained_placeholder"` rather than a fabricated MAE/RMSE/NRMSE.
 
 Once real labeled data exists, training it and putting it into production is a three-step, verified-working loop:
 
@@ -102,7 +102,7 @@ export AI_ML_MODEL_PATH=models/ai_ml_v1.joblib
 
 ## Open Issues
 
-These questions have no sourced answer in `documents/` or `YESTECH_Manual_2023.md` and are deliberately deferred rather than guessed at. Full detail (what was checked, what task/FR each blocks) lives in each feature's own `issue/README.md`.
+These questions have no sourced answer in `documents/` or `yestech_manual_2023.md` and are deliberately deferred rather than guessed at. Full detail (what was checked, what task/FR each blocks) lives in each feature's own `issue/README.md`.
 
 **Evidence Generation Pipeline** — [`specs/001-evidence-generation-pipeline/issue/README.md`](specs/001-evidence-generation-pipeline/issue/README.md):
 

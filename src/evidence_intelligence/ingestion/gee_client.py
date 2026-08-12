@@ -18,7 +18,7 @@ LANDSAT89_SR = "LANDSAT/LC09/C02/T1_L2"
 SENTINEL1_GRD = "COPERNICUS/S1_GRD"
 SENTINEL2_CLOUD_FILTER_PCT = 20
 
-# Evidence-Flow-Spec.md §4 step 3: standing water reads below -15dB in VV with
+# evidence-flow-spec.md §4 step 3: standing water reads below -15dB in VV with
 # a >3dB drop from the pre-event baseline.
 SENTINEL1_FLOOD_VV_THRESHOLD_DB = -15
 SENTINEL1_FLOOD_DROP_THRESHOLD_DB = 3
@@ -40,7 +40,7 @@ class SarComposite:
     """Backscatter change over the event window, per polarization.
 
     Both drops are `pre − post` in dB, so a positive value means backscatter
-    fell — matching the positive-to-damage direction `Modeling-Approach.md` §6's
+    fell — matching the positive-to-damage direction `modeling-approach.md` §6's
     DSI indicator table uses. `vh_drop_db` is `None` where the acquisitions
     covering this geometry were single-polarization (see `_s1_median`)."""
 
@@ -85,7 +85,7 @@ class GEEClient:
     ) -> ImageryComposite | None:
         """NDVI composite from Sentinel-2 (primary) falling back to Landsat
         8/9 if no cloud-free Sentinel-2 image exists in the window
-        (Evidence-Flow-Spec.md §3)."""
+        (evidence-flow-spec.md §3)."""
         region = ee.Geometry(geometry)
         collection = (
             ee.ImageCollection(SENTINEL2_SR)
@@ -151,10 +151,10 @@ class GEEClient:
         polarizations — two different measurements from the same acquisitions,
         because they answer different questions:
 
-        - **VV** drives flood-extent detection (Evidence-Flow-Spec.md §4
+        - **VV** drives flood-extent detection (evidence-flow-spec.md §4
           step 3). Standing water is a specular reflector, so co-polarized
           backscatter collapses over it.
-        - **VH** drives the structural-damage signal (`Modeling-Approach.md` §6's
+        - **VH** drives the structural-damage signal (`modeling-approach.md` §6's
           DSI indicator table, "SAR VH backscatter deviation"). Cross-polarized
           return comes from volume scattering within the canopy, so it tracks
           crop structure rather than surface conditions.
@@ -195,7 +195,7 @@ class GEEClient:
         self, geometry: dict, seasonal_window_start: date, seasonal_window_end: date, years: int = 5
     ) -> list[ImageryComposite]:
         """5-year historical archive over the same seasonal window, for
-        anomaly-vs-history scoring (Evidence-Flow-Spec.md §3)."""
+        anomaly-vs-history scoring (evidence-flow-spec.md §3)."""
         composites: list[ImageryComposite] = []
         for offset in range(1, years + 1):
             start = shift_years(seasonal_window_start, -offset)

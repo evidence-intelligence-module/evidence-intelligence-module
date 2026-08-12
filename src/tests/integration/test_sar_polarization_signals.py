@@ -1,7 +1,7 @@
 """Integration tests for the SAR polarization signals
 (`specs/002-satellite-evidence-parity/tasks.md` T0-15).
 
-`Modeling-Approach.md` §6's DSI indicator table names cross-polarized **VH**
+`modeling-approach.md` §6's DSI indicator table names cross-polarized **VH**
 backscatter deviation as the structural-damage signal, and §3's Component 2
 feature table names the VH/VV cross-pol ratio. The pipeline was feeding the
 VH indicator a **VV** measurement — the flood detector's polarization, which

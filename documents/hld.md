@@ -1,6 +1,6 @@
 # Evidence Intelligence Module — High-Level Design
 
-**Governed by:** [Constitution.md](./Constitution.md) — read that first; this document implements it and does not restate its boundaries.
+**Governed by:** [constitution.md](./constitution.md) — read that first; this document implements it and does not restate its boundaries.
 
 **Implemented by:** [`specs/001-evidence-generation-pipeline/`](../../../specs/001-evidence-generation-pipeline/) — the Spec Kit plan (`plan.md`, `data-model.md`, `contracts/`, `tasks.md`) translating this architecture into `src/`. This document is the source of truth for the architecture; that directory tracks its concrete, executable implementation and may lag behind if this document changes.
 
@@ -44,18 +44,18 @@ flowchart LR
 
 ## 3. Component Breakdown
 
-The damage/yield-loss modeling components below mirror YES-TECH's own five-model-family structure (semi-physical, AI/ML, crop simulation, ensemble, composite index), applied to per-field evidence scoring rather than IU-level CCE-blended yield. Full methodology for each is in [Modeling-Approach.md](./Modeling-Approach.md) — this table is the system-design view, not the science.
+The damage/yield-loss modeling components below mirror YES-TECH's own five-model-family structure (semi-physical, AI/ML, crop simulation, ensemble, composite index), applied to per-field evidence scoring rather than IU-level CCE-blended yield. Full methodology for each is in [modeling-approach.md](./modeling-approach.md) — this table is the system-design view, not the science.
 
 | Component | Responsibility |
 |---|---|
 | **Evidence Request Interface** | Accepts requests, validates the input contract, returns a request ID immediately, and later serves the completed package or current status |
 | **Imagery Ingestion** | Queries GEE for pre-event and post-event optical (Sentinel-2/Landsat) and, where needed, SAR (Sentinel-1) imagery for the requested geometry and date window |
 | **Weather Correlation Engine** | Pulls CHIRPS/ERA5/GPM/SMAP data for the event window and compares against historical baselines to characterize the weather event |
-| **Semi-Physical Damage Model** | RUE-chain biomass estimate (PAR/fAPAR/water-temperature stress) vs. observed trajectory — Modeling-Approach.md §2 |
-| **AI/ML Damage & Yield-Loss Models** | RF/DNN models over a documented multi-source feature set, with mandatory hyperparameter and accuracy disclosure — Modeling-Approach.md §3 |
-| **CSM Assimilation Engine** (advanced tier) | Remote-sensing-assimilated crop simulation model (WOFOST/InfoCrop) run for high-scrutiny claims — Modeling-Approach.md §4 |
-| **Ensemble Blending Engine** | Always combines the above components per request, weighted by each one's own confidence — Modeling-Approach.md §5 |
-| **Damage Severity Index (DSI) Engine** | Entropy-weighted composite index, computed per field against its own historical archive — Modeling-Approach.md §6 |
+| **Semi-Physical Damage Model** | RUE-chain biomass estimate (PAR/fAPAR/water-temperature stress) vs. observed trajectory — modeling-approach.md §2 |
+| **AI/ML Damage & Yield-Loss Models** | RF/DNN models over a documented multi-source feature set, with mandatory hyperparameter and accuracy disclosure — modeling-approach.md §3 |
+| **CSM Assimilation Engine** (advanced tier) | Remote-sensing-assimilated crop simulation model (WOFOST/InfoCrop) run for high-scrutiny claims — modeling-approach.md §4 |
+| **Ensemble Blending Engine** | Always combines the above components per request, weighted by each one's own confidence — modeling-approach.md §5 |
+| **Damage Severity Index (DSI) Engine** | Entropy-weighted composite index, computed per field against its own historical archive — modeling-approach.md §6 |
 | **Causation Analysis Engine** | Scores temporal alignment, spatial alignment, magnitude correlation, and physiological plausibility between the weather event and the observed damage |
 | **Report/Package Generator** | Assembles all of the above into the Output Artifact (Section 6), including the mandatory §65B admissibility fields |
 | **Evidence Store** | Persists request metadata, intermediate analysis results, and final packages against the retention principle in Constitution §7 |
@@ -70,7 +70,7 @@ Owned entirely by this module — no foreign keys into any other initiative's sc
 | `request_id` | Primary key |
 | `geometry` | Field boundary or point, as submitted by the requester |
 | `event_date` | Claimed/reported event date |
-| `peril_type` | One of the supported peril categories (Section 7, Evidence-Flow-Spec.md) |
+| `peril_type` | One of the supported peril categories (Section 7, evidence-flow-spec.md) |
 | `external_reference_id` | Optional, opaque — caller's own correlation key; never interpreted or validated by this module |
 | `status` | `RECEIVED` \| `IN_PROGRESS` \| `COMPLETE` \| `INSUFFICIENT_DATA` \| `FAILED` |
 | `requested_at`, `completed_at` | |
@@ -85,7 +85,7 @@ Owned entirely by this module — no foreign keys into any other initiative's sc
 
 ### `model_component_results`
 
-One row per modeling component run per request (Modeling-Approach.md §2–§6) — not a single shared blob, so each component's provenance and confidence are independently auditable.
+One row per modeling component run per request (modeling-approach.md §2–§6) — not a single shared blob, so each component's provenance and confidence are independently auditable.
 
 | Field | Notes |
 |---|---|
@@ -95,7 +95,7 @@ One row per modeling component run per request (Modeling-Approach.md §2–§6) 
 | `point_estimate` | Damage/yield-loss estimate, or DSI score for the `DSI` row |
 | `confidence_or_accuracy` | R²/NRMSE for `AI_ML`; calibration confidence for `SEMI_PHYSICAL`/`CSM_ASSIMILATION`; combined confidence for `ENSEMBLE`; entropy-weight summary for `DSI` |
 | `damage_classification`, `affected_area_ha` | Populated on the `ENSEMBLE` row — the reconciled, reportable figures |
-| `component_inputs` | Structured reference to the specific feature values/datasets that produced this row (Modeling-Approach.md §7) |
+| `component_inputs` | Structured reference to the specific feature values/datasets that produced this row (modeling-approach.md §7) |
 
 ### `weather_correlation_results`
 | Field | Notes |
@@ -103,7 +103,7 @@ One row per modeling component run per request (Modeling-Approach.md §2–§6) 
 | `result_id`, `request_id` (FK) | |
 | `source_dataset`, `source_version` | e.g. CHIRPS v2.0, ERA5-Land |
 | `observed_value`, `historical_baseline`, `anomaly_score` | |
-| `causation_confidence_score` | 0–100, per Evidence-Flow-Spec.md §5 |
+| `causation_confidence_score` | 0–100, per evidence-flow-spec.md §5 |
 
 ### `evidence_packages`
 | Field | Notes |
@@ -173,8 +173,8 @@ Every completed request produces:
 | Weather reanalysis | ERA5-Land | Via GEE / Copernicus CDS API |
 | Soil moisture | SMAP L3 | Via GEE |
 | Official weather records | IMD AWS | Via API / data-sharing agreement — used to corroborate, not substitute, gridded sources |
-| AI/ML modeling | scikit-learn (Random Forest) and/or a documented DNN framework | Component 2 — Modeling-Approach.md §3; every trained version carries disclosed hyperparameters and MAE/RMSE/NRMSE |
-| Crop simulation | WOFOST or InfoCrop (Indian-calibrated) | Component 3, advanced tier — Modeling-Approach.md §4 |
+| AI/ML modeling | scikit-learn (Random Forest) and/or a documented DNN framework | Component 2 — modeling-approach.md §3; every trained version carries disclosed hyperparameters and MAE/RMSE/NRMSE |
+| Crop simulation | WOFOST or InfoCrop (Indian-calibrated) | Component 3, advanced tier — modeling-approach.md §4 |
 | Report generation | Python (Matplotlib/Folium for maps, ReportLab for PDF) | Open source |
 | Object storage | S3-compatible | Evidence packages, imagery derivatives |
 | Compute | Cloud-based; GEE handles heavy satellite compute server-side; ML/CSM components run on standard cloud compute | |
@@ -183,7 +183,7 @@ Every completed request produces:
 
 | Dimension | Requirement |
 |---|---|
-| Latency | Preliminary (weather-only) result within minutes of request; full satellite-inclusive package within the imagery revisit window (see Evidence-Flow-Spec.md §8 for the cloud-cover fallback path) |
+| Latency | Preliminary (weather-only) result within minutes of request; full satellite-inclusive package within the imagery revisit window (see evidence-flow-spec.md §8 for the cloud-cover fallback path) |
 | Reproducibility | Same request + same methodology version → same output, always |
 | Auditability | Every field in a report traces to a named source dataset, version, and acquisition date |
 | Availability | Degrades gracefully to weather-only evidence when satellite imagery is unavailable (never fails silently) |
@@ -191,4 +191,4 @@ Every completed request produces:
 
 ## 9. Explicit Boundaries
 
-This module does not: ingest CCE data, implement yield-blending, run standalone predictive alerting, or read/write any other initiative's tables, topics, or tools. See [Constitution.md](./Constitution.md) §3–§5 for the reasoning; this section exists only as a pointer, not a restatement.
+This module does not: ingest CCE data, implement yield-blending, run standalone predictive alerting, or read/write any other initiative's tables, topics, or tools. See [constitution.md](./constitution.md) §3–§5 for the reasoning; this section exists only as a pointer, not a restatement.

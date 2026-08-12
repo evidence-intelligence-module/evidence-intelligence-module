@@ -71,14 +71,14 @@ Two items remain genuinely open from `spec.md`/`plan.md` and are called out inli
 
 ### Implementation for User Story 1
 
-- [X] T014 [P] [US1] Implement Imagery Ingestion (pre-event 30-day window, post-event 7-15 day window, 5-year historical baseline; phenology/crop-calendar sanity check) in `src/evidence_intelligence/ingestion/imagery.py` per `Evidence-Flow-Spec.md` §3
-- [X] T015 [P] [US1] Implement Weather Correlation Engine (CHIRPS/ERA5-Land/GPM/SMAP query + historical baseline + IMD AWS corroboration) in `src/evidence_intelligence/ingestion/weather.py` per `Evidence-Flow-Spec.md` §5 steps 1-3
-- [X] T016 [P] [US1] Implement Semi-Physical Damage Model (RUE-chain biomass estimate) in `src/evidence_intelligence/models/semi_physical.py` per `Modeling-Approach.md` §2
-- [X] T017 [P] [US1] Implement AI/ML Damage & Yield-Loss Model (RF/DNN over documented feature set, with MAE/RMSE/NRMSE disclosure) in `src/evidence_intelligence/models/ai_ml.py` per `Modeling-Approach.md` §3
+- [X] T014 [P] [US1] Implement Imagery Ingestion (pre-event 30-day window, post-event 7-15 day window, 5-year historical baseline; phenology/crop-calendar sanity check) in `src/evidence_intelligence/ingestion/imagery.py` per `evidence-flow-spec.md` §3
+- [X] T015 [P] [US1] Implement Weather Correlation Engine (CHIRPS/ERA5-Land/GPM/SMAP query + historical baseline + IMD AWS corroboration) in `src/evidence_intelligence/ingestion/weather.py` per `evidence-flow-spec.md` §5 steps 1-3
+- [X] T016 [P] [US1] Implement Semi-Physical Damage Model (RUE-chain biomass estimate) in `src/evidence_intelligence/models/semi_physical.py` per `modeling-approach.md` §2
+- [X] T017 [P] [US1] Implement AI/ML Damage & Yield-Loss Model (RF/DNN over documented feature set, with MAE/RMSE/NRMSE disclosure) in `src/evidence_intelligence/models/ai_ml.py` per `modeling-approach.md` §3
 - [X] T018 [US1] Implement Ensemble Blending Engine (weighted by each component's own validation confidence) in `src/evidence_intelligence/models/ensemble.py` (depends on T016, T017)
-- [X] T019 [US1] Implement Damage Severity Index Engine (entropy-weighted, Min-Max normalized) in `src/evidence_intelligence/models/dsi.py` per `Modeling-Approach.md` §6 (depends on T014, T015)
-- [X] T020 [US1] Implement Causation Analysis Engine (temporal/spatial/magnitude/physiological weighted scoring) in `src/evidence_intelligence/causation/scoring.py` per `Evidence-Flow-Spec.md` §5 (depends on T014, T015)
-- [X] T021 [US1] Implement Report/Package Generator (PDF via ReportLab, JSON, GeoTIFF/PNG maps via Folium/Matplotlib, with mandatory §65B fields: source attribution, methodology, accuracy statement, chain of custody, checksum) in `src/evidence_intelligence/packaging/report_generator.py` per `HLD.md` §6 (depends on T018, T019, T020)
+- [X] T019 [US1] Implement Damage Severity Index Engine (entropy-weighted, Min-Max normalized) in `src/evidence_intelligence/models/dsi.py` per `modeling-approach.md` §6 (depends on T014, T015)
+- [X] T020 [US1] Implement Causation Analysis Engine (temporal/spatial/magnitude/physiological weighted scoring) in `src/evidence_intelligence/causation/scoring.py` per `evidence-flow-spec.md` §5 (depends on T014, T015)
+- [X] T021 [US1] Implement Report/Package Generator (PDF via ReportLab, JSON, GeoTIFF/PNG maps via Folium/Matplotlib, with mandatory §65B fields: source attribution, methodology, accuracy statement, chain of custody, checksum) in `src/evidence_intelligence/packaging/report_generator.py` per `hld.md` §6 (depends on T018, T019, T020)
 - [X] T022 [US1] Implement `POST /evidence-requests` endpoint (validate input, persist `EvidenceRequest`, return `request_id` synchronously, enqueue pipeline) in `src/evidence_intelligence/api/routes.py` (depends on T006, T008)
 - [X] T023 [US1] Implement `GET /evidence-requests/{request_id}` endpoint (status + completed package retrieval) in `src/evidence_intelligence/api/routes.py` (depends on T006, T008)
 - [X] T024 [US1] Wire end-to-end pipeline orchestration (request → ingestion → models → causation → ensemble/DSI → packaging → store) in `src/evidence_intelligence/pipeline.py` (depends on T014-T021)
@@ -122,7 +122,7 @@ Two items remain genuinely open from `spec.md`/`plan.md` and are called out inli
 ### Implementation for User Story 3
 
 - [X] T032 [US3] Implement no-usable-imagery detection and `INSUFFICIENT_DATA` status transition in `src/evidence_intelligence/ingestion/imagery.py` (depends on T014)
-- [X] T033 [US3] Implement Sentinel-1 SAR flood-extent substitution (VV backscatter, <-15dB threshold, >3dB drop) in `src/evidence_intelligence/ingestion/imagery.py` per `Evidence-Flow-Spec.md` §4 step 3 (depends on T014)
+- [X] T033 [US3] Implement Sentinel-1 SAR flood-extent substitution (VV backscatter, <-15dB threshold, >3dB drop) in `src/evidence_intelligence/ingestion/imagery.py` per `evidence-flow-spec.md` §4 step 3 (depends on T014)
 - [X] T034 [US3] Implement weather-only preliminary package generation (`package_tier=WEATHER_ONLY_PRELIMINARY`, retained alongside a later complete package per `data-model.md`) in `src/evidence_intelligence/packaging/report_generator.py` (depends on T021)
 - [X] T035 [US3] Implement backoff-retry and `INSUFFICIENT_DATA` → `COMPLETE` re-queue logic once imagery becomes available in `src/evidence_intelligence/pipeline.py` (depends on T024, T032)
 - [X] T036 [US3] Implement no-historical-baseline fallback (proceed from pre/post comparison alone; explicit "anomaly-vs-history scoring omitted" note in the package, never a fabricated baseline) in `src/evidence_intelligence/ingestion/imagery.py` and `src/evidence_intelligence/packaging/report_generator.py` (depends on T014, T021)
@@ -136,7 +136,7 @@ Two items remain genuinely open from `spec.md`/`plan.md` and are called out inli
 **Purpose**: Improvements that affect multiple user stories, plus the two deliberately-deferred spec items
 
 - [X] T037 [P] Unit tests for each model component (semi-physical, AI/ML, ensemble, DSI, causation scoring) in `src/tests/unit/`
-- [X] T038 [P] Implement CSM Assimilation Engine (WOFOST/InfoCrop, Indian-calibrated) in `src/evidence_intelligence/models/csm_assimilation.py` per `Modeling-Approach.md` §4, gated behind a configurable high-scrutiny trigger defaulting to **disabled** — trigger criteria not yet defined, see `issue/open query - CSM high-scrutiny trigger criteria (FR-011).md`
+- [X] T038 [P] Implement CSM Assimilation Engine (WOFOST/InfoCrop, Indian-calibrated) in `src/evidence_intelligence/models/csm_assimilation.py` per `modeling-approach.md` §4, gated behind a configurable high-scrutiny trigger defaulting to **disabled** — trigger criteria not yet defined, see `issue/open query - CSM high-scrutiny trigger criteria (FR-011).md`
 - [X] T039 [P] Implement low-confidence labeling on `WeatherCorrelationResult.causation_confidence_score` using a configurable threshold (unset by default — package is never auto-rejected regardless) in `src/evidence_intelligence/causation/scoring.py`, referencing `issue/open query - causation confidence low-confidence threshold (FR-024).md`
 - [X] T040 [P] Implement 10-year `retention_expiry_date` calculation and retention-tracking on package creation in `src/evidence_intelligence/store/evidence_store.py` per Constitution §7
 - [X] T041 Run `quickstart.md` end-to-end against a local environment and confirm all three scenarios pass — validated via automated integration tests (tests/integration/) using injected fakes for GEE/weather/IMD, since real credentials/Postgres+PostGIS aren't provisioned in this environment (quickstart.md Prerequisites); app startup and route registration independently verified live via TestClient

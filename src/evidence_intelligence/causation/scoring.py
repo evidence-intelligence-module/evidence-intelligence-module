@@ -1,4 +1,4 @@
-"""Causation Analysis Engine (Evidence-Flow-Spec.md §5). Weighted score
+"""Causation Analysis Engine (evidence-flow-spec.md §5). Weighted score
 (0-100) across temporal, spatial, magnitude, and physiological alignment
 between the reported weather event and the observed damage (spec.md FR-015).
 
@@ -31,7 +31,7 @@ class CausationScoreResult:
 
 
 def _temporal_alignment(days_between_event_and_ndvi_drop: int) -> float:
-    """Evidence-Flow-Spec.md §5: NDVI drop within 7 days = 100%; 7-14 days =
+    """evidence-flow-spec.md §5: NDVI drop within 7 days = 100%; 7-14 days =
     70%; >14 days = 30%."""
     if days_between_event_and_ndvi_drop <= 7:
         return 100.0
@@ -67,7 +67,7 @@ def _physiological_plausibility(
 ) -> float:
     """Whether the peril is capable of producing the observed damage pattern
     at the crop's inferred growth stage. `peril_type = other` runs the
-    generic pass without this heuristic (Evidence-Flow-Spec.md §2)."""
+    generic pass without this heuristic (evidence-flow-spec.md §2)."""
     if not peril_type.runs_peril_specific_causation_heuristics:
         return 50.0  # generic pass — neither supports nor contradicts plausibility
     return 40.0 if phenology_flag else 90.0

@@ -31,10 +31,10 @@ Optional, only for the `brainstorming` skill's visual companion (mockups/diagram
 
 1. [`CLAUDE.md`](CLAUDE.md) — hard boundaries and directory map
 2. [`documents/README.md`](documents/README.md) — goal, problem, boundaries, reading order
-3. `Constitution.md` → `HLD.md` → `Modeling-Approach.md` → `Evidence-Flow-Spec.md` in `documents/`
+3. `constitution.md` → `hld.md` → `modeling-approach.md` → `evidence-flow-spec.md` in `documents/`
 4. [`documents/notes/decision-log.md`](documents/notes/decision-log.md) — why things were deliberately removed, before assuming something is missing
 
 ## Notes
 
 - `src/` holds the actual implementation (see `CLAUDE.md`'s directory map). It has its own `pyproject.toml` — see [`GUIDE.md`](GUIDE.md#configure) for the environment-setup and test-run commands. `documents/` and `specs/` remain documentation-only with no build step of their own.
-- `.specify/memory/constitution.md` is a Spec-Kit-facing distillation of the canonical `Constitution.md` above; if that canonical doc is amended, re-sync this file too (see its own header comment).
+- `.specify/memory/constitution.md` is a Spec-Kit-facing distillation of the canonical `constitution.md` above; if that canonical doc is amended, re-sync this file too (see its own header comment).

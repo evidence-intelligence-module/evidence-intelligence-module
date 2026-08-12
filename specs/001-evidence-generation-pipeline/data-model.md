@@ -1,8 +1,8 @@
 # Phase 1 Data Model: Evidence Generation Pipeline
 
-**Derived from [`HLD.md`](../../documents/HLD.md) §4 — not an independent schema.** If the two ever disagree, `HLD.md` is authoritative and this file is stale and needs re-syncing, not the other way around.
+**Derived from [`hld.md`](../../documents/hld.md) §4 — not an independent schema.** If the two ever disagree, `hld.md` is authoritative and this file is stale and needs re-syncing, not the other way around.
 
-Elaborates the schema already fixed in `HLD.md` §4 with validation rules and state transitions needed for implementation. Field names and table shapes are taken as given from `HLD.md` — this document adds the behavioral rules the spec (`spec.md`) and flow spec (`Evidence-Flow-Spec.md`) require but the HLD's table listing didn't spell out.
+Elaborates the schema already fixed in `hld.md` §4 with validation rules and state transitions needed for implementation. Field names and table shapes are taken as given from `hld.md` — this document adds the behavioral rules the spec (`spec.md`) and flow spec (`evidence-flow-spec.md`) require but the HLD's table listing didn't spell out.
 
 ## EvidenceRequest (`evidence_requests`)
 
@@ -11,7 +11,7 @@ Elaborates the schema already fixed in `HLD.md` §4 with validation rules and st
 | `request_id` | string, PK | Format `EIM-YYYY-MMDD-NNNNNN` (per HLD §5 example) |
 | `geometry` | GeoJSON Polygon or Point | As submitted by requester |
 | `event_date` | date | Claimed/reported event date |
-| `peril_type` | enum | `hailstorm` \| `flood` \| `drought` \| `cyclone` \| `unseasonal_rain` \| `frost` \| `heatwave` \| `pest_disease_weather_induced` \| `landslide` \| `cloudburst` \| `other` (Evidence-Flow-Spec.md §2 — fixed list) |
+| `peril_type` | enum | `hailstorm` \| `flood` \| `drought` \| `cyclone` \| `unseasonal_rain` \| `frost` \| `heatwave` \| `pest_disease_weather_induced` \| `landslide` \| `cloudburst` \| `other` (evidence-flow-spec.md §2 — fixed list) |
 | `external_reference_id` | string, nullable | Opaque; never validated or interpreted (spec.md FR-002) |
 | `status` | enum | `RECEIVED` → `IN_PROGRESS` → `COMPLETE` \| `INSUFFICIENT_DATA` \| `FAILED` |
 | `requested_at` | timestamp | Set on creation |
@@ -19,7 +19,7 @@ Elaborates the schema already fixed in `HLD.md` §4 with validation rules and st
 
 **Validation rules**:
 - `geometry`, `event_date`, `peril_type` are required; `external_reference_id` is optional and opaque (FR-001, FR-002).
-- `peril_type = other` or unrecognized: pipeline still runs the generic damage-detection + weather-anomaly pass but skips peril-specific causation heuristics (Evidence-Flow-Spec.md §2).
+- `peril_type = other` or unrecognized: pipeline still runs the generic damage-detection + weather-anomaly pass but skips peril-specific causation heuristics (evidence-flow-spec.md §2).
 
 **State transitions**:
 ```
@@ -29,7 +29,7 @@ IN_PROGRESS --(no usable imagery, non-flood-compatible peril)--> INSUFFICIENT_DA
 INSUFFICIENT_DATA --(imagery becomes available, re-processed)--> COMPLETE
 IN_PROGRESS --(unrecoverable error)--> FAILED
 ```
-`INSUFFICIENT_DATA` is not terminal — Evidence-Flow-Spec.md §8 requires re-queuing once imagery becomes available (FR-022).
+`INSUFFICIENT_DATA` is not terminal — evidence-flow-spec.md §8 requires re-queuing once imagery becomes available (FR-022).
 
 ## SatelliteAnalysisResult (`satellite_analysis_results`)
 
@@ -54,13 +54,13 @@ IN_PROGRESS --(unrecoverable error)--> FAILED
 | `point_estimate` | float | Damage/yield-loss estimate, or DSI score for the `DSI` row |
 | `confidence_or_accuracy` | float / structured | R²/NRMSE for `AI_ML`; calibration confidence for `SEMI_PHYSICAL`/`CSM_ASSIMILATION`; combined confidence for `ENSEMBLE`; entropy-weight summary for `DSI` |
 | `damage_classification`, `affected_area_ha` | string, float, nullable | Populated only on the `ENSEMBLE` row — the reconciled, reportable figures |
-| `component_inputs` | structured reference | Points to the specific feature values/datasets used (Modeling-Approach.md §7) |
+| `component_inputs` | structured reference | Points to the specific feature values/datasets used (modeling-approach.md §7) |
 
 **Validation rules**:
 - One row per `(request_id, component)` — a later component's result MUST NOT overwrite an earlier row (FR-012). Re-running produces a new row set, not an in-place update, to preserve the audit trail.
 - `SEMI_PHYSICAL` and `AI_ML` rows exist for every request (FR-010). A `CSM_ASSIMILATION` row exists only for requests meeting the high-scrutiny criteria — **criteria not yet defined**, see `issue/open query - CSM high-scrutiny trigger criteria (FR-011).md`; until resolved, this field's presence/absence is a design placeholder, not a working trigger.
 - `ENSEMBLE` row is derived only after all contributing component rows exist for the request (FR-013).
-- `DSI` row is computed independently of `ENSEMBLE` — both are evidence components, neither supersedes the other (Modeling-Approach.md §6, FR-014).
+- `DSI` row is computed independently of `ENSEMBLE` — both are evidence components, neither supersedes the other (modeling-approach.md §6, FR-014).
 
 ## WeatherCorrelationResult (`weather_correlation_results`)
 
@@ -70,7 +70,7 @@ IN_PROGRESS --(unrecoverable error)--> FAILED
 | `request_id` | FK → EvidenceRequest | |
 | `source_dataset`, `source_version` | string, string | e.g. CHIRPS v2.0, ERA5-Land |
 | `observed_value`, `historical_baseline`, `anomaly_score` | float, float, float | |
-| `causation_confidence_score` | integer, 0–100 | Weighted combination per Evidence-Flow-Spec.md §5 (temporal 30%, spatial 25%, magnitude 25%, physiological 20%) |
+| `causation_confidence_score` | integer, 0–100 | Weighted combination per evidence-flow-spec.md §5 (temporal 30%, spatial 25%, magnitude 25%, physiological 20%) |
 
 **Validation rules**: `causation_confidence_score` is always computed and always persisted, even when below the low-confidence threshold — the package is still delivered, clearly labeled (FR-024; numeric threshold **not yet defined**, see `issue/open query - causation confidence low-confidence threshold (FR-024).md`).
 

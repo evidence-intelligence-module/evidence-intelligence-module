@@ -1,4 +1,4 @@
-"""Component 5 — Damage Severity Index (Modeling-Approach.md §6).
+"""Component 5 — Damage Severity Index (modeling-approach.md §6).
 Entropy-weighted, Min-Max-normalized composite computed per field against
 its own historical archive — never blended with CCE data (Constitution §4)."""
 
@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 METHODOLOGY_VERSION = "dsi-entropy-v1"
 
-# Modeling-Approach.md §6 Table — name -> "does a higher value mean more damage?"
+# modeling-approach.md §6 Table — name -> "does a higher value mean more damage?"
 INDICATOR_DIRECTIONS: dict[str, bool] = {
     "ndvi_deviation": True,
     "lswi_deviation": True,
@@ -39,7 +39,7 @@ def _min_max_normalize(value: float, historical_values: list[float], positive: b
 
 
 def _entropy_weights(historical_matrix: dict[str, list[float]]) -> dict[str, float]:
-    """Standard entropy-weighting method (Modeling-Approach.md §6, mirroring
+    """Standard entropy-weighting method (modeling-approach.md §6, mirroring
     YES-TECH's CHF Appendix 1 §5.4): indicators that vary more informatively
     across the historical archive receive proportionally more weight."""
     names = list(historical_matrix.keys())

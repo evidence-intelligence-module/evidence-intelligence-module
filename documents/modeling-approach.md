@@ -1,12 +1,12 @@
 # Evidence Intelligence Module — Modeling Approach
 
-**Governed by:** [Constitution.md](./Constitution.md). **Implements:** [HLD.md](./HLD.md) §3 (Component Breakdown). This document is the science/methodology reference — it plays the same role for this module that Section 4 and Appendix 1 of [`YESTECH_Manual_2023.md`](./standards/YESTECH_Manual_2023.md) play for YES-TECH: it names each modeling component, its inputs, its method, and its validation standard.
+**Governed by:** [constitution.md](./constitution.md). **Implements:** [hld.md](./hld.md) §3 (Component Breakdown). This document is the science/methodology reference — it plays the same role for this module that Section 4 and Appendix 1 of [`yestech_manual_2023.md`](./standards/yestech_manual_2023.md) play for YES-TECH: it names each modeling component, its inputs, its method, and its validation standard.
 
 ---
 
 ## 1. Design Philosophy
 
-`YESTECH_Manual_2023.md` — the DA&FW/MNCFC manual governing technology-based yield estimation under PMFBY — mandates five documented modeling approaches (semi-physical, AI/ML, crop simulation, ensemble, and a parametric composite index) for area-level yield estimation blended with CCE. This module targets the same technical rigor, applied to a different problem: **per-field damage/evidence scoring for an individual claimed loss event**, not IU-level yield determination for indemnity calculation.
+`yestech_manual_2023.md` — the DA&FW/MNCFC manual governing technology-based yield estimation under PMFBY — mandates five documented modeling approaches (semi-physical, AI/ML, crop simulation, ensemble, and a parametric composite index) for area-level yield estimation blended with CCE. This module targets the same technical rigor, applied to a different problem: **per-field damage/evidence scoring for an individual claimed loss event**, not IU-level yield determination for indemnity calculation.
 
 Concretely, this means: every component below has a real analogue in YES-TECH's own methodology — same families of models, same class of input data, same discipline around documenting hyperparameters and reporting accuracy — but re-purposed to answer "what happened to this field, and how confident are we" rather than "what is this Insurance Unit's yield this season."
 
@@ -126,4 +126,4 @@ Every component's outputs, on every request, carry:
 
 ## 9. Explicit Boundaries
 
-This document does not authorize CCE ingestion, CCE-blending, or MITR/TIP-style governance — see [Constitution.md](./Constitution.md) §4 and §6. Increasing modeling rigor here does not change what the outputs are used for.
+This document does not authorize CCE ingestion, CCE-blending, or MITR/TIP-style governance — see [constitution.md](./constitution.md) §4 and §6. Increasing modeling rigor here does not change what the outputs are used for.

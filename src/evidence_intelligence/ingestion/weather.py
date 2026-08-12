@@ -1,6 +1,6 @@
 """Weather Correlation Engine (HLD §3). CHIRPS/ERA5-Land/GPM IMERG/SMAP via
 GEE, corroborated by IMD AWS station data where available
-(Evidence-Flow-Spec.md §5 steps 1-3)."""
+(evidence-flow-spec.md §5 steps 1-3)."""
 
 from __future__ import annotations
 
@@ -102,7 +102,7 @@ class WeatherClient:
 
 class IMDClient:
     """Official weather-station records, used to corroborate gridded
-    sources, never to substitute them (Evidence-Flow-Spec.md §5 step 3)."""
+    sources, never to substitute them (evidence-flow-spec.md §5 step 3)."""
 
     def __init__(self, base_url: str | None = None):
         self.base_url = base_url or os.environ.get("IMD_AWS_API_BASE_URL")

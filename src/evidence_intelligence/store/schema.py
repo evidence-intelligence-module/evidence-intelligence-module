@@ -1,5 +1,5 @@
 """SQLAlchemy schema for the five data-model.md entities. Field names and
-shapes are taken as given from HLD.md §4 / data-model.md; not an independent
+shapes are taken as given from hld.md §4 / data-model.md; not an independent
 design."""
 
 import enum
@@ -40,13 +40,13 @@ class PerilType(str, enum.Enum):
     @property
     def is_flood_compatible(self) -> bool:
         """Whether SAR substitutes for optical imagery when this peril's
-        window has unusable optical coverage (FR-006, Evidence-Flow-Spec.md
+        window has unusable optical coverage (FR-006, evidence-flow-spec.md
         §4 step 3)."""
         return self is PerilType.FLOOD
 
     @property
     def runs_peril_specific_causation_heuristics(self) -> bool:
-        """FR-015/Evidence-Flow-Spec.md §2: 'other' or ambiguous perils skip
+        """FR-015/evidence-flow-spec.md §2: 'other' or ambiguous perils skip
         peril-specific causation heuristics but still run the generic pass."""
         return self is not PerilType.OTHER
 

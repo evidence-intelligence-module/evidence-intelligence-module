@@ -21,8 +21,8 @@ Full reasoning for all three lives in the Constitution — see below. If a task 
 | Path | What it is |
 |---|---|
 | `documents/README.md` | Orientation for the whole initiative — goal, problem, boundaries, reading order. Start here (see above). |
-| `documents/Constitution.md` → `HLD.md` → `Modeling-Approach.md` → `Evidence-Flow-Spec.md` | Non-negotiables → architecture → modeling science → pipeline detail, in reading order (after `documents/README.md`). Everything lives directly under `documents/` — this repo has a single active initiative, so there's no per-initiative subdirectory. |
-| `documents/standards/YESTECH_Manual_2023.md` | External, verbatim government manual (DA&FW/MNCFC). Not our content — never edit it, only relocate/reference it. The modeling approach is designed to match and exceed its rigor. |
+| `documents/constitution.md` → `hld.md` → `modeling-approach.md` → `evidence-flow-spec.md` | Non-negotiables → architecture → modeling science → pipeline detail, in reading order (after `documents/README.md`). Everything lives directly under `documents/` — this repo has a single active initiative, so there's no per-initiative subdirectory. |
+| `documents/standards/yestech_manual_2023.md` | External, verbatim government manual (DA&FW/MNCFC). Not our content — never edit it, only relocate/reference it. The modeling approach is designed to match and exceed its rigor. |
 | `documents/research/` | Internal source white paper the initiative was derived from. Optional depth, not required reading. |
 | `documents/notes/decision-log.md` | Running decision log — why the module is scoped the way it is, including why earlier material (baseline platform docs, the voice-agent initiative, an old root-level `implementation_plan.md`) was deleted, and why the documentation tree itself is laid out this way. Read this before assuming something is "missing." |
 
@@ -30,7 +30,7 @@ Full reasoning for all three lives in the Constitution — see below. If a task 
 
 | Path | What it is |
 |---|---|
-| `specs/001-evidence-generation-pipeline/` | The Spec Kit feature directory implementing `evidence-intelligence-module/HLD.md`: `spec.md` (requirements) → `plan.md` (architecture-to-code mapping) → `research.md`/`data-model.md`/`contracts/`/`quickstart.md` (Phase 0/1 design) → `tasks.md` (executable task list). `issue/` holds open questions the spec/plan deliberately deferred rather than guessed at (see its `README.md`). |
+| `specs/001-evidence-generation-pipeline/` | The Spec Kit feature directory implementing `evidence-intelligence-module/hld.md`: `spec.md` (requirements) → `plan.md` (architecture-to-code mapping) → `research.md`/`data-model.md`/`contracts/`/`quickstart.md` (Phase 0/1 design) → `tasks.md` (executable task list). `issue/` holds open questions the spec/plan deliberately deferred rather than guessed at (see its `README.md`). |
 | `specs/002-satellite-evidence-parity/` | A second Spec Kit feature against the same running service — a roadmap extending `001`'s pipeline to push satellite-only evidence generation as close as achievable to CCE-level verification confidence (tiered confidence/fallback output, higher-resolution/SAR-priority sourcing, open geospatial foundation-model feature augmentation, independent crop-type cross-check), without relaxing the no-CCE boundary. Grounded in `documents/research/satellite-parity-global-precedent-research.md`. Same internal structure as `001` (`spec.md` → `plan.md` → Phase 0/1 artifacts → `tasks.md`, plus `issue/`), and its `data-model.md`/`contracts/` are explicitly additive extensions of `001`'s, not an independent schema. |
 | `.specify/` | Spec Kit's own scaffolding — templates, PowerShell scripts, `memory/constitution.md` (a Spec-Kit-facing distillation of the domain Constitution, kept in sync with it, not an independent authority). Not hand-edited in normal use. |
 | `SETUP.md` | Machine/tooling setup for a fresh clone (Spec Kit CLI, PowerShell, the `brainstorming` skill's optional Node dependency). Separate from this file, which is orientation, not setup. |
@@ -45,5 +45,5 @@ Full reasoning for all three lives in the Constitution — see below. If a task 
 ## Working conventions
 
 - Cross-document references use `File.md §N — Section Title` or a markdown link; when adding new cross-references, prefer linking to the file and naming the section by its actual heading text so references survive renumbering.
-- Every evidence-generation claim in the docs should be traceable to either a named public dataset or a specific section of `YESTECH_Manual_2023.md` — don't invent figures or citations.
+- Every evidence-generation claim in the docs should be traceable to either a named public dataset or a specific section of `yestech_manual_2023.md` — don't invent figures or citations.
 - `src/` has a real build/test step (`pytest`, `ruff`) — see `GUIDE.md`. Everything under `documents/` and `specs/` remains documentation: "correctness" there means internal consistency (cross-references resolve, no contradicted boundaries) and factual accuracy against the cited sources.

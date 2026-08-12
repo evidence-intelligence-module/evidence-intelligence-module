@@ -19,7 +19,7 @@ So as specified, the reviewer reads "supplementary evidence may improve confiden
 
 ## What was checked
 
-**The loop is genuinely open, not merely unimplemented.** `data-model.md` gives `supplementary_evidence_attachments` no path into any model, index, or confidence figure. No component in `Modeling-Approach.md` accepts a photo as an input, and no FR asks one to. So even a deployment that wanted re-evaluation would have nothing to re-evaluate *with* — the attachment is stored, surfaced, and otherwise inert. This is a defensible design (a human reviewer reads the photo themselves), but then the guidance text should say that, not imply the module will act on it.
+**The loop is genuinely open, not merely unimplemented.** `data-model.md` gives `supplementary_evidence_attachments` no path into any model, index, or confidence figure. No component in `modeling-approach.md` accepts a photo as an input, and no FR asks one to. So even a deployment that wanted re-evaluation would have nothing to re-evaluate *with* — the attachment is stored, surfaced, and otherwise inert. This is a defensible design (a human reviewer reads the photo themselves), but then the guidance text should say that, not imply the module will act on it.
 
 **Package supersession is already ambiguous in `001`, before `002` adds to it.** `pipeline.py`'s `retry_insufficient_data` re-runs the full pipeline and calls `store.add_package` again, producing a second `EvidencePackage` row for the same request. `store/evidence_store.py` deliberately "never overwrites a component/package row in place", and `api/routes.py` returns `store.latest_package(...)`, describing the earlier one as "superseded". But `schema.py`'s `EvidencePackage` has no `supersedes`, no sequence number, and no status — "superseded" exists in prose and in an ordering, not in the data.
 
@@ -33,7 +33,7 @@ So as specified, the reviewer reads "supplementary evidence may improve confiden
 |---|---|
 | A. No re-evaluation; fix the guidance text | State plainly that supplementary evidence is stored and surfaced for the reviewer's own judgement and does not change the module's figures. Cheapest and most honest given nothing consumes an attachment today. |
 | B. Attachment triggers re-run of the unchanged pipeline | Re-runs source acquisition (which may now find a clear optical pass), producing a genuinely updated package. The attachment itself still doesn't enter any model — the improvement comes from time having passed, which is worth being explicit about rather than letting the reviewer credit their photo. |
-| C. Attachment becomes a modeled input | A geotagged photo as an actual evidence component with its own confidence contribution. Largest change by far; needs its own modeling section in `Modeling-Approach.md` and is arguably a different feature. |
+| C. Attachment becomes a modeled input | A geotagged photo as an actual evidence component with its own confidence contribution. Largest change by far; needs its own modeling section in `modeling-approach.md` and is arguably a different feature. |
 | D. Explicit package lineage, independent of the above | Add `supersedes` / `version` / `status` to `EvidencePackage` so every regeneration states which artifact it replaces and why. Needed under B and C, and worth having under A too, because `retry_insufficient_data` already regenerates packages. |
 
 ## Recommendation

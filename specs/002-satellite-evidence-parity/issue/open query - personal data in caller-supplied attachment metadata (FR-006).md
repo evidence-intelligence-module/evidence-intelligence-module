@@ -5,7 +5,7 @@
 
 ## Provisional default (2026-08-13)
 
-**Adopted — drop `caller_supplied_metadata`.** The decisive fact is that the field has no reader: nothing in `data-model.md`, `contracts/`, `Modeling-Approach.md`, or any model consumes it. It is a write-only personal-data ingress into a store with a ten-year retention floor, and `external_reference_id` already covers the legitimate correlation need with the same opacity and a bounded shape. Removing it costs no capability, so no trade-off decision was required — which is why this did not need to stay open. Recorded in `data-model.md`.
+**Adopted — drop `caller_supplied_metadata`.** The decisive fact is that the field has no reader: nothing in `data-model.md`, `contracts/`, `modeling-approach.md`, or any model consumes it. It is a write-only personal-data ingress into a store with a ten-year retention floor, and `external_reference_id` already covers the legitimate correlation need with the same opacity and a bounded shape. Removing it costs no capability, so no trade-off decision was required — which is why this did not need to stay open. Recorded in `data-model.md`.
 
 **Adopted — constrain the `uri` and state the non-dereference property.** The endpoint accepts a reference to an already-stored object rather than an upload. That means `uri` must be restricted to the module's own object store (or an explicit allowlist), and the contract must state plainly that the module never dereferences it. If nothing fetches the URI, that is a security property worth asserting rather than leaving as an accident of current implementation; if something ever does, an unconstrained caller-supplied URI is a server-side request forgery vector and a route to reading objects the caller should not reach through this service.
 

@@ -5,11 +5,11 @@
 
 ## The question
 
-`Evidence-Flow-Spec.md` §8 states that when "causation confidence [is] below a low-confidence threshold," the package is still delivered but clearly labeled with the low score. The causation confidence score itself is 0–100 (§5, weighted combination of temporal/spatial/magnitude/physiological alignment), but no document states what numeric value counts as "low."
+`evidence-flow-spec.md` §8 states that when "causation confidence [is] below a low-confidence threshold," the package is still delivered but clearly labeled with the low score. The causation confidence score itself is 0–100 (§5, weighted combination of temporal/spatial/magnitude/physiological alignment), but no document states what numeric value counts as "low."
 
 ## What was checked
 
-Searched `YESTECH_Manual_2023.md` for a transferable numeric precedent. It mandates *disclosing* model accuracy metrics (RMSE, NRMSE, MAPE, correlation coefficient — §4.1.4.2, §5.2.2.4) but never sets a numeric pass/fail threshold for any of them. YES-TECH has no concept equivalent to a "causation confidence score" — that scoring mechanism is this module's own invention (Evidence-Flow-Spec.md §5), and even that document deliberately left the threshold unstated. There is no sourced number to pull from.
+Searched `yestech_manual_2023.md` for a transferable numeric precedent. It mandates *disclosing* model accuracy metrics (RMSE, NRMSE, MAPE, correlation coefficient — §4.1.4.2, §5.2.2.4) but never sets a numeric pass/fail threshold for any of them. YES-TECH has no concept equivalent to a "causation confidence score" — that scoring mechanism is this module's own invention (evidence-flow-spec.md §5), and even that document deliberately left the threshold unstated. There is no sourced number to pull from.
 
 ## Options considered (presented to user 2026-08-12)
 

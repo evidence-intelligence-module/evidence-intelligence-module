@@ -1,6 +1,6 @@
 """Report/Package Generator (HLD §3, §6). Assembles the pipeline's outputs
 into the Output Artifact: PDF + JSON + maps, with the mandatory §65B fields
-(Constitution §2.3, Evidence-Flow-Spec.md §7) on every package regardless of
+(Constitution §2.3, evidence-flow-spec.md §7) on every package regardless of
 tier."""
 
 from __future__ import annotations

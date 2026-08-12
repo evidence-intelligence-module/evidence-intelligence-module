@@ -1,6 +1,6 @@
 # Open Queries — Evidence Generation Pipeline
 
-Questions that genuinely have no answer in `documents/` or `YESTECH_Manual_2023.md`, surfaced during `/speckit-specify`, `/speckit-plan`, and post-implementation review rather than guessed at.
+Questions that genuinely have no answer in `documents/` or `yestech_manual_2023.md`, surfaced during `/speckit-specify`, `/speckit-plan`, and post-implementation review rather than guessed at.
 
 **Status vocabulary** (same in `specs/002-satellite-evidence-parity/issue/`):
 
@@ -19,4 +19,4 @@ All four below are Open, and each is *deferred* — the shipped code states its 
 | **Open — narrowed** 2026-08-13 | [`open query - causation confidence low-confidence threshold (FR-024).md`](./open%20query%20-%20causation%20confidence%20low-confidence%20threshold%20%28FR-024%29.md) | `/speckit-specify` | `spec.md` FR-024, `tasks.md` T039. Cannot be calibrated by data availability alone: 55 of the score's 100 points are hardcoded at the call site, so the distribution is degenerate. Needs `002`'s `T0-06` first, then **claim outcomes** (`002` `TV-01`) — not the CCE-label decision, which the 2026-08-13 split established is a different dataset. `002`'s rule-table default for confidence tiers is a candidate template here |
 | **Open — narrowed** 2026-08-13 | [`open query - expected request volume and concurrency target.md`](./open%20query%20-%20expected%20request%20volume%20and%20concurrency%20target.md) | `/speckit-plan` | `plan.md` Scale/Scope, `research.md` §4. Narrowed to **capacity sizing only** — the durability/architecture half (`002` `T05-06`) is justified on correctness alone and should not wait on a volume figure |
 
-None of these were invented — each file documents what was checked (usually `YESTECH_Manual_2023.md`) and why no sourced answer exists, per this repo's convention against unsourced figures (`CLAUDE.md` Working conventions).
+None of these were invented — each file documents what was checked (usually `yestech_manual_2023.md`) and why no sourced answer exists, per this repo's convention against unsourced figures (`CLAUDE.md` Working conventions).

@@ -1,4 +1,4 @@
-"""Component 1 — Semi-Physical Damage Model (Modeling-Approach.md §2).
+"""Component 1 — Semi-Physical Damage Model (modeling-approach.md §2).
 RUE-chain expected-vs-observed biomass deviation, adapted from YES-TECH's
 absolute-yield RUE model to a damage-detection comparison.
 
@@ -25,7 +25,7 @@ TEMPERATURE_UNIT_SANITY_RANGE_C = (-90.0, 60.0)
 
 @dataclass(frozen=True)
 class CropParameters:
-    """Published crop-variety reference values (Modeling-Approach.md §2),
+    """Published crop-variety reference values (modeling-approach.md §2),
     not CCE-derived. Placeholder defaults — a real deployment populates this
     from an agronomic reference table per crop/region."""
 
@@ -52,7 +52,7 @@ def _water_stress_scalar(lswi: float, lswi_max: float) -> float:
 
 def _temperature_stress_scalar(temp_c: float, params: CropParameters) -> float:
     """Bounded 0-1 function of observed temperature relative to the crop's
-    min/optimum/max thresholds (Modeling-Approach.md §2)."""
+    min/optimum/max thresholds (modeling-approach.md §2)."""
     if temp_c <= params.temp_min_c or temp_c >= params.temp_max_c:
         return 0.0
     if temp_c <= params.temp_optimum_c:
@@ -85,7 +85,7 @@ def run(
 ) -> SemiPhysicalResult:
     """Expected biomass (pre-event trajectory, projected forward under
     unchanged conditions) vs. observed post-event biomass — the deviation is
-    the damage signal (Modeling-Approach.md §2)."""
+    the damage signal (modeling-approach.md §2)."""
     params = params or CropParameters()
 
     expected = _biomass(
