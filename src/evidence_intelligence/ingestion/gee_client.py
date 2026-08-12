@@ -47,7 +47,7 @@ def _ensure_initialized() -> None:
     if not credentials_path:
         raise RuntimeError(
             "GEE_SERVICE_ACCOUNT_CREDENTIALS is not set — required to initialize the "
-            "Earth Engine client (see SETUP.md / quickstart.md prerequisites)."
+            "Earth Engine client (see GUIDE.md / quickstart.md prerequisites)."
         )
     service_account = os.environ.get("GEE_SERVICE_ACCOUNT_EMAIL", "")
     credentials = ee.ServiceAccountCredentials(service_account, credentials_path)

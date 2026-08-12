@@ -7,7 +7,7 @@
 
 ## 1. Why This Document Exists
 
-A third-party pitch document proposed a general-purpose, multi-tenant SaaS platform for satellite-based crop insurance evidence. It was evaluated against [`Constitution.md`](../initiatives/evidence-intelligence-module/Constitution.md) and found to conflict with all three of its hard boundaries:
+A third-party pitch document proposed a general-purpose, multi-tenant SaaS platform for satellite-based crop insurance evidence. It was evaluated against [`Constitution.md`](../Constitution.md) and found to conflict with all three of its hard boundaries:
 
 - It defaults to a **configurable CCE-blending ratio** (Constitution §4 excludes CCE entirely).
 - It runs **continuous proactive anomaly scanning with auto-notification** to stakeholders before any loss is reported (Constitution §3 excludes standalone predictive alerting).
@@ -15,7 +15,7 @@ A third-party pitch document proposed a general-purpose, multi-tenant SaaS platf
 
 The pitch itself — tenancy model, pricing, roadmap, staffing, financial projections, and YES-TECH "compliance" framing built around CCE blending — was rejected and is not reproduced here. See `notes/decision-log.md` for the full decision record.
 
-What survived: a set of **remote-sensing and ML techniques** that are technically sound, don't depend on CCE data or proactive alerting, and improve on gaps in this module's own [`Modeling-Approach.md`](../initiatives/evidence-intelligence-module/Modeling-Approach.md) and [`Evidence-Flow-Spec.md`](../initiatives/evidence-intelligence-module/Evidence-Flow-Spec.md). Those are captured below as reference material — evaluate and adopt deliberately, the same way any other research input is used; nothing here is pre-approved for implementation.
+What survived: a set of **remote-sensing and ML techniques** that are technically sound, don't depend on CCE data or proactive alerting, and improve on gaps in this module's own [`Modeling-Approach.md`](../Modeling-Approach.md) and [`Evidence-Flow-Spec.md`](../Evidence-Flow-Spec.md). Those are captured below as reference material — evaluate and adopt deliberately, the same way any other research input is used; nothing here is pre-approved for implementation.
 
 ## 2. Satellite Data Ingestion Reference
 
@@ -29,11 +29,11 @@ What survived: a set of **remote-sensing and ML techniques** that are technicall
 | INSAT-3D | Imager/Sounder | 1-4km | 30 min | Insolation, cloud, SST | MOSDAC |
 | SMAP | L-band radiometer | 9-36km | 2-3 days | Soil moisture | NASA |
 
-Our module already draws on most of these via Google Earth Engine ([HLD.md](../initiatives/evidence-intelligence-module/HLD.md) §7); this table is kept as a consolidated spec/resolution/revisit reference.
+Our module already draws on most of these via Google Earth Engine ([HLD.md](../HLD.md) §7); this table is kept as a consolidated spec/resolution/revisit reference.
 
 ## 3. Processing Pipeline Techniques
 
-These address a real gap: our current pipeline ([Evidence-Flow-Spec.md](../initiatives/evidence-intelligence-module/Evidence-Flow-Spec.md) §3) falls back from Sentinel-2 to Landsat on cloud cover without stating how the two are made comparable, and falls back to SAR-only or `INSUFFICIENT_DATA` on persistent cloud cover without trying to fill the optical gap first.
+These address a real gap: our current pipeline ([Evidence-Flow-Spec.md](../Evidence-Flow-Spec.md) §3) falls back from Sentinel-2 to Landsat on cloud cover without stating how the two are made comparable, and falls back to SAR-only or `INSUFFICIENT_DATA` on persistent cloud cover without trying to fill the optical gap first.
 
 - **Cross-sensor harmonization (HLS methodology):** align Sentinel-2 and Landsat 8/9 surface-reflectance products radiometrically before treating them as interchangeable inputs to the same NDVI/LSWI time series.
 - **Cloud/shadow masking:** Sentinel-2's Scene Classification Layer (SCL) plus a supplementary CNN-based cloud/shadow detector for edge cases the SCL band misses.
@@ -42,7 +42,7 @@ These address a real gap: our current pipeline ([Evidence-Flow-Spec.md](../initi
 
 ## 4. ML Modeling Techniques
 
-Candidates for strengthening the five components in [Modeling-Approach.md](../initiatives/evidence-intelligence-module/Modeling-Approach.md) — none of these require CCE-derived labels or change what the outputs are used for.
+Candidates for strengthening the five components in [Modeling-Approach.md](../Modeling-Approach.md) — none of these require CCE-derived labels or change what the outputs are used for.
 
 - **Foundation-model crop segmentation:** a pretrained multi-temporal foundation model (e.g. Prithvi-EO-2.0-style backbone) with a CNN+GRU/LSTM temporal head, or a Segment-Anything-style adapter, for the per-field crop mask / sowing-date classification that Modeling-Approach §2 currently leaves as an unspecified input to the semi-physical model.
 - **Physics-informed neural network (PINN):** embeds the RUE-chain equations (Modeling-Approach §2) as constraints in a neural network's loss function — a genuine fusion of the semi-physical and AI/ML components (§2 and §3) rather than two independent models reconciled only at the ensemble stage.
@@ -51,11 +51,11 @@ Candidates for strengthening the five components in [Modeling-Approach.md](../in
 
 ## 5. Damage-Scoring Technique
 
-Modeling-Approach §6 (Damage Severity Index) currently uses Min-Max normalization with entropy-derived weights only. An **isolation-forest + Z-score ensemble** anomaly score, computed per indicator against the field's own historical archive, is a stronger per-indicator anomaly measure — and can be computed inside the existing event-triggered flow ([Evidence-Flow-Spec.md](../initiatives/evidence-intelligence-module/Evidence-Flow-Spec.md) §4/§6) rather than requiring the continuous proactive scanning the source pitch wrapped it in. The technique is separable from that wrapper; only the wrapper was rejected.
+Modeling-Approach §6 (Damage Severity Index) currently uses Min-Max normalization with entropy-derived weights only. An **isolation-forest + Z-score ensemble** anomaly score, computed per indicator against the field's own historical archive, is a stronger per-indicator anomaly measure — and can be computed inside the existing event-triggered flow ([Evidence-Flow-Spec.md](../Evidence-Flow-Spec.md) §4/§6) rather than requiring the continuous proactive scanning the source pitch wrapped it in. The technique is separable from that wrapper; only the wrapper was rejected.
 
 ## 6. Evidence Integrity Idea
 
-**Blockchain hash-anchoring:** the source pitch anchors each evidence document's hash on a low-cost chain (e.g. Polygon) in addition to storing a checksum. Our `evidence_packages` table ([HLD.md](../initiatives/evidence-intelligence-module/HLD.md) §4) already records a `checksum`; anchoring that hash externally would strengthen the §65B chain-of-custody requirement (Constitution §2 item 4) without any change to module scope.
+**Blockchain hash-anchoring:** the source pitch anchors each evidence document's hash on a low-cost chain (e.g. Polygon) in addition to storing a checksum. Our `evidence_packages` table ([HLD.md](../HLD.md) §4) already records a `checksum`; anchoring that hash externally would strengthen the §65B chain-of-custody requirement (Constitution §2 item 4) without any change to module scope.
 
 ## 7. Technical Risk Notes Worth Keeping
 

@@ -11,7 +11,7 @@ same no-invented-figures rule that governs the docs (CLAUDE.md Working
 Conventions), and this figure ends up in a legal evidence package
 (Constitution §2.2/§2.3).
 
-Training workflow (see README.md "Training the AI/ML Model" for the full
+Training workflow (see GUIDE.md "Training the AI/ML Model" for the full
 walkthrough and scripts/train_ai_ml_model.py for a runnable entry point):
 `fit()` on labeled training data -> `evaluate()` against a disjoint held-out
 set to record real MAE/RMSE/NRMSE -> `save()` to a path -> point

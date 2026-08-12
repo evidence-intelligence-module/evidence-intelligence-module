@@ -1,6 +1,6 @@
 # Setup
 
-What to configure after cloning this repo. Read [`CLAUDE.md`](CLAUDE.md) first — it's the actual orientation doc; this file only covers machine/tooling setup.
+What to configure after cloning this repo. Read [`CLAUDE.md`](CLAUDE.md) first — it's the actual orientation doc; this file only covers machine/tooling setup for Spec Kit itself. For configuring and running the actual application (env vars, tests, the service, model training), see [`GUIDE.md`](GUIDE.md).
 
 ## Already in the repo — nothing to install for basic use
 
@@ -8,11 +8,7 @@ What to configure after cloning this repo. Read [`CLAUDE.md`](CLAUDE.md) first �
 
 ## Prerequisites
 
-| Tool | Needed for |
-|---|---|
-| [Claude Code](https://claude.com/claude-code) | The `/speckit-*` and other skills in `.claude/skills/` only run inside it |
-| Git | Cloning, obviously |
-| PowerShell 7+ (`pwsh`) | This repo was initialized with `--script ps`, so `.specify/scripts/powershell/*.ps1` are the active automation scripts the `/speckit-*` skills call |
+Spec Kit's own tooling prerequisites (Claude Code, Git, PowerShell) and the "verify the environment" check now live in [`GUIDE.md`](GUIDE.md#configure), alongside the application's own configuration steps.
 
 Optional, only if you need to touch the Spec Kit installation itself (upgrade it, re-check tool integrations, add an extension) — not required to just read docs or use the existing `/speckit-*` commands:
 
@@ -31,13 +27,6 @@ Optional, only for the `brainstorming` skill's visual companion (mockups/diagram
 
 `.claude/skills/brainstorming/` is vendored from the [`obra/superpowers`](https://github.com/obra/superpowers) GitHub repo, not written here. `skills-lock.json` at the repo root pins its source path and content hash — if you ever need to update it, re-fetch from that source and update the hash, don't hand-edit the skill in place. The `speckit-*` skills came from the Spec Kit install above and are tracked the same way as any other committed file (no separate lock).
 
-## Verify the environment
-
-```
-uvx --from git+https://github.com/github/spec-kit.git@v0.16.2 specify check
-```
-Confirms required tools (git, the selected AI integration, script runtime) are present and matches what the repo expects.
-
 ## First read, in order
 
 1. [`CLAUDE.md`](CLAUDE.md) — hard boundaries and directory map
@@ -47,5 +36,5 @@ Confirms required tools (git, the selected AI integration, script runtime) are p
 
 ## Notes
 
-- `src/` holds the actual implementation (see `CLAUDE.md`'s directory map). It has its own `pyproject.toml` — `cd src && uv venv .venv && uv pip install -e ".[dev]" --python .venv && .venv/Scripts/python -m pytest tests/` (adjust the venv activation path for your shell) runs the test suite. `documents/` and `specs/` remain documentation-only with no build step of their own.
+- `src/` holds the actual implementation (see `CLAUDE.md`'s directory map). It has its own `pyproject.toml` — see [`GUIDE.md`](GUIDE.md#configure) for the environment-setup and test-run commands. `documents/` and `specs/` remain documentation-only with no build step of their own.
 - `.specify/memory/constitution.md` is a Spec-Kit-facing distillation of the canonical `Constitution.md` above; if that canonical doc is amended, re-sync this file too (see its own header comment).

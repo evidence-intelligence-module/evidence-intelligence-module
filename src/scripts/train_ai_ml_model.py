@@ -1,6 +1,6 @@
 """Trains the AI/ML damage model (evidence_intelligence.models.ai_ml) against
 labeled data and saves it for the running service to load via
-AI_ML_MODEL_PATH. See README.md "Training the AI/ML Model" for the full
+AI_ML_MODEL_PATH. See GUIDE.md "Training the AI/ML Model" for the full
 walkthrough, including where labeled data is expected to come from — none
 ships in this repo (see specs/001-evidence-generation-pipeline/issue/
 "AI-ML training data source and CCE-label question.md").

@@ -1,0 +1,110 @@
+# Guide
+
+Configuration, running the service, training the AI/ML model, and the current open
+issues — the operational how-to for this repo, consolidated in one place. For orientation
+(what this is, why it exists, the hard boundaries) see [`documents/README.md`](documents/README.md).
+For machine/tooling setup of Spec Kit itself (not this application), see [`SETUP.md`](SETUP.md).
+
+## Configure
+
+### Prerequisites
+
+| Tool | Needed for |
+|---|---|
+| [Claude Code](https://claude.com/claude-code) | The `/speckit-*` and other skills in `.claude/skills/` only run inside it |
+| Git | Cloning, obviously |
+| PowerShell 7+ (`pwsh`) | This repo was initialized with `--script ps`, so `.specify/scripts/powershell/*.ps1` are the active automation scripts the `/speckit-*` skills call |
+
+Verify these are present and match what the repo expects:
+
+```
+uvx --from git+https://github.com/github/spec-kit.git@v0.16.2 specify check
+```
+
+### Set up the Python environment
+
+```bash
+cd src
+uv venv .venv
+uv pip install -e ".[dev]" --python .venv
+```
+
+### Set environment variables
+
+The service needs three things to run for real — none are provisioned in this repo:
+
+| Variable | What it's for |
+|---|---|
+| `GEE_SERVICE_ACCOUNT_CREDENTIALS` | Path to a Google Earth Engine service account key — satellite/weather ingestion |
+| `DATABASE_URL` | A PostgreSQL+PostGIS connection string — `docker-compose up -d` in `src/` starts one locally |
+| `EVIDENCE_STORE_BUCKET` | Object storage bucket name for generated packages (falls back to local disk in dev — see `LocalObjectStorage`) |
+
+Without these, the service still runs and its test suite still passes (tests inject fakes for GEE/weather/storage), but real evidence requests will fail at the ingestion step.
+
+## Running the App
+
+### Run the tests
+
+```bash
+.venv/Scripts/python -m pytest tests/
+```
+
+46 tests (unit/contract/integration) — all pass without any of the above configured.
+
+### Run the service
+
+```bash
+.venv/Scripts/python -m uvicorn evidence_intelligence.api:app --reload
+```
+
+### Submit an evidence request
+
+```bash
+curl -X POST http://localhost:8000/evidence-requests \
+  -H "Content-Type: application/json" \
+  -d '{
+    "geometry": {"type": "Polygon", "coordinates": [[[77.0,20.0],[77.01,20.0],[77.01,20.01],[77.0,20.01],[77.0,20.0]]]},
+    "event_date": "2026-08-08",
+    "peril_type": "hailstorm",
+    "external_reference_id": "your-own-correlation-key"
+  }'
+# -> {"request_id": "EIM-...", "status": "IN_PROGRESS", "estimated_completion": "..."}
+
+curl http://localhost:8000/evidence-requests/EIM-...
+# -> {"request_id": "EIM-...", "status": "COMPLETE", "package": {...}}
+```
+
+`peril_type` is one of `hailstorm`, `flood`, `drought`, `cyclone`, `unseasonal_rain`, `frost`, `heatwave`, `pest_disease_weather_induced`, `landslide`, `cloudburst`, `other`. Full request/response shapes, including the weather-only-preliminary and 404 cases: [`contracts/evidence-request-api.md`](specs/001-evidence-generation-pipeline/contracts/evidence-request-api.md).
+
+## Training the AI/ML Model
+
+The AI/ML damage model (`evidence_intelligence/models/ai_ml.py`, Modeling-Approach.md §3) ships **untrained** by default — no labeled data exists in this repo (see the open question below), so it falls back to a disclosed placeholder formula and every prediction honestly reports `confidence_or_accuracy.status == "untrained_placeholder"` rather than a fabricated MAE/RMSE/NRMSE.
+
+Once real labeled data exists, training it and putting it into production is a three-step, verified-working loop:
+
+**1. Prepare labeled data as a CSV.** One row per historical claim, one column per name in `ai_ml.FEATURE_NAMES` (satellite/weather/radar deviations — see the file for the exact list), plus a `damage_fraction` column (the verified outcome, `0`–`1`) as the label. See the [open question on where this data comes from](specs/001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md) — this isn't solved yet, deliberately.
+
+**2. Train and evaluate:**
+```bash
+cd src
+.venv/Scripts/python scripts/train_ai_ml_model.py --data path/to/labeled.csv --output models/ai_ml_v1.joblib
+# Trained on 48 rows, validated on 12 held-out rows.
+# MAE=0.0272  RMSE=0.0327  NRMSE=0.2797
+# Saved to models/ai_ml_v1.joblib
+```
+The script holds out a validation split (`--test-size`, default 20%) the model never trains on, and reports MAE/RMSE/NRMSE computed against that held-out set — never a number the model has already seen, and never fabricated if training data is too thin (`evaluate()` requires `fit()` to have run first, `save()` refuses to persist an untrained model).
+
+**3. Point the running service at it:**
+```bash
+export AI_ML_MODEL_PATH=models/ai_ml_v1.joblib
+```
+`config.py` reads this at startup; `pipeline.py` loads and caches the model once per process (`_load_ai_ml_model`). From then on, every evidence package's `confidence_or_accuracy.status` reads `"trained"` with real MAE/RMSE/NRMSE instead of the placeholder. If the path is unset, missing, or the saved model was trained against a different feature set or methodology version, the service logs it and falls back to the untrained placeholder rather than crashing or silently mispredicting.
+
+## Open Issues
+
+Four open questions have no sourced answer in `documents/` or `YESTECH_Manual_2023.md` and are deliberately deferred rather than guessed at. Each is deferred, not blocking. Full detail (what was checked, what task/FR it blocks) lives in [`specs/001-evidence-generation-pipeline/issue/README.md`](specs/001-evidence-generation-pipeline/issue/README.md):
+
+- CSM high-scrutiny trigger criteria (FR-011) — the CSM assimilation tier is implemented but gated off by default until this is resolved.
+- Causation confidence low-confidence threshold (FR-024) — low-confidence labeling uses a configurable, currently-unset threshold.
+- Expected request volume and concurrency target — doesn't block Phase 0/1 design, matters at infra-sizing time.
+- AI/ML training data source and CCE-label question — the model ships transparently untrained today (see "Training the AI/ML Model" above); blocks any future move to train/calibrate it.

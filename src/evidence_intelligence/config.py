@@ -40,7 +40,7 @@ def load_settings() -> Settings:
         == "true",
         # Path to a model saved by AiMlModel.save() (see scripts/train_ai_ml_model.py).
         # Unset by default — the model ships untrained until one is trained and pointed
-        # to here (see README.md "Training the AI/ML Model").
+        # to here (see GUIDE.md "Training the AI/ML Model").
         ai_ml_model_path=os.environ.get("AI_ML_MODEL_PATH"),
     )
 

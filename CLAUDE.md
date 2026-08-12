@@ -39,10 +39,11 @@ Full reasoning for all three lives in the Constitution — see below. If a task 
 
 | Path | What it is |
 |---|---|
-| `src/` | The Evidence Generation Pipeline service (Python/FastAPI): `evidence_intelligence/` (the package — `api/`, `ingestion/`, `models/`, `causation/`, `packaging/`, `store/`, per `plan.md`'s Project Structure) and `tests/` (`contract/`, `integration/`, `unit/`). Has its own `pyproject.toml`/`.venv`/`docker-compose.yml` — see `SETUP.md` before running anything here. |
+| `src/` | The Evidence Generation Pipeline service (Python/FastAPI): `evidence_intelligence/` (the package — `api/`, `ingestion/`, `models/`, `causation/`, `packaging/`, `store/`, per `plan.md`'s Project Structure) and `tests/` (`contract/`, `integration/`, `unit/`). Has its own `pyproject.toml`/`.venv`/`docker-compose.yml` — see `GUIDE.md` before running anything here. |
+| `GUIDE.md` | Operational how-to for `src/`: configuration, running the service, training the AI/ML model, and an index of current open issues. Separate from `SETUP.md`, which covers Spec Kit's own tooling, not this application. |
 
 ## Working conventions
 
 - Cross-document references use `File.md §N — Section Title` or a markdown link; when adding new cross-references, prefer linking to the file and naming the section by its actual heading text so references survive renumbering.
 - Every evidence-generation claim in the docs should be traceable to either a named public dataset or a specific section of `YESTECH_Manual_2023.md` — don't invent figures or citations.
-- `src/` has a real build/test step (`pytest`, `ruff`) — see `SETUP.md`. Everything under `documents/` and `specs/` remains documentation: "correctness" there means internal consistency (cross-references resolve, no contradicted boundaries) and factual accuracy against the cited sources.
+- `src/` has a real build/test step (`pytest`, `ruff`) — see `GUIDE.md`. Everything under `documents/` and `specs/` remains documentation: "correctness" there means internal consistency (cross-references resolve, no contradicted boundaries) and factual accuracy against the cited sources.
