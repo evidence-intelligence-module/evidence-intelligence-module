@@ -13,6 +13,8 @@ Two of the three sub-questions do not need a decision to be answered safely:
 
 **Still open — the accuracy floor (Option B).** No sourced per-parcel accuracy figure for WorldCereal over Indian smallholdings exists, so no floor can be set without inventing one. Until it is, `INCONCLUSIVE` is the safe default for any case where the reference product's reliability at that granularity is unestablished.
 
+*Cross-tracker note (2026-08-13)*: splitting [`001`'s label query](../../001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md) identified three distinct kinds of missing ground truth, and **this accuracy figure is the third of them** — tracked here rather than duplicated there. It is also by far the easiest: unlike per-field damage magnitudes (which need the Constitution §4 decision) or claim outcomes (which need `TV-01` to start capturing them), WorldCereal publishes its own validation results. Obtaining it is a literature lookup against the product's published accuracy assessment, not fieldwork and not a governance decision. It is only *open* because nobody has done the lookup and recorded which crops and regions it actually supports at the confidence a per-claimant finding demands — which is the same question as whether User Story 4 should ship at all (Option D).
+
 **Still open — whether to ship User Story 4 (Option D).** Unchanged, and worth revisiting on its merits: this remains the only capability in the roadmap whose failure mode harms an identifiable individual, and the roadmap values it least. The defaults above reduce the harm; they do not make the case for building it.
 
 ## The question

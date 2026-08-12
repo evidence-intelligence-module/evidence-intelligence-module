@@ -31,10 +31,12 @@ Validation scenarios proving each user story (`spec.md`) works end-to-end, on to
 
 ## Scenario 4 — Crop-type/calendar discrepancy flagging (User Story 4)
 
-1. Submit a request with a declared crop type known to mismatch the field's actual crop (e.g., declare "wheat" for a field independently known to be under paddy for that season).
-2. **Expected**: `package.crop_calendar_cross_check.discrepancy_flag: true`, and the package's declared/observed values are both retained (not silently reconciled), per spec.md Acceptance Scenario 4.2.
+1. Submit a request with a declared crop type known to mismatch the field's actual crop (e.g., declare "wheat" for a field independently known to be under paddy for that season). Pick a field whose actual crop **is** covered by the reference product's class set, or step 2 will legitimately return `INCONCLUSIVE`.
+2. **Expected**: `package.crop_calendar_cross_check.outcome: "DISCREPANT"`, with `reference_accuracy`, `pure_pixel_count` and the not-a-fraud-determination note all present, and the declared/observed values both retained (not silently reconciled), per spec.md Acceptance Scenario 4.2.
 3. Repeat with a matching declared/observed crop type.
-4. **Expected**: `discrepancy_flag: false`, no flag raised, per spec.md Acceptance Scenario 4.1.
+4. **Expected**: `outcome: "CONSISTENT"`, no discrepancy raised, per spec.md Acceptance Scenario 4.1.
+5. Repeat with a declared crop **outside** the reference product's class set, or a field too small to yield the minimum pure-pixel count.
+6. **Expected**: `outcome: "INCONCLUSIVE"` — never `DISCREPANT`. This is the case the original boolean `discrepancy_flag` could only have represented as a mismatch, turning "the reference product doesn't cover this crop" into an adverse finding against a named claimant. It is the most important of the three to verify, and for much of India's insured crop range it is the common path, not an edge case.
 
 ## Scenario 5 — Graceful degradation (Edge Cases)
 

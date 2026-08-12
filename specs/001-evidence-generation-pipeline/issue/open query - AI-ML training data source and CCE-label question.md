@@ -1,21 +1,42 @@
 # Open Query: AI/ML training data source, and whether historical CCE outcomes may be used as offline training labels
 
 **Plan/Tasks**: [../plan.md](../plan.md), [../tasks.md](../tasks.md) T017 — `src/evidence_intelligence/models/ai_ml.py`
-**Status**: **Open — root dependency of this repo's open-query tree** (re-assessed 2026-08-13). Still not blocking `001` today (the model ships transparently untrained), but every other numeric-threshold question across both features terminates here. If one decision gets made, make this one.
+**Status**: **Split and narrowed 2026-08-13.** Now scoped to **one** thing: per-field damage/yield-loss magnitude labels for Component 2, and whether historical CCE outcomes may supply them. Still not blocking `001` today (the model ships transparently untrained). Still the hardest of the three, but no longer the root of everything — two of the three label types it used to carry don't need this decision at all.
 
-## What this gates (added 2026-08-13)
+## Split (2026-08-13): "labels" was three different datasets
 
-A cross-tracker evaluation on 2026-08-13 found this query sitting underneath most of the others, which none of the individual files stated:
+This file originally asked one question — "where does labeled training data come from?" — for everything downstream. A re-assessment found it was carrying three unrelated datasets of very different difficulty, and that bundling them made several downstream items look blocked on the CCE decision when they are not:
 
-| Downstream | How it depends on this |
+| Label type | What it actually is | Where it now lives |
+|---|---|---|
+| **(a) Damage magnitude** — per field, `damage_fraction` in [0,1] | The verified outcome Component 2 regresses against | **This file.** The genuinely hard one, and the only one the Constitution §4 question governs |
+| **(b) Claim outcomes** — was a package's conclusion upheld or overturned? | A binary/ordinal record per settled claim. Calibrates the causation threshold and any numeric confidence-tier component | **Work, not a decision** → `002` `tasks.md` `TV-01`/`TV-02`. Self-generating from operating the system; no CCE involvement |
+| **(c) Reference-product accuracy** — WorldCereal's published per-class accuracy for a crop and region | A literature lookup, not fieldwork | Already tracked as the open accuracy-floor item in `002`'s [`crop cross-check accuracy floor`](../../002-satellite-evidence-parity/issue/open%20query%20-%20crop%20cross-check%20accuracy%20floor%20and%20discrepancy-flag%20harm%20posture%20%28FR-010%29.md) |
+
+**(b) is the one that changes the picture.** Every evidence package eventually pairs with a settled claim, so the label source for threshold calibration is a byproduct of running the module — provided somebody records it. Today nothing does: there is no outcome field on `EvidenceRequest` and no outcome endpoint in the contract, so the system generates evidence and discards the only labels it will ever produce for free. `TV-01` fixes that, and it needs no decision from anyone.
+
+The sequencing consequence is direct: **build outcome capture before the Pilot & Validation phase, not after.** Otherwise the pilot runs against real claims, produces hundreds of packages, throws away every label, and this query is exactly as open a year later.
+
+## What this file still gates (narrowed)
+
+| Downstream | How it depends on (a) specifically |
 |---|---|
 | `002` [`what the parity claim is validated against`](../../002-satellite-evidence-parity/issue/open%20query%20-%20what%20the%20parity%20claim%20is%20validated%20against%20%28SC-002%2C%20US3%29.md) | Same decision, viewed from `002`. Resolve together; **this file is authoritative** |
-| `002` User Story 3, SC-001, SC-002 | Cannot be evaluated without a labeled held-out split |
-| `002` [`SAR damage semantics`](../../002-satellite-evidence-parity/issue/open%20query%20-%20SAR%20damage%20semantics%20for%20non-flood%20perils%20%28FR-001%29.md), second half | "What magnitude of VH drop constitutes damage" is a calibration question, not a physics one |
-| [`causation confidence low-confidence threshold (FR-024)`](./open%20query%20-%20causation%20confidence%20low-confidence%20threshold%20%28FR-024%29.md) | Its own resolution defers to "empirical calibration against real claim outcomes" — which is this data |
-| `002` [`confidence tier threshold values (FR-004)`](../../002-satellite-evidence-parity/issue/open%20query%20-%20confidence%20tier%20threshold%20values%20%28FR-004%29.md) | Its provisional rule-table default ships without labels, but any later numeric calibration of tier boundaries needs them |
+| `002` User Story 3, SC-002 | Cannot be evaluated without a labeled held-out split of magnitude outcomes |
+| `002` [`SAR damage semantics`](../../002-satellite-evidence-parity/issue/open%20query%20-%20SAR%20damage%20semantics%20for%20non-flood%20perils%20%28FR-001%29.md), second half | "What magnitude of VH drop constitutes damage" is a calibration question against (a) |
 
-The practical consequence: the two `002` gates previously described as "most urgent" are both downstream of this one.
+No longer gated by this file: SC-001 (needs no labels — only a defensible definition of *usable*), the [`causation threshold`](./open%20query%20-%20causation%20confidence%20low-confidence%20threshold%20%28FR-024%29.md) and confidence-tier calibration (both want **(b)**, not (a)), and the crop cross-check accuracy floor (wants **(c)**).
+
+## The argument against Option A, stated properly (added 2026-08-13)
+
+The Options table below describes Option A's risk as *appearing* to contradict §4. Two stronger objections belong on the record before anyone decides:
+
+1. **CCE would become the model's target variable.** Train Component 2 on CCE outcomes and the model is, by construction, an estimator of what CCE would have said — which is the equivalence §4 forbids, routed through a regression rather than through the blended-yield formula. Every package would then be a CCE prediction carrying a disclaimer that it isn't one.
+2. **CCE's sampling error lands where it hurts most.** CCE samples a handful of plots per Insurance Unit. Used as labels at *per-field* granularity — the granularity this module exists to provide — that error is largest exactly where it would be applied, so the model would partly be learning the sampling noise.
+
+**A caution on the apparent shortcut**: published district-level yield statistics look like a clean non-CCE external check, but in India the General Crop Estimation Survey's yield figures are themselves largely CCE-derived. Validating against them is using CCE at one remove. Worth knowing before it gets adopted as the "neutral" option, because it isn't one.
+
+This does not close the decision — per Constitution §8 it remains the boundary owner's call — but it should be made against the strongest version of the case, not the mildest.
 
 ## The question
 
@@ -41,7 +62,11 @@ Two questions, not one:
 
 ## Recommendation
 
-Not resolved unilaterally here. Leaning toward B/C as the safer default — it matches the roadmap's own intended sequencing and avoids any appearance of CCE dependency without an explicit decision — but Option A shouldn't be ruled out either, since the underlying Constitution §4 text may not have been written with offline-training-label use in mind at all. Per Constitution §8, this needs an explicit, recorded decision from whoever owns that boundary (with rationale, if Option A is chosen) before implementation, not an inference from silence.
+**Updated 2026-08-13**: leaning B/C considerably harder than the original wording below, on the two arguments in "The argument against Option A, stated properly" above — the target-variable objection in particular is a reason of principle, not of appearance. Option A should not be ruled out by inference from silence either, but if chosen it needs an explicit §8 decision recording that both objections were considered.
+
+Independent of which option is chosen, three things should proceed now and are not blocked by it: outcome capture (`TV-01`/`TV-02`), the label-free validations (`TV-03`–`TV-05`), and SC-001, which needs no labels at all.
+
+*Original wording, retained:* Not resolved unilaterally here. Leaning toward B/C as the safer default — it matches the roadmap's own intended sequencing and avoids any appearance of CCE dependency without an explicit decision — but Option A shouldn't be ruled out either, since the underlying Constitution §4 text may not have been written with offline-training-label use in mind at all. Per Constitution §8, this needs an explicit, recorded decision from whoever owns that boundary (with rationale, if Option A is chosen) before implementation, not an inference from silence.
 
 ## Resolution
 

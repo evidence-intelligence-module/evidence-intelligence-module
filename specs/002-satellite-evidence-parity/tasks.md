@@ -18,6 +18,7 @@ description: "Task list for Satellite Evidence Parity Roadmap implementation"
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (US1, US2, US3, US4, US5)
 - **`T0-NN`**: Phase 0 base-pipeline corrections, added 2026-08-13 (see below). Numbered separately from the `TNNN` series so the original task numbering stays stable.
+- **`T05-NN`**: Phase 0.5 evidence-processing improvements. **`TV-NN`**: Phase 0.6 label capture and label-free validation. Distinct prefixes so `T0-06` and the Phase 0.6 tasks can't be confused.
 
 ## Path Conventions
 
@@ -60,7 +61,7 @@ Until these hold, `002`'s new sources, embeddings and tiers change the provenanc
 - [ ] T0-06 Compute the causation engine's temporal and spatial terms from observed data (break-point date of the index time series; actual distance from the geometry to the weather anomaly) instead of passing hardcoded `1` and `0.0` at the call site, in `src/evidence_intelligence/pipeline.py` and `src/evidence_intelligence/causation/scoring.py`
 - [ ] T0-07 Add per-pixel cloud and cloud-shadow masking (SCL/QA60 or s2cloudless) and report a per-geometry `valid_pixel_fraction`, replacing the scene-level `CLOUDY_PIXEL_PERCENTAGE < 20` filter that lets a scene 19% cloudy be 100% cloudy over a 0.16 ha field, in `src/evidence_intelligence/ingestion/gee_client.py`
 - [ ] T0-08 Restructure `SatelliteAnalysisResult` to one row per source considered, not one row per request (today only the post-event source is persisted; pre-event and the five historical composites are dropped) — prerequisite for FR-009 and for `contracts/`'s `sources_used[]`/`sources_considered_not_used[]` arrays, in `src/evidence_intelligence/store/schema.py` and `pipeline.py`. **Fold into T004** rather than migrating twice
-- [ ] T0-09 Add a per-request evidence-inputs manifest recording every source and signal attempted, its outcome, and the reason on failure — the natural input to the confidence tier, and what a §65B chain-of-custody argument needs as one retrievable statement rather than spread across `considered_not_used` / `status` / `pass_available` / `discrepancy_flag` in four tables
+- [ ] T0-09 Add a per-request evidence-inputs manifest recording every source and signal attempted, its outcome, and the reason on failure — the natural input to the confidence tier, and what a §65B chain-of-custody argument needs as one retrievable statement rather than spread across `considered_not_used` / `status` / `pass_available` / the cross-check `outcome` in four tables
 - [ ] T0-10 [P] Carry event-window precipitation as sum and 1-day maximum alongside the current 10-day mean (a `collection.mean()` over the window averages a cloudburst into insignificance — for the perils this module names as highest-value), and record the already-fetched IMD station corroboration in package provenance instead of discarding it, in `src/evidence_intelligence/ingestion/weather.py`
 - [ ] T0-11 [P] Filter Sentinel-1 by `relativeOrbitNumber_start` and `orbitProperties_pass` so pre/post backscatter comparisons use matching viewing geometry, in `src/evidence_intelligence/ingestion/gee_client.py`
 
@@ -89,6 +90,29 @@ Until these hold, `002`'s new sources, embeddings and tiers change the provenanc
 - [ ] T05-07 [P] Replace deprecated `datetime.utcnow()` with timezone-aware `datetime.now(UTC)` across `api/routes.py`, `pipeline.py`, `store/schema.py`, and `tests/fakes.py` — currently ~2,400 deprecation warnings per test run, and removed in a future Python
 
 **Checkpoint**: the existing archive is fully exploited. User Story 1's new sources now have a real baseline to improve on.
+
+---
+
+## Phase 0.6: Label Capture & Label-Free Validation (added 2026-08-13)
+
+**Purpose**: end the situation where the module has no way to learn from its own operation, and start measuring the things that *can* be measured without ground truth.
+
+Splitting [`001`'s label query](../001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md) three ways showed that only one of the three label types it carried — per-field damage magnitude — actually needs the Constitution §4 decision. Claim outcomes are a byproduct of running the system, and several useful validations need no labels at all. None of the tasks below waits on any open query.
+
+**The sequencing point that matters**: `TV-01` must land **before** the Pilot & Validation phase (`documents/README.md` §8), not after. Otherwise the pilot runs against real claims, generates hundreds of packages, discards every outcome, and the label question is exactly as open a year later. Today there is no outcome field on `EvidenceRequest` and no outcome endpoint in the contract, so the module produces evidence and throws away the only labels it will ever get for free.
+
+### Label capture
+
+- [ ] TV-01 Record claim outcomes: a `claim_outcomes` table FK'd to `evidence_requests` (outcome category, recorded-at, optional free-text note) plus a `POST /evidence-requests/{request_id}/outcome` endpoint. **Channel-agnostic per Constitution §5** — accepts a small closed enum describing what happened to the claim, never a caller's claim schema, policy fields, or farmer identifiers; same opacity discipline as `external_reference_id`, and the same minimal-personal-data posture adopted for supplementary-evidence attachments. Does not re-run the pipeline or alter any issued package
+- [ ] TV-02 Export a training set from captured outcomes in `scripts/train_ai_ml_model.py`'s existing CSV format (one column per `FEATURE_NAMES` plus `damage_fraction`), joining each request's recorded feature vector to its outcome. Closes the loop: once `TV-01` has run long enough, training becomes the two-command operation `001`'s issue file already describes, with no new code. Requires the per-request feature vector to be persisted — check `model_component_results.component_inputs` covers it before assuming
+
+### Validation that needs no labels
+
+- [ ] TV-03 [P] **Negative controls / specificity harness**: run the pipeline over fields with no claimed event and measure the rate at which it reports damage. If unaffected fields score like claimed ones, something is wrong — and this is measurable with no ground truth, since the only input needed is fields nobody claimed on. Directly tests the cloud-over-field failure mode `T0-07` addresses, and would have caught the fabricated-signal defects Phase 0 fixed
+- [ ] TV-04 [P] **Reproducibility check**: same request, re-run later, yields an identical package (modulo timestamps). Constitution Principle I asserts this and nothing verifies it — and it is *not* obviously true today, since GEE composites are medians over windows whose contents can change as collections are reprocessed
+- [ ] TV-05 [P] **Ablation harness**: measure whether adding or removing a feature changes the output at all. Cannot show a feature is *better* without labels, but "changes nothing" is decisive and cheap — and it is the honest, available version of what User Story 3's independent test is trying to do while `D2` is open
+
+**Checkpoint**: operating the module now generates labels instead of discarding them, and its false-positive rate, reproducibility, and feature sensitivity are measurable today rather than after the pilot.
 
 ---
 
@@ -158,7 +182,7 @@ Until these hold, `002`'s new sources, embeddings and tiers change the provenanc
 
 - [ ] T016 [P] [US2] Implement Confidence Tier classifier (derives HIGH/MEDIUM/LOW from existing per-component/ensemble confidence per `Modeling-Approach.md` §5, §7) in `src/evidence_intelligence/models/confidence_tier.py` per `research.md` §4
 - [ ] T017 [US2] Wire confidence tier, guidance text, and `cce_non_equivalence_statement` into `EvidencePackage` generation, enforcing the non-equivalence statement whenever tier is `LOW`, in `src/evidence_intelligence/packaging/report_generator.py` (depends on T016, T004)
-- [ ] T018 [US2] Implement `POST /evidence-requests/{request_id}/supplementary-evidence` endpoint (accepts opaque `attachment_type`/`uri`/`caller_supplied_metadata`, never validated against a specific channel schema) in `src/evidence_intelligence/api/routes.py` (depends on T004, T005)
+- [ ] T018 [US2] Implement `POST /evidence-requests/{request_id}/supplementary-evidence` endpoint (accepts `attachment_type` and `uri` only, never validated against a specific channel schema) in `src/evidence_intelligence/api/routes.py` (depends on T004, T005). **`caller_supplied_metadata` was removed 2026-08-13** — do not reintroduce it; it was an unread personal-data ingress (`issue/`, provisional default). `uri` is restricted to the module's own object store or a configured allowlist and is never dereferenced
 - [ ] T019 [US2] Add validation/error handling for the supplementary-evidence endpoint (`400` on missing `attachment_type`/`uri`, `404` on unknown `request_id`) in `src/evidence_intelligence/api/routes.py` (depends on T018)
 
 **Checkpoint**: User Stories 1 and 2 both work independently.
@@ -200,7 +224,7 @@ Until these hold, `002`'s new sources, embeddings and tiers change the provenanc
 ### Implementation for User Story 4
 
 - [ ] T027 [P] [US4] Implement WorldCereal-based crop-type/calendar cross-check client (via `openeo`/Copernicus Data Space Ecosystem) in `src/evidence_intelligence/ingestion/crop_calendar_crosscheck.py` per `research.md` §3 (depends on T001)
-- [ ] T028 [US4] Wire the cross-check into pipeline orchestration, persisting `CropCalendarCrossCheck` with `discrepancy_flag` in `src/evidence_intelligence/pipeline.py` (depends on T004, T027)
+- [ ] T028 [US4] Wire the cross-check into pipeline orchestration, persisting `CropCalendarCrossCheck` with its three-state `outcome` (`CONSISTENT`/`INCONCLUSIVE`/`DISCREPANT`) plus `reference_accuracy` and `pure_pixel_count`, in `src/evidence_intelligence/pipeline.py` (depends on T004, T027). `DISCREPANT` MUST be unreachable when the reference product has no class covering the field, when pure-pixel count is below the configured minimum, or when accuracy is unestablished for that crop/region — those resolve to `INCONCLUSIVE` (`data-model.md`, and the provisional default in `issue/`)
 - [ ] T029 [US4] Surface `crop_calendar_cross_check` in the evidence package per `contracts/evidence-request-api-extensions.md` in `src/evidence_intelligence/packaging/report_generator.py` (depends on T028)
 
 **Checkpoint**: All four original user stories independently functional.
@@ -311,6 +335,7 @@ Then `T0-09` once coverage figures exist to put in a manifest; `T0-10`/`T0-11` i
 
 - **Base-Pipeline Corrections (Phase 0)**: No dependencies. `T0-01`–`T0-05` BLOCK Phase 2 onward; `T0-06`–`T0-11` should land before User Story 1. `T0-05` is itself gated on the confidence-tier query in [`issue/`](./issue/README.md)
 - **Evidence-Processing Improvements (Phase 0.5)**: Not blocking, but `T05-01`/`T05-02` should precede User Story 1 (they determine what its new sources are improving *on*), and `T05-05` should precede User Story 3 (it produces the timeseries shape Presto consumes). `T05-06` should precede any user story that adds an external dependency — i.e. all of them
+- **Label Capture & Label-Free Validation (Phase 0.6)**: No dependencies on anything in this feature, and blocked by no open query. `TV-01` must precede the Pilot & Validation phase or the pilot's labels are lost. `TV-03`–`TV-05` can run as soon as Phase 0's correctness fixes land — running them earlier measures the defects rather than the module
 - **Setup (Phase 1)**: No dependencies — can start immediately once `001` is running; can run in parallel with Phase 0
 - **Foundational (Phase 2)**: Depends on Setup **and on Phase 0's blocking tasks** — BLOCKS all user stories
 - **User Stories (Phase 3-7)**: All depend on Foundational phase completion

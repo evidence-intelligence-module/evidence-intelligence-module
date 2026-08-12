@@ -73,7 +73,7 @@ specs/002-satellite-evidence-parity/
 ```text
 src/evidence_intelligence/
 ├── api/
-│   └── routes.py                     # MODIFIED — new supplementary-evidence endpoint (contracts/)
+│   └── routes.py                     # MODIFIED — new supplementary-evidence and claim-outcome endpoints (contracts/)
 ├── ingestion/
 │   ├── imagery.py                    # MODIFIED — consults source_registry.py for SAR-priority/enhanced-source selection
 │   ├── gee_client.py                 # UNCHANGED — remains the client for existing baseline (Sentinel/Landsat/MODIS) sources
@@ -89,15 +89,22 @@ src/evidence_intelligence/
 │   ├── red_edge_indices.py           # NEW — formalized NDRE/CIred-edge/MTCI computation, replacing the generic "red-edge index" placeholder (FR-015)
 │   └── field_boundary_assist.py      # NEW, SHOULD-priority — human-in-the-loop segmentation assist (FR-014)
 ├── packaging/
-│   └── report_generator.py           # MODIFIED — surfaces confidence tier, source provenance, discrepancy flags, non-equivalence statement, thermal/red-edge signals
+│   └── report_generator.py           # MODIFIED — surfaces confidence tier, source provenance, cross-check outcome, non-equivalence statement, thermal/red-edge signals, package lineage
+├── validation/                       # NEW (Phase 0.6) — label-free validation harnesses
+│   ├── negative_controls.py          # NEW — false-positive rate over unclaimed fields (TV-03)
+│   ├── reproducibility.py            # NEW — same request re-run yields an identical package (TV-04)
+│   └── ablation.py                   # NEW — does a feature change the output at all (TV-05)
 └── store/
-    └── schema.py                      # MODIFIED — new columns/tables per data-model.md
+    ├── schema.py                      # MODIFIED — new columns/tables per data-model.md, incl. claim_outcomes and package lineage
+    └── label_export.py                # NEW — training CSV from captured outcomes, in scripts/train_ai_ml_model.py's format (TV-02)
 
 src/tests/
 ├── contract/              # New: validates api/ against contracts/ extension
 ├── integration/           # New: end-to-end per spec.md User Stories 1-5
 └── unit/                  # New: source_registry, confidence_tier, foundation_features, crop_calendar_crosscheck, thermal_stress, red_edge_indices
 ```
+
+**Structure additions 2026-08-13**: `validation/` and `store/label_export.py` come from Phase 0.6 (`tasks.md` `TV-01`–`TV-05`), which did not exist when this plan was written. `validation/` is deliberately a sibling of the pipeline packages rather than part of `models/` — its harnesses measure the assembled system's behaviour (false-positive rate, reproducibility, feature sensitivity) rather than contributing any figure to an evidence package, and nothing under it is ever imported by a request path.
 
 **Structure Decision**: Single project (Option 1), same as `001` — this is an extension of the existing service, not a new one. Every new module is additive within the existing `ingestion/`, `models/`, `packaging/` subpackages so each stays independently testable, matching the module's existing per-component structure; nothing here introduces a second service, a frontend, or a new top-level source tree.
 
