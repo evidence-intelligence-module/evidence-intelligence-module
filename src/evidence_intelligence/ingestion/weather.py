@@ -45,6 +45,14 @@ class WeatherIngestionResult:
     reanalysis: WeatherObservation
     soil_moisture: WeatherObservation
     station_corroboration: dict | None
+    precipitation_total_mm: float | None = None
+    precipitation_max_daily_mm: float | None = None
+    """Window total and wettest-day figures alongside the mean (T0-10).
+
+    A mean over the event window is the wrong statistic for the perils this
+    module exists to evidence: a cloudburst is defined by its intensity on one
+    day, and averaging it across a 10-day window is what makes it look
+    ordinary."""
 
 
 class WeatherClient:
@@ -74,8 +82,49 @@ class WeatherClient:
         value = next(iter(values.values()))
         return float(value) if value is not None else None
 
+    def _window_stat(
+        self, collection_id: str, band: str, geometry: dict, start: date, end: date, reducer
+    ) -> float | None:
+        """Reduce a daily collection over time with `reducer`, then average
+        the result over the geometry."""
+        region = ee.Geometry(geometry)
+        collection = (
+            ee.ImageCollection(collection_id)
+            .filterBounds(region)
+            .filterDate(str(start), str(end))
+            .select(band)
+        )
+        if collection.size().getInfo() == 0:
+            return None
+        stats = collection.reduce(reducer).reduceRegion(
+            reducer=ee.Reducer.mean(), geometry=region, scale=5000
+        )
+        values = stats.getInfo()
+        if not values:
+            return None
+        value = next(iter(values.values()))
+        return float(value) if value is not None else None
+
     def precipitation(self, geometry: dict, start: date, end: date) -> float | None:
         return self._window_mean(CHIRPS_DAILY, "precipitation", geometry, start, end)
+
+    def precipitation_total(self, geometry: dict, start: date, end: date) -> float | None:
+        """Total rainfall over the window."""
+        return self._window_stat(
+            CHIRPS_DAILY, "precipitation", geometry, start, end, ee.Reducer.sum()
+        )
+
+    def precipitation_max_daily(self, geometry: dict, start: date, end: date) -> float | None:
+        """Wettest single day in the window.
+
+        The figure that matters for a cloudburst or hailstorm claim, and the
+        one a window mean destroys: 200 mm falling in one day inside a 10-day
+        window averages to 20 mm/day, indistinguishable from steady moderate
+        rain (tasks.md T0-10). These are the perils this module names as its
+        highest-value cases."""
+        return self._window_stat(
+            CHIRPS_DAILY, "precipitation", geometry, start, end, ee.Reducer.max()
+        )
 
     def near_real_time_precipitation(
         self, geometry: dict, start: date, end: date
@@ -253,4 +302,21 @@ def ingest_weather(
         reanalysis=reanalysis,
         soil_moisture=soil_moisture,
         station_corroboration=station_record,
+        precipitation_total_mm=_optional(
+            weather_client, "precipitation_total", geometry, window_start, window_end
+        ),
+        precipitation_max_daily_mm=_optional(
+            weather_client, "precipitation_max_daily", geometry, window_start, window_end
+        ),
     )
+
+
+def _optional(client, method: str, geometry: dict, start: date, end: date) -> float | None:
+    """Call `method` if the client provides it.
+
+    Test doubles implement only the subset of `WeatherClient` they need, and a
+    missing extreme-rainfall statistic should leave the figure absent rather
+    than fail the whole request — the same never-fail-silently posture the rest
+    of ingestion follows."""
+    fetch = getattr(client, method, None)
+    return fetch(geometry, start, end) if callable(fetch) else None

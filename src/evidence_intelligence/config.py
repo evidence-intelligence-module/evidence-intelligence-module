@@ -15,6 +15,7 @@ class Settings:
     causation_low_confidence_threshold: int | None
     csm_high_scrutiny_enabled: bool
     ai_ml_model_path: str | None
+    minimum_valid_pixel_fraction: float | None
 
 
 def load_settings() -> Settings:
@@ -42,6 +43,18 @@ def load_settings() -> Settings:
         # Unset by default — the model ships untrained until one is trained and pointed
         # to here (see GUIDE.md "Training the AI/ML Model").
         ai_ml_model_path=os.environ.get("AI_ML_MODEL_PATH"),
+        # tasks.md T0-07: the fraction of a field that must be cloud-free at least
+        # once in the analysis window for its composite to count as usable. No
+        # sourced value exists — how much of a field must be visible before an
+        # index value means anything is exactly the kind of figure this repo
+        # declines to invent (CLAUDE.md). Unset by default, matching the FR-024
+        # precedent above: the fraction is always measured and disclosed in every
+        # package, and only *gates* usability once a deployment supplies a value.
+        minimum_valid_pixel_fraction=(
+            float(os.environ["MINIMUM_VALID_PIXEL_FRACTION"])
+            if "MINIMUM_VALID_PIXEL_FRACTION" in os.environ
+            else None
+        ),
     )
 
 

@@ -29,6 +29,33 @@ class ImageryIngestionResult:
     phenology_flag: str | None
 
 
+def has_sufficient_coverage(
+    composite: ImageryComposite | None, minimum_valid_pixel_fraction: float | None
+) -> bool:
+    """Whether a composite saw enough of the field to be relied on (T0-07).
+
+    Kept as a pure function, separate from the Earth Engine calls that produce
+    the fraction, so the decision itself is testable without a live GEE
+    connection — the absence of exactly that separation is why the masking gap
+    went unnoticed.
+
+    With `minimum_valid_pixel_fraction` unset (the default — no sourced value
+    exists for how much of a field must be visible before its index value means
+    anything), this always returns `True`: the fraction is measured and
+    disclosed in the package either way, but it does not silently suppress
+    evidence until a deployment chooses a threshold. A composite whose fraction
+    could not be measured at all is treated as sufficient rather than
+    discarded, matching the module's never-fail-silently posture — an unknown
+    coverage figure is disclosed, not read as zero coverage."""
+    if composite is None:
+        return False
+    if minimum_valid_pixel_fraction is None:
+        return True
+    if composite.valid_pixel_fraction is None:
+        return True
+    return composite.valid_pixel_fraction >= minimum_valid_pixel_fraction
+
+
 def _phenology_sanity_check(pre_event: ImageryComposite | None) -> str | None:
     """evidence-flow-spec.md §3: flagged, not blocked, if the pre-event NDVI
     doesn't plausibly indicate a standing crop before the claimed event."""
@@ -47,6 +74,7 @@ def ingest_imagery(
     geometry: dict,
     event_date: date,
     peril_type: PerilType,
+    minimum_valid_pixel_fraction: float | None = None,
 ) -> ImageryIngestionResult:
     """FR-005/FR-006/FR-007: pre/post-event windows, SAR substitution for
     flood-compatible/cloud-blocked cases, and a 5-year historical baseline."""
@@ -57,6 +85,15 @@ def ingest_imagery(
 
     pre_event = client.optical_composite(geometry, pre_start, pre_end)
     post_event = client.optical_composite(geometry, post_start, post_end)
+
+    # A composite that saw too little of the field is discarded here rather
+    # than carried forward as a measured value (T0-07). Only reachable when a
+    # deployment has configured a minimum; unset, coverage is disclosed but
+    # never suppresses evidence.
+    if not has_sufficient_coverage(pre_event, minimum_valid_pixel_fraction):
+        pre_event = None
+    if not has_sufficient_coverage(post_event, minimum_valid_pixel_fraction):
+        post_event = None
 
     # FR-006: SAR substitutes only for flood-compatible perils — radar
     # flood-extent detection isn't a meaningful signal for e.g. drought or

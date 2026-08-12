@@ -18,6 +18,7 @@ from evidence_intelligence.geometry import to_ewkt
 from evidence_intelligence.ingestion.gee_client import GEEClient
 from evidence_intelligence.ingestion.imagery import ingest_imagery
 from evidence_intelligence.ingestion.weather import IMDClient, WeatherClient, ingest_weather
+from evidence_intelligence.manifest import EvidenceInputsManifest, InputOutcome
 from evidence_intelligence.models import ai_ml, dsi, ensemble, semi_physical
 from evidence_intelligence.packaging.report_generator import (
     LocalObjectStorage,
@@ -75,6 +76,110 @@ def _insolation_proxy_mj() -> float:
 FALLBACK_TEMPERATURE_C = 25.0
 
 
+def _build_manifest(imagery, weather, ai_ml_result, semi_physical_result, settings):
+    """Record every evidence input attempted for this request (T0-09)."""
+    manifest = EvidenceInputsManifest()
+
+    for name, composite in (
+        ("optical_pre_event", imagery.pre_event),
+        ("optical_post_event", imagery.post_event),
+    ):
+        if composite is None:
+            manifest.record(name, InputOutcome.UNAVAILABLE, "no usable composite in window")
+        else:
+            fraction = composite.valid_pixel_fraction
+            # Half the field is a reporting boundary for the manifest's
+            # coarse USED/DEGRADED label only — it gates nothing. What decides
+            # usability is `minimum_valid_pixel_fraction`, which stays unset
+            # until a deployment sources a value (T0-07).
+            partial = fraction is not None and fraction < 0.5
+            manifest.record(
+                name,
+                InputOutcome.DEGRADED if partial else InputOutcome.USED,
+                f"{composite.source_dataset}"
+                + (f", {fraction:.0%} cloud-free coverage" if fraction is not None else ""),
+            )
+
+    if imagery.sar is not None:
+        manifest.record(
+            "sar_backscatter",
+            InputOutcome.DEGRADED if imagery.post_event is None else InputOutcome.USED,
+            "substituted for unusable post-event optical"
+            if imagery.post_event is None
+            else "supplementary to optical",
+        )
+    else:
+        manifest.record(
+            "sar_backscatter", InputOutcome.NOT_APPLICABLE, "not a flood-compatible peril"
+        )
+
+    manifest.record(
+        "historical_baseline",
+        InputOutcome.USED if imagery.historical else InputOutcome.UNAVAILABLE,
+        f"{len(imagery.historical)} prior season(s)",
+    )
+
+    for name, observation in (
+        ("weather_precipitation", weather.precipitation),
+        ("weather_temperature", weather.reanalysis),
+        ("weather_soil_moisture", weather.soil_moisture),
+    ):
+        manifest.record(
+            name,
+            InputOutcome.USED if observation.anomaly_score is not None else InputOutcome.DEGRADED,
+            observation.source_dataset
+            + ("" if observation.anomaly_score is not None else ", no baseline to compare against"),
+        )
+
+    manifest.record(
+        "imd_station_corroboration",
+        InputOutcome.USED if weather.station_corroboration else InputOutcome.UNAVAILABLE,
+        None if weather.station_corroboration else "no station record returned",
+    )
+
+    manifest.record(
+        "model_semi_physical",
+        InputOutcome.USED if semi_physical_result is not None else InputOutcome.UNAVAILABLE,
+        None if semi_physical_result is not None else "requires a pre/post optical pair",
+    )
+
+    trained = ai_ml_result.confidence_or_accuracy.get("status") == "trained"
+    manifest.record(
+        "model_ai_ml",
+        InputOutcome.USED if trained else InputOutcome.DEGRADED,
+        None if trained else "untrained placeholder formula, not a calibrated prediction",
+    )
+
+    manifest.record(
+        "model_csm_assimilation",
+        InputOutcome.USED if settings.csm_high_scrutiny_enabled else InputOutcome.NOT_APPLICABLE,
+        None if settings.csm_high_scrutiny_enabled else "advanced tier disabled",
+    )
+
+    return manifest
+
+
+def _coverage_statement(imagery) -> str:
+    """How much of the field was actually seen, for the accuracy statement.
+
+    A reader of an evidence package needs this to weigh every index-derived
+    figure in it: an NDVI drop measured over 12% of a field is a different
+    claim from the same drop measured over 95% of it, and before T0-07 the
+    package could not tell them apart (Constitution Principle I/II)."""
+    parts = []
+    for label, composite in (("pre-event", imagery.pre_event), ("post-event", imagery.post_event)):
+        if composite is None:
+            parts.append(f"{label}: no usable optical composite")
+        elif composite.valid_pixel_fraction is None:
+            parts.append(f"{label}: coverage not measured")
+        else:
+            parts.append(f"{label}: {composite.valid_pixel_fraction:.0%} of field")
+    return (
+        "Cloud/shadow-free coverage of the submitted geometry, after per-pixel "
+        f"masking — {'; '.join(parts)}."
+    )
+
+
 def _cross_pol_ratio_deviation(sar) -> float | None:
     """`vh_vv_backscatter_deviation` (modeling-approach.md §3's Component 2
     feature table) — how much the cross-polarized ratio changed over the event.
@@ -114,7 +219,13 @@ def run_pipeline(
 
     store.set_status(request_id, RequestStatus.IN_PROGRESS)
 
-    imagery = ingest_imagery(gee_client, geometry, event_date, peril_type)
+    imagery = ingest_imagery(
+        gee_client,
+        geometry,
+        event_date,
+        peril_type,
+        minimum_valid_pixel_fraction=settings.minimum_valid_pixel_fraction,
+    )
 
     weather = ingest_weather(
         weather_client,
@@ -381,6 +492,7 @@ def run_pipeline(
         f"{', '.join(supplied_features) if supplied_features else 'none'} "
         f"({len(supplied_features)} of {len(ai_ml.FEATURE_NAMES)} declared). "
         "Features that could not be measured were omitted rather than defaulted.",
+        _coverage_statement(imagery),
     ]
     if imagery.post_event is None and imagery.sar is not None:
         accuracy_statement.append(
@@ -418,10 +530,32 @@ def run_pipeline(
                 "source_dataset": weather.precipitation.source_dataset,
                 "source_version": weather.precipitation.source_version,
                 "acquisition_date": str(event_date),
+                # T0-10: window mean alone understates a single-day extreme,
+                # which is the whole signal for cloudburst and hailstorm claims.
+                "window_total_mm": weather.precipitation_total_mm,
+                "max_daily_mm": weather.precipitation_max_daily_mm,
             },
+            *(
+                [
+                    {
+                        "source_dataset": "IMD AWS station record",
+                        "source_version": "imd-aws",
+                        "acquisition_date": str(event_date),
+                        # T0-10: this was fetched and discarded, leaving
+                        # evidence-flow-spec.md §5's "corroborated by IMD AWS"
+                        # claim unbacked by anything in the package.
+                        "corroboration": weather.station_corroboration,
+                    }
+                ]
+                if weather.station_corroboration
+                else []
+            ),
         ],
         accuracy_statement=accuracy_statement,
         notes=notes,
+        evidence_inputs=_build_manifest(
+            imagery, weather, ai_ml_result, semi_physical_result, settings
+        ).as_list(),
     )
     package_fields = generate_package(package_content, storage)
     store.add_package(
@@ -524,7 +658,13 @@ def retry_insufficient_data(
         return False
 
     gee_client = clients.get("gee_client") or GEEClient()
-    imagery = ingest_imagery(gee_client, geometry, event_date, peril_type)
+    imagery = ingest_imagery(
+        gee_client,
+        geometry,
+        event_date,
+        peril_type,
+        minimum_valid_pixel_fraction=settings.minimum_valid_pixel_fraction,
+    )
     if not imagery.usable:
         return False
 

@@ -148,11 +148,20 @@ class FakeGEEClient:
     window's `end` date against `event_date` (the pre-event window always
     ends the day before; the post-event window always starts on or after it)."""
 
-    def __init__(self, scenario: str = "healthy", event_date: date | None = None):
+    def __init__(
+        self,
+        scenario: str = "healthy",
+        event_date: date | None = None,
+        valid_pixel_fraction: float | None = 0.95,
+    ):
         self.scenario = scenario
         self.event_date = event_date or date(2026, 6, 15)
         self.pre_event_ndvi = 0.75
         self.post_event_ndvi = 0.30
+        # Per-pixel cloud/shadow coverage the real client reports (T0-07).
+        # Defaults to a well-observed field so existing scenarios are unchanged;
+        # override to exercise the partial-visibility path.
+        self.valid_pixel_fraction = valid_pixel_fraction
 
     FLOOD_SCENARIOS = ("flood", "flood_single_pol")
 
@@ -170,6 +179,7 @@ class FakeGEEClient:
             source_version="fake-v1",
             acquisition_date=end,
             index_value=index_value,
+            valid_pixel_fraction=self.valid_pixel_fraction,
         )
 
     def sar_composite(self, geometry, pre_event_end, post_event_start, post_event_end):

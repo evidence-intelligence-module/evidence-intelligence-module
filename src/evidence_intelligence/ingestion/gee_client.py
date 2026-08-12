@@ -16,7 +16,26 @@ from evidence_intelligence.dates import shift_years
 SENTINEL2_SR = "COPERNICUS/S2_SR_HARMONIZED"
 LANDSAT89_SR = "LANDSAT/LC09/C02/T1_L2"
 SENTINEL1_GRD = "COPERNICUS/S1_GRD"
-SENTINEL2_CLOUD_FILTER_PCT = 20
+
+# Scene Classification Layer values that make a Sentinel-2 pixel unusable for
+# vegetation analysis: 0 no-data, 1 saturated/defective, 2 cast shadow,
+# 3 cloud shadow, 8 cloud medium probability, 9 cloud high probability,
+# 10 thin cirrus, 11 snow/ice. Retained: 4 vegetation, 5 not-vegetated,
+# 6 water (a flooded field is a real observation, not an artefact),
+# 7 unclassified.
+SENTINEL2_INVALID_SCL_CLASSES = [0, 1, 2, 3, 8, 9, 10, 11]
+
+# Landsat C2 L2 QA_PIXEL bits: 0 fill, 1 dilated cloud, 2 cirrus, 3 cloud,
+# 4 cloud shadow, 5 snow.
+LANDSAT_QA_INVALID_BITS = [0, 1, 2, 3, 4, 5]
+
+# A *performance* prefilter only, not a correctness gate — it exists to avoid
+# compositing scenes that cannot contribute any clear pixel, and is deliberately
+# loose. Correctness is decided per pixel below (tasks.md T0-07). An operational
+# efficiency knob rather than an evidentiary figure, so it is not subject to the
+# no-invented-figures rule that governs domain thresholds (CLAUDE.md), the same
+# treatment `api/routes.py` gives its completion-time estimates.
+SENTINEL2_SCENE_PREFILTER_PCT = 95
 
 # evidence-flow-spec.md §4 step 3: standing water reads below -15dB in VV with
 # a >3dB drop from the pre-event baseline.
@@ -33,6 +52,15 @@ class ImageryComposite:
     index_value: float | None
     index_type: str = "NDVI"
     usable: bool = True
+    valid_pixel_fraction: float | None = None
+    """Fraction of the submitted geometry seen cloud- and shadow-free at least
+    once in the window, after per-pixel masking (tasks.md T0-07).
+
+    This is the figure that distinguishes "the field is damaged" from "we could
+    not see the field". Scene-level cloud percentage cannot: a scene 19% cloudy
+    overall can be entirely clouded over one 0.16 ha field, while a scene 60%
+    cloudy can be perfectly clear over it. Cloud over vegetation depresses NDVI,
+    so an unmasked composite reports that indistinguishably from crop loss."""
 
 
 @dataclass
@@ -80,28 +108,68 @@ class GEEClient:
         if auto_init:
             _ensure_initialized()
 
+    @staticmethod
+    def _sentinel2_valid_mask(image: ee.Image) -> ee.Image:
+        """Per-pixel validity from the Scene Classification Layer."""
+        return image.select("SCL").remap(
+            SENTINEL2_INVALID_SCL_CLASSES,
+            [0] * len(SENTINEL2_INVALID_SCL_CLASSES),
+            1,
+        )
+
+    @staticmethod
+    def _landsat_valid_mask(image: ee.Image) -> ee.Image:
+        """Per-pixel validity from the Collection 2 QA_PIXEL bitmask."""
+        qa = image.select("QA_PIXEL")
+        mask = ee.Image.constant(1)
+        for bit in LANDSAT_QA_INVALID_BITS:
+            mask = mask.And(qa.bitwiseAnd(1 << bit).eq(0))
+        return mask
+
+    def _valid_pixel_fraction(
+        self, masked: ee.ImageCollection, band: str, region: ee.Geometry, scale: int
+    ) -> float | None:
+        """Fraction of `region` seen unmasked at least once in the window.
+
+        `count()` is per pixel across the collection, so a field clouded on one
+        pass but clear on another counts as seen. `unmask(0)` is load-bearing:
+        GEE reducers skip masked pixels entirely, so without it the mean would
+        be taken over only the surviving pixels and would always return 1.0 —
+        reporting perfect coverage precisely when coverage was worst."""
+        seen = masked.select(band).count().gt(0).unmask(0)
+        return self._reduce_mean(seen, region, scale=scale)
+
     def optical_composite(
         self, geometry: dict, window_start: date, window_end: date
     ) -> ImageryComposite | None:
         """NDVI composite from Sentinel-2 (primary) falling back to Landsat
-        8/9 if no cloud-free Sentinel-2 image exists in the window
-        (evidence-flow-spec.md §3)."""
+        8/9 (evidence-flow-spec.md §3), cloud- and shadow-masked per pixel.
+
+        Masking is applied before compositing, so cloudy pixels never enter the
+        median. Previously any scene passing a 20% *scene-level* cloud filter
+        contributed all of its pixels — including those directly over the field
+        — and cloud over vegetation depresses NDVI, so the composite reported
+        obscured ground indistinguishably from crop loss (tasks.md T0-07).
+        Every composite now carries `valid_pixel_fraction` so a caller can tell
+        a real index value from one computed over almost nothing."""
         region = ee.Geometry(geometry)
         collection = (
             ee.ImageCollection(SENTINEL2_SR)
             .filterBounds(region)
             .filterDate(str(window_start), str(window_end))
-            .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", SENTINEL2_CLOUD_FILTER_PCT))
+            .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", SENTINEL2_SCENE_PREFILTER_PCT))
         )
         if collection.size().getInfo() > 0:
-            image = collection.median()
-            ndvi = image.normalizedDifference(["B8", "B4"])
-            value = self._reduce_mean(ndvi, region)
+            masked = collection.map(
+                lambda image: image.updateMask(self._sentinel2_valid_mask(image))
+            )
+            ndvi = masked.median().normalizedDifference(["B8", "B4"])
             return ImageryComposite(
                 source_dataset="Sentinel-2 SR Harmonized",
                 source_version=SENTINEL2_SR,
                 acquisition_date=window_end,
-                index_value=value,
+                index_value=self._reduce_mean(ndvi, region),
+                valid_pixel_fraction=self._valid_pixel_fraction(masked, "B8", region, scale=10),
             )
 
         landsat = (
@@ -110,22 +178,29 @@ class GEEClient:
             )
         )
         if landsat.size().getInfo() > 0:
-            image = landsat.median()
-            ndvi = image.normalizedDifference(["SR_B5", "SR_B4"])
-            value = self._reduce_mean(ndvi, region)
+            masked = landsat.map(lambda image: image.updateMask(self._landsat_valid_mask(image)))
+            ndvi = masked.median().normalizedDifference(["SR_B5", "SR_B4"])
             return ImageryComposite(
                 source_dataset="Landsat 8/9 Collection 2 Level-2",
                 source_version=LANDSAT89_SR,
                 acquisition_date=window_end,
-                index_value=value,
+                index_value=self._reduce_mean(ndvi, region),
+                valid_pixel_fraction=self._valid_pixel_fraction(masked, "SR_B5", region, scale=30),
             )
 
         return None
 
     def _s1_median(
-        self, region: ee.Geometry, window_start: date, window_end: date, polarization: str
+        self,
+        region: ee.Geometry,
+        window_start: date,
+        window_end: date,
+        polarization: str,
+        orbit_pass: str | None = None,
+        relative_orbit: int | None = None,
     ) -> ee.Image:
-        """Median backscatter composite for one polarization over a window.
+        """Median backscatter composite for one polarization over a window,
+        optionally pinned to a single viewing geometry.
 
         Filtering on `transmitterReceiverPolarisation` is what makes the VH
         signal honest: Sentinel-1 IW is usually dual-pol VV+VH over land, but
@@ -133,16 +208,47 @@ class GEEClient:
         acquired the collection is empty, the composite carries no bands, and
         `_reduce_mean` returns `None` — so the caller leaves the VH-derived
         signals absent instead of substituting VV, which measures a different
-        physical process."""
-        return (
+        physical process.
+
+        `orbit_pass`/`relative_orbit` pin pre- and post-event composites to
+        matching acquisition geometry (tasks.md T0-11)."""
+        collection = (
             ee.ImageCollection(SENTINEL1_GRD)
             .filterBounds(region)
             .filterDate(str(window_start), str(window_end))
             .filter(ee.Filter.eq("instrumentMode", "IW"))
             .filter(ee.Filter.listContains("transmitterReceiverPolarisation", polarization))
-            .select(polarization)
-            .median()
         )
+        if orbit_pass is not None:
+            collection = collection.filter(ee.Filter.eq("orbitProperties_pass", orbit_pass))
+        if relative_orbit is not None:
+            collection = collection.filter(
+                ee.Filter.eq("relativeOrbitNumber_start", relative_orbit)
+            )
+        return collection.select(polarization).median()
+
+    @staticmethod
+    def _dominant_orbit(collection: ee.ImageCollection) -> tuple[str, int] | None:
+        """The pass direction and relative orbit of the most recent acquisition
+        in `collection`, or `None` when it is empty (tasks.md T0-11).
+
+        Used to pin the pre- and post-event composites to one viewing geometry.
+        Sentinel-1 backscatter varies systematically with incidence angle and
+        look direction, so differencing an ascending pre-event composite
+        against a descending post-event one mixes a real ground change with a
+        geometry change — a well-known false-positive source in SAR change
+        detection, and one that produces exactly the >3 dB drop this module
+        reads as flooding."""
+        recent = collection.sort("system:time_start", False).first()
+        info = ee.Algorithms.If(collection.size().gt(0), recent, None).getInfo()
+        if not info:
+            return None
+        properties = info.get("properties", {})
+        orbit_pass = properties.get("orbitProperties_pass")
+        relative_orbit = properties.get("relativeOrbitNumber_start")
+        if orbit_pass is None or relative_orbit is None:
+            return None
+        return orbit_pass, relative_orbit
 
     def sar_composite(
         self, geometry: dict, pre_event_end: date, post_event_start: date, post_event_end: date
@@ -161,18 +267,39 @@ class GEEClient:
 
         A missing VH acquisition yields `vh_drop_db=None` rather than falling
         back to VV. Returns `None` overall only when VV itself is unavailable,
-        since flood extent is the signal this method is called for today."""
+        since flood extent is the signal this method is called for today.
+
+        Both windows are pinned to the post-event acquisition's viewing
+        geometry (tasks.md T0-11) so the difference measures ground change
+        rather than look-angle change."""
         region = ee.Geometry(geometry)
         pre_start = pre_event_end - timedelta(days=SENTINEL1_PRE_EVENT_WINDOW_DAYS)
 
-        pre_vv = self._s1_median(region, pre_start, pre_event_end, "VV")
-        post_vv = self._s1_median(region, post_event_start, post_event_end, "VV")
+        # Pin to the post-event pass's geometry: it is the acquisition that
+        # must exist for this analysis to mean anything, so it dictates which
+        # pre-event pass is comparable to it rather than the reverse.
+        post_collection = (
+            ee.ImageCollection(SENTINEL1_GRD)
+            .filterBounds(region)
+            .filterDate(str(post_event_start), str(post_event_end))
+            .filter(ee.Filter.eq("instrumentMode", "IW"))
+        )
+        orbit = self._dominant_orbit(post_collection)
+        orbit_pass, relative_orbit = orbit if orbit else (None, None)
+
+        def median(start: date, end: date, polarization: str) -> ee.Image:
+            return self._s1_median(
+                region, start, end, polarization, orbit_pass, relative_orbit
+            )
+
+        pre_vv = median(pre_start, pre_event_end, "VV")
+        post_vv = median(post_event_start, post_event_end, "VV")
         vv_drop = self._reduce_mean(pre_vv.subtract(post_vv), region)
         if vv_drop is None:
             return None
 
-        pre_vh = self._s1_median(region, pre_start, pre_event_end, "VH")
-        post_vh = self._s1_median(region, post_event_start, post_event_end, "VH")
+        pre_vh = median(pre_start, pre_event_end, "VH")
+        post_vh = median(post_event_start, post_event_end, "VH")
         vh_drop = self._reduce_mean(pre_vh.subtract(post_vh), region)
 
         flood_mask = post_vv.lt(SENTINEL1_FLOOD_VV_THRESHOLD_DB).And(
@@ -206,8 +333,8 @@ class GEEClient:
         return composites
 
     @staticmethod
-    def _reduce_mean(image: ee.Image, region: ee.Geometry) -> float | None:
-        stats = image.reduceRegion(reducer=ee.Reducer.mean(), geometry=region, scale=10)
+    def _reduce_mean(image: ee.Image, region: ee.Geometry, scale: int = 10) -> float | None:
+        stats = image.reduceRegion(reducer=ee.Reducer.mean(), geometry=region, scale=scale)
         values = stats.getInfo()
         if not values:
             return None

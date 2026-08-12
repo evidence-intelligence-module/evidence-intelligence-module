@@ -40,6 +40,13 @@ class PackageContent:
     source_attribution: list[dict] = field(default_factory=list)
     accuracy_statement: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    evidence_inputs: list[dict] = field(default_factory=list)
+    """Every input attempted for this request and what came of it (T0-09).
+
+    Part of the §65B chain-of-custody argument, not a debug aid: it is what
+    lets a reviewer distinguish a conclusion drawn from full evidence from one
+    drawn after half the inputs were unavailable, and it distinguishes "we
+    looked and found nothing" from "we never looked"."""
 
 
 class LocalObjectStorage:
@@ -83,6 +90,7 @@ def _build_json_record(content: PackageContent) -> dict:
         "damage_classification": content.damage_classification,
         "affected_area_ha": content.affected_area_ha,
         "source_attribution": content.source_attribution,
+        "evidence_inputs": content.evidence_inputs,
         "accuracy_statement": content.accuracy_statement,
         "notes": content.notes,
         "disclaimer": SUPPORTING_EVIDENCE_DISCLAIMER,

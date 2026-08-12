@@ -25,6 +25,7 @@ def _settings(ai_ml_model_path=None) -> Settings:
         causation_low_confidence_threshold=None,
         csm_high_scrutiny_enabled=False,
         ai_ml_model_path=ai_ml_model_path,
+        minimum_valid_pixel_fraction=None,
     )
 
 

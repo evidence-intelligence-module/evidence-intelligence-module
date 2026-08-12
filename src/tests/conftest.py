@@ -29,6 +29,10 @@ def test_settings() -> Settings:
         causation_low_confidence_threshold=None,
         csm_high_scrutiny_enabled=False,
         ai_ml_model_path=None,
+        # Unset, matching the production default: coverage is measured and
+        # disclosed but does not gate usability until a deployment chooses a
+        # threshold (T0-07). Tests that need the gate set it explicitly.
+        minimum_valid_pixel_fraction=None,
     )
 
 
