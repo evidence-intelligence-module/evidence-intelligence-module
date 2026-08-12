@@ -6,13 +6,13 @@ Validation scenarios proving each user story (`spec.md`) works end-to-end, on to
 
 - The `001-evidence-generation-pipeline` service running per its own `quickstart.md`/`GUIDE.md`.
 - `AI_ML_MODEL_PATH` pointing at a trained Component 2 model (`GUIDE.md` "Training the AI/ML Model") — foundation-model feature augmentation (Scenario 3) is evaluated against this.
-- Access credentials for at least one enhanced-tier source (Sentinel-1 SAR is already free/baseline; PlanetScope requires a subscription key per `research.md` §2) — Scenario 1 can be validated with SAR alone if no commercial credentials are configured, since SAR is the load-bearing default, not the enhanced/paid tier.
+- `BHOONIDHI_API_KEY` for ISRO's free Resourcesat-2A LISS-4/EOS-04 access (`research.md` §6.3) — Scenario 1 can be validated with Sentinel-1 SAR alone if this isn't configured, since SAR is the load-bearing default, not the enhanced tier. No commercial (Planet/Maxar/ICEYE) credentials are needed or used anywhere in this quickstart — commercial tasking is deferred (`issue/`, resolved 2026-08-12).
 
 ## Scenario 1 — Monsoon cloud cover fallback (User Story 1)
 
 1. Submit an evidence request (`POST /evidence-requests`) for a field and event date where the pre/post-event window is known to be fully cloud-covered (verifiable independently via any Sentinel-2 cloud-mask product for that date/AOI).
 2. Poll `GET /evidence-requests/{request_id}` until `status: COMPLETE` or `INSUFFICIENT_DATA`.
-3. **Expected**: `package.sources_used` includes a `SAR`-class source (Sentinel-1 baseline or, if authorized, commercial SAR); the package is not `INSUFFICIENT_DATA` solely due to cloud cover, per spec.md Acceptance Scenario 1.1.
+3. **Expected**: `package.sources_used` includes a SAR source (Sentinel-1 baseline, or EOS-04 if Bhoonidhi is configured); the package is not `INSUFFICIENT_DATA` solely due to cloud cover, per spec.md Acceptance Scenario 1.1.
 
 ## Scenario 2 — Confidence tier and non-equivalence statement (User Story 2)
 
@@ -40,6 +40,15 @@ Validation scenarios proving each user story (`spec.md`) works end-to-end, on to
 
 1. Submit a request for a field/date where no enhanced source (SAR, VHR, or commercial) is available or authorized.
 2. **Expected**: the request still completes using only the `001` baseline pipeline; `package.sources_considered_not_used` may be non-empty (recording that a commercial source was evaluated and skipped), but the request is never failed solely because an enhanced source was unavailable, per spec.md Edge Cases.
+
+## Scenario 6 — Thermal/red-edge stress signals for drought and heatwave claims (User Story 5)
+
+1. Submit a request with `peril_type: "drought"` or `"heatwave"` for a field/date where Sentinel-2 red-edge bands and an ECOSTRESS pass are both available within the analysis window.
+2. **Expected**: `package.red_edge_index` names a specific index (e.g. `NDRE`, not a generic value) and `package.thermal_stress_signal` is populated with a non-null deviation figure, per spec.md Acceptance Scenarios 5.1/5.2.
+3. Repeat for a date/location where no ECOSTRESS pass fell within the window (its 1–5 day revisit is irregular).
+4. **Expected**: the request still completes; `package.thermal_stress_signal` is `null`, `package.red_edge_index` is still populated if red-edge bands were available, per spec.md Acceptance Scenario 5.3.
+5. Repeat for a non-drought/heatwave peril type (e.g. `hailstorm`).
+6. **Expected**: `package.thermal_stress_signal` is `null` — this field is scoped to drought/heatwave only (spec.md FR-016), not populated or attempted for other peril types.
 
 ## Out of scope for this quickstart
 

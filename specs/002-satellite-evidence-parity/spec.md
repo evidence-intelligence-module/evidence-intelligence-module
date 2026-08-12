@@ -72,12 +72,29 @@ A claims reviewer wants an independent, satellite-derived signal confirming that
 
 ---
 
+### User Story 5 - Thermal and Red-Edge Stress Signals for Drought and Heatwave Claims (Priority: P5)
+
+A claims reviewer handling a drought or heatwave claim needs stress evidence beyond generic greenness (NDVI), since water stress and heat stress often manifest as a canopy-temperature or chlorophyll/nitrogen signal before they show up as a broad vegetation-index decline. Today the pipeline has a generic, undisclosed "red-edge index" placeholder and no thermal signal at all. This story formalizes dedicated red-edge indices (e.g. NDRE) and adds NASA ECOSTRESS canopy-temperature data as an additive water-stress signal, scoped specifically to `drought` and `heatwave` requests.
+
+**Why this priority**: An accuracy/coverage improvement for two specific peril types, sequenced after the stories that affect every request (sourcing, confidence tiering, foundation-model augmentation, crop cross-check). Depends on no other story in this feature.
+
+**Independent Test**: Submit drought and heatwave claims and verify the evidence package includes named, disclosed red-edge indices, and — where an ECOSTRESS pass is available within the analysis window — a canopy-temperature-derived water-stress signal; verify graceful fallback when no ECOSTRESS pass is available.
+
+**Acceptance Scenarios**:
+
+1. **Given** a drought or heatwave claim where Sentinel-2 red-edge bands are available, **When** the evidence package is generated, **Then** it includes a named, disclosed red-edge index (at minimum NDRE) distinct from the existing generic vegetation index, with source/version provenance.
+2. **Given** an ECOSTRESS pass is available within the claim's analysis window, **When** the evidence package is generated, **Then** it includes a canopy-temperature-derived water-stress signal alongside the existing vegetation/SAR signals.
+3. **Given** no ECOSTRESS pass is available within the analysis window (its 1–5 day revisit is irregular, not sun-synchronous), **When** the evidence package is generated, **Then** the pipeline falls back to red-edge and existing baseline signals without failing the request.
+
+---
+
 ### Edge Cases
 
 - What happens when neither SAR nor any higher-resolution source is available within the request's latency window (e.g., a genuine gap in coverage over a given field)? The module MUST fall back to the existing baseline pipeline and MUST NOT block or fail the evidence request solely because an enhanced source was unavailable.
 - What happens when SAR and optical/VHR signals disagree (e.g., SAR indicates flooding but the next cloud-free optical pass shows no visible damage)? The disagreement itself is evidence-relevant and MUST be surfaced in the package rather than silently resolved by picking one source.
 - What happens when a request would require paid/tasked commercial imagery (VHR optical or commercial SAR) and tasking budget or authorization is not available for that request? The module MUST fall back to free/open sources and MUST record that a commercial source was considered but not used, rather than silently omitting the consideration.
 - What happens when a foundation-model embedding source (Story 3) is deprecated, changes its output format, or becomes unavailable? Evidence generation MUST continue using the existing hand-crafted feature set, and the change in feature-source availability MUST be reflected in the methodology version per Constitution Principle I.
+- What happens when ECOSTRESS's irregular revisit doesn't produce a pass within a drought/heatwave claim's analysis window? The module MUST fall back to red-edge and existing baseline signals and MUST NOT fail the request solely because thermal coverage was unavailable — this is expected, disclosed per-package data availability, not a pipeline failure.
 - What happens when even the best available combination of sources cannot resolve a case above the lowest confidence tier (the structural ceiling documented in research §2.6 — sub-canopy conditions, actual harvested yield, pre-symptom pest/disease onset)? The package MUST be delivered at the lowest tier with an explicit statement of what remains unresolved, and MUST NOT claim or imply CCE-equivalent confidence regardless of how much sourcing/modeling effort was applied.
 
 ## Requirements *(mandatory)*
@@ -98,6 +115,11 @@ A claims reviewer wants an independent, satellite-derived signal confirming that
 - **FR-012**: The module MUST NOT present any output, at any confidence tier or with any combination of enhanced sources, as a replacement for or equivalent to CCE-based yield determination.
 - **FR-013**: The module MUST record, per evidence package, whether a commercial (paid/tasked) source was considered and whether it was used, as part of the package's provenance trail.
 - **FR-014**: The module SHOULD support human-in-the-loop, segmentation-model-assisted refinement of a submitted field or damage-extent polygon, as an assistive step rather than a fully automated replacement for the submitted field geometry.
+- **FR-015**: The module MUST compute and disclose a named red-edge vegetation index (at minimum NDRE), replacing the undisclosed generic "red-edge index" placeholder, for every request where Sentinel-2 red-edge bands are available.
+- **FR-016**: The module MUST support ingestion of NASA ECOSTRESS canopy-temperature data as an additive water-stress signal, scoped to `drought` and `heatwave` peril-type requests, where a usable pass exists within the analysis window.
+- **FR-017**: The module MUST fall back to red-edge and existing baseline vegetation signals when no ECOSTRESS pass is available within the analysis window, without failing the request.
+- **FR-018**: Every red-edge index and ECOSTRESS-derived signal included in a package MUST carry source/version provenance, per the same discipline Constitution Principle I/II requires of every other satellite-derived figure in this module.
+- **FR-019**: Commercial satellite tasking (paid VHR optical, commercial SAR) is **not authorized** for this rollout — the Satellite Source Registry's commercial tier remains disabled by default; enhanced-tier sourcing is limited to free/open sources (existing baseline plus ISRO sovereign sources via a dedicated access client, since these are not available through the existing GEE integration).
 
 ### Key Entities
 
@@ -106,6 +128,7 @@ A claims reviewer wants an independent, satellite-derived signal confirming that
 - **Foundation Model Feature Set**: A versioned set of embeddings from an integrated open geospatial foundation model, recorded per Constitution Principle I and used additively alongside the existing Component 2 feature set.
 - **Cross-Validation Signal**: The result (consistent / discrepant) of comparing a claim's declared crop type and calendar against an independent, satellite-derived crop-type mapping product.
 - **Supplementary Evidence Attachment**: An optional, channel-agnostic evidence item (e.g., a geotagged photo) that can be associated with a package to help resolve a low-confidence case, without coupling the module to any specific intimation channel.
+- **Thermal Stress Signal**: A canopy-temperature-derived water-stress measurement (land surface temperature/evapotranspiration deviation from baseline), sourced from NASA ECOSTRESS, associated with a request, present only for `drought`/`heatwave` peril-type requests where a usable pass existed within the analysis window.
 
 ## Success Criteria *(mandatory)*
 
@@ -116,11 +139,13 @@ A claims reviewer wants an independent, satellite-derived signal confirming that
 - **SC-003**: 100% of evidence packages include a plain-language confidence tier that a non-technical claims reviewer can act on without interpreting a raw numeric score.
 - **SC-004**: 0% of evidence packages, across all confidence tiers and all source combinations, present output as equivalent to or a replacement for CCE-based determination (verified via package-content audit).
 - **SC-005**: The proportion of claims resolving to the lowest confidence tier is tracked and reported as a visible baseline metric, so later roadmap phases have a concrete number to measure improvement against.
+- **SC-006**: For drought and heatwave claims specifically, the evidence package includes a dedicated stress signal (red-edge and/or thermal) distinct from the generic vegetation-index baseline, whenever a usable red-edge or ECOSTRESS source exists for the claim window.
 
 ## Assumptions
 
 - "As close as technically achievable to CCE-level verification confidence" is interpreted as narrowing the gap via the tiered-confidence-plus-best-available-source pattern that every reviewed global precedent uses (`documents/research/Satellite-Parity-Global-Precedent-Research.md` §1.10, §5) — not achieving literal parity. No reviewed program achieves CCE-equivalent confidence at individual-field granularity without either a tiered fallback or an area-level index trade-off, so this roadmap does not claim to be the exception.
-- Commercial (paid/tasked) satellite sources — very-high-resolution optical and commercial SAR — are treated as budget-gated and optional per request in this spec; the exact budget, volume thresholds, and which claim types justify tasking cost are delivery-planning decisions for `/speckit-plan`, not fixed here. The near-term rollout is assumed to prioritize free/open sources (existing Sentinel/Landsat/MODIS baseline, plus ISRO sovereign sources and open foundation-model embeddings) with commercial tasking as a later-phase, higher-value-claim capability.
+- **Decided (2026-08-12), no longer an assumption**: commercial (paid/tasked) satellite sources — very-high-resolution optical and commercial SAR — are **not authorized** for this rollout (FR-019). The near-term rollout uses free/open sources only (existing Sentinel/Landsat/MODIS baseline, ISRO sovereign sources via a dedicated Bhoonidhi client, and open foundation-model embeddings). Commercial tasking remains designed-for but inactive, revisited only once a real budget decision is made (`issue/open query - commercial satellite tasking budget and volume thresholds.md`).
+- ECOSTRESS's canopy-temperature revisit (1–5 days, irregular, ISS-mounted rather than sun-synchronous) means Thermal Stress Signal availability varies per request and cannot be guaranteed the way baseline Sentinel sources can — this is disclosed as a per-package data-availability fact (FR-017), not treated as a pipeline failure.
 - Presto is assumed as the first foundation-model integration target (Story 3) given its production track record as ESA WorldCereal's backbone and its native fit with the module's existing Sentinel-1/2 + weather timeseries inputs; final model selection remains subject to technical evaluation during `/speckit-plan`.
 - This roadmap extends the already-implemented pipeline in `specs/001-evidence-generation-pipeline/` (specifically Component 2 and the ensemble/confidence layer of `documents/Modeling-Approach.md`) rather than building new evidence-generation infrastructure from scratch.
 - Empirical validation of confidence-tier thresholds and any accuracy claims arising from this roadmap is assumed to occur during the existing Pilot & Validation roadmap phase (`documents/README.md` §8), not resolved unilaterally by this spec.

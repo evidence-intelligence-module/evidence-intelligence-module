@@ -16,14 +16,16 @@ Resolves the technical choices flagged in `plan.md`'s Technical Context. Every d
 
 ## 2. Cloud-penetrating / enhanced-resolution source priority
 
-**Decision**: Sentinel-1 SAR (already in the `001` baseline) becomes the default fallback the moment optical is unusable for a request's analysis window; Planet PlanetScope (daily, ~3–4m, moderate commercial cost) is the default enhanced-tier optical source for small-field cases; commercial SAR (ICEYE first) and tasked VHR (SkySat/Maxar/Pléiades Neo) are budget-gated, request-level options, not always-on.
+**Decision (corrected 2026-08-12 — see note below)**: Sentinel-1 SAR (already in the `001` baseline) becomes the default fallback the moment optical is unusable for a request's analysis window; ISRO Resourcesat-2A LISS-4 (free, via the new Bhoonidhi client, §6.3) is the default enhanced-resolution optical tier for small-field cases; EOS-04/RISAT-1A is a free sovereign SAR backup. **Planet PlanetScope, commercial SAR (ICEYE/Capella/Umbra), and tasked VHR (SkySat/WorldView Legion/Pléiades Neo) are all deferred under the free-only decision (§5)** — every one of them is a paid/commercial source per the licensing breakdown this research surfaced (8 of 13 enhanced-tier sources researched are commercial), so none belong in the near-term default tier.
 
-**Rationale**: Research §3 documents 90–92% July–August cloud cover in monsoon-affected regions — exactly the window most claimed hailstorm/flood/cloudburst events fall in — making SAR-first fallback load-bearing, not optional, for this module's core use case. Research §2.1 shows PlanetScope's daily revisit and 3–4m resolution measurably improves classification on India's median ~0.16 ha field size, at a moderate, subscription-based (not per-scene-tasked) cost — a reasonable default-on enhanced tier. Sub-meter tasked sources (SkySat, WorldView Legion, Pléiades Neo) and commercial SAR (ICEYE/Capella/Umbra) carry meaningfully higher per-request cost (research §2.1/§2.2: "$1,200+/scene" for WorldView Legion tasking) and are better suited to budget-gated, high-value-claim use — resolved as an open scope item, §5 below.
+**Correction note**: the original version of this decision (pre-2026-08-12) treated PlanetScope as a "default-on" source despite it being commercial/subscription-based — an inconsistency surfaced when the commercial-licensing breakdown was produced and the free-only decision was made explicit. PlanetScope was moved into the deferred/commercial bucket alongside the sources it was previously distinguished from, rather than left as an unexplained exception to the free-only rule.
+
+**Rationale**: Research §3 documents 90–92% July–August cloud cover in monsoon-affected regions — exactly the window most claimed hailstorm/flood/cloudburst events fall in — making SAR-first fallback load-bearing, not optional, for this module's core use case; this holds regardless of the commercial-tasking decision, since Sentinel-1 is free. Research §2.3 documents LISS-4's free 5.8m/5-day resolution as a real, if partial, improvement over the 10–30m baseline for India's ~0.16 ha median field size — coarser and slower than PlanetScope's 3–4m/daily, but $0, consistent with §5's decision. Every sub-3m or sub-daily option researched (PlanetScope, SkySat, WorldView Legion, Pléiades Neo, ICEYE, Capella, Umbra) is commercial and therefore out of scope for this rollout.
 
 **Alternatives considered**:
 - *Optical-only, wait for the next clear pass* — rejected: this is the status quo `001` already has via the baseline pipeline's graceful degradation to a weather-only preliminary package; it's retained as the ultimate fallback (`plan.md` Constraints), but doesn't close the gap this feature exists to close.
-- *Commercial SAR always-on for every request* — rejected: no source document or research finding supports the cost being justified for every request regardless of claim value or confidence need; reserved as budget-gated per FR-002/FR-013.
-- *ISRO Resourcesat-2A LISS-4 as the default enhanced optical tier instead of Planet* — not rejected, but sequenced second: free/sovereign and a real 5.8m option (research §2.3), but 5-day revisit is coarser than PlanetScope's daily cadence and civilian tasking availability for Cartosat-3's finer resolution is unclear from public documentation — a good budget-free fallback within the Satellite Source Registry, not the default.
+- *PlanetScope as a default-on exception to the free-only rule* — rejected (see correction note above): no principled basis for treating one commercial source as "default" while gating the rest; consistency requires treating all 8 commercial sources identically until a budget decision changes that.
+- *Cartosat-3 as a free high-resolution option* — not adopted: civilian agri-insurance tasking availability is unclear from public documentation (research §2.3), and its status as a strategic/government asset makes "free" a weaker claim than for LISS-4/EOS-04, which have established civilian access via Bhoonidhi.
 
 ## 3. Independent crop-type/calendar cross-check source
 
@@ -48,12 +50,38 @@ Resolves the technical choices flagged in `plan.md`'s Technical Context. Every d
 
 ## 5. Commercial satellite tasking budget / scale
 
-**Decision**: Not resolved here — explicitly deferred.
+**Decision (resolved 2026-08-12): Option A — no commercial tasking in the near-term rollout.** Enhanced-tier sourcing is free-only: existing GEE baseline + ISRO sovereign sources (Resourcesat-2A LISS-4, EOS-04) via a new Bhoonidhi client (§6.3 below). `commercial_tasking_client.py` remains an inactive, disabled-by-default stub.
 
-**Rationale**: No source document states a tasking budget, per-claim cost ceiling, or volume threshold for commercial VHR/SAR sourcing. Inventing one would violate `CLAUDE.md`'s no-invented-figures convention, the same reasoning `001-evidence-generation-pipeline/research.md` §4 applied to its own concurrency/scale question. Phase 1 design below (data model, contracts) does not depend on this number — the Satellite Source Registry and commercial tasking client are designed to accept a budget/authorization decision as configuration, not as a hardcoded assumption, so resolving this later doesn't require a design change. Full reasoning: [`issue/open query - commercial satellite tasking budget and volume thresholds.md`](./issue/open%20query%20-%20commercial%20satellite%20tasking%20budget%20and%20volume%20thresholds.md).
+**Rationale**: No source document ever stated a tasking budget, per-claim cost ceiling, or volume threshold, and inventing one would have violated `CLAUDE.md`'s no-invented-figures convention. Rather than block on that missing figure, the decision was made to run free-only for the near-term rollout and revisit once real budget or Pilot & Validation data exists — the same logic the issue file's Option A/C recommendation laid out. The Satellite Source Registry and commercial tasking client were already designed to accept a budget/authorization decision as configuration, not a hardcoded assumption, so this decision required no design change, only a scope reduction for this rollout.
 
-**Alternatives considered**: N/A — no candidate figures exist in any source document to weigh against each other.
+**Alternatives considered**: Option B (budget-gated by claim value/confidence tier) — the natural target once a real budget figure exists, but not chosen now since no threshold value exists to gate on. Option C (defer to Pilot & Validation) — functionally the same near-term behavior as Option A, folded into the same decision rather than tracked as a separate path.
+
+## 6. User Story 5 additions (added 2026-08-12, scope-completeness pass)
+
+### 6.1 Red-edge index formalization
+
+**Decision**: Compute NDRE (Normalized Difference Red-Edge) as the primary formalized index, with Chlorophyll Index Red-Edge and MTCI as secondary/disclosed alternatives, replacing the generic "red-edge index" placeholder in `Modeling-Approach.md` §3's Component 2 feature table.
+
+**Rationale**: `documents/research/Satellite-Parity-Global-Precedent-Research.md` §2.5a/§2.5a-quantitative documents NDRE detecting nitrogen deficiency 1–2 weeks earlier than NDVI and resisting NDVI's saturation in dense canopy, with sourced R²=0.74–0.94 (nitrogen/chlorophyll) against Sentinel-2's existing red-edge bands (705/740/783nm) — no new data source required, purely a feature-engineering formalization.
+
+**Alternatives considered**: Leaving "red-edge index" generic (status quo) — rejected, since naming and disclosing the specific index is required for the same Constitution Principle I/II provenance discipline every other feature in this module already follows.
+
+### 6.2 ECOSTRESS thermal integration
+
+**Decision**: Ingest NASA ECOSTRESS canopy-temperature data (5 thermal bands, 8–12.5µm, 70m resolution, 1–5 day irregular revisit, free via AWS Open Data Registry) as an additive water-stress signal, scoped to `drought` and `heatwave` peril-type requests.
+
+**Rationale**: Research §2.5a identified this as filling a real gap — no thermal signal exists anywhere in the current feature set, and this module's own peril-type list names `drought`/`heatwave` explicitly. ECOSTRESS measures water stress via evapotranspiration/thermal response, a genuinely different physical principle than reflectance spectroscopy, so it's additive information, not a duplicate of red-edge/NDVI signals.
+
+**Alternatives considered**: Landsat 8/9 TIRS thermal band — rejected as primary choice; Landsat's ~16-day single-satellite revisit is coarser than ECOSTRESS's 1–5 day cadence and Landsat wasn't purpose-built for plant water-stress measurement the way ECOSTRESS is. Not ruled out as a future secondary/fallback thermal source.
+
+### 6.3 ISRO sovereign source access: separate Bhoonidhi client, not folded into GEE
+
+**Decision**: Build a dedicated `bhoonidhi_client.py` for Resourcesat-2A LISS-4 and EOS-04/RISAT-1A, separate from the existing `gee_client.py`.
+
+**Rationale**: Directly checked Google Earth Engine's Data Catalog — it lists NASA/USGS/ESA-primary public datasets (Landsat, MODIS, Sentinel, etc.) with no ISRO/Resourcesat/EOS-series entries found. ISRO's sovereign data is distributed through its own Bhoonidhi/Bhuvan platform, not GEE, so the free-only decision (§5) requires two ingestion clients for its two free-enhanced-tier sources, not one. This was surfaced during the free-only decision discussion and is recorded here rather than left as an incorrect assumption in the design.
+
+**Alternatives considered**: Assuming GEE covers ISRO sources — rejected after direct verification; would have produced a design that silently failed to actually reach the free sources it claimed to use.
 
 ## Output
 
-All technical choices flagged in `plan.md`'s Technical Context are resolved above, except commercial tasking budget/scale, which is deliberately left open and tracked as an issue rather than guessed. This does not block Phase 1 — the data model and contracts are budget-agnostic, treating "was a commercial source available/authorized for this request" as a per-request input rather than a fixed constant.
+All technical choices flagged in `plan.md`'s Technical Context are resolved above. Commercial tasking budget/scale, previously deferred, is now resolved (§5) — free-only for this rollout. Request-volume/concurrency targets remain open for the same reason `001`'s equivalent question is open — not invented here either, and not blocking Phase 1 design, which is scale-agnostic.

@@ -20,11 +20,28 @@ The `package` object in the `COMPLETE` and `INSUFFICIENT_DATA` responses (`001` 
     "confidence_tier_guidance": null,
     "sources_used": [
       { "name": "Sentinel-1 SAR", "source_class": "BASELINE", "access_model": "FREE" },
-      { "name": "PlanetScope", "source_class": "ENHANCED", "access_model": "FREE" }
+      { "name": "Resourcesat-2A LISS-4", "source_class": "ENHANCED", "access_model": "FREE" }
     ],
     "sources_considered_not_used": [],
     "foundation_model_features": { "model_name": "presto", "model_version": "v1.0", "status": "USED" },
-    "crop_calendar_cross_check": { "discrepancy_flag": false }
+    "crop_calendar_cross_check": { "discrepancy_flag": false },
+    "red_edge_index": { "type": "NDRE", "value": 0.42 },
+    "thermal_stress_signal": null
+  }
+}
+```
+
+**Drought/heatwave example** (`peril_type: "drought"`, ECOSTRESS pass available):
+
+```json
+{
+  "package": {
+    "red_edge_index": { "type": "NDRE", "value": 0.18 },
+    "thermal_stress_signal": {
+      "source_dataset": "ECOSTRESS L2 LSTE",
+      "deviation_from_baseline_celsius": 4.7,
+      "pass_available": true
+    }
   }
 }
 ```
@@ -48,6 +65,8 @@ The `package` object in the `COMPLETE` and `INSUFFICIENT_DATA` responses (`001` 
 | `sources_used` / `sources_considered_not_used` | Full provenance list, including commercial sources evaluated but not used (spec.md FR-013) |
 | `foundation_model_features` | `status: "USED"` or `"FALLBACK_NOT_USED"` — always present (spec.md FR-007/FR-008) |
 | `crop_calendar_cross_check` | Present only when a declared crop type existed to compare against (data-model.md) |
+| `red_edge_index` | `null` when Sentinel-2 red-edge bands were unavailable; otherwise names the specific index used (never a generic/undisclosed value) — spec.md FR-015 |
+| `thermal_stress_signal` | `null` for non-drought/heatwave peril types, or when no ECOSTRESS pass was available within the analysis window (`pass_available: false` case is recorded internally per data-model.md but surfaced here simply as `null` — the reviewer doesn't need to distinguish "not applicable" from "not available" at the API layer) — spec.md FR-016/FR-017 |
 
 **This is a strictly additive change** — a caller written against `001`'s contract alone continues to work unmodified; these are new fields on the same response shape, not a new response shape.
 

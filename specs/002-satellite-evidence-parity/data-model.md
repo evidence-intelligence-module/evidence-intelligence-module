@@ -66,14 +66,38 @@ New columns, added to the table `001` already defines:
 
 **Validation rules**: Attachable to a request at any confidence tier, but only surfaced as tier-improvement guidance for `MEDIUM`/`LOW` packages (`evidence_packages.confidence_tier_guidance`). The module never requires this table to be populated — it exists purely as an optional channel-agnostic input (spec.md FR-006).
 
+## New: ThermalStressSignal (`thermal_stress_signals`)
+
+| Field | Type | Notes |
+|---|---|---|
+| `signal_id` | string, PK | |
+| `request_id` | FK → EvidenceRequest | |
+| `source_dataset`, `source_version` | string, string | e.g. ECOSTRESS L2 LSTE, collection version (research.md §6.2) |
+| `land_surface_temperature`, `historical_baseline`, `deviation` | float, float, float | Canopy-temperature deviation from the field's own historical baseline, mirroring the deviation-from-baseline pattern `WeatherCorrelationResult` (`001`) and the DSI (`Modeling-Approach.md` §6) already use |
+| `pass_available` | boolean | `false` when no usable ECOSTRESS pass existed within the analysis window — row still persisted so "we checked and none was available" is distinguishable from "we never checked" |
+
+**Validation rules**: A row is generated for every `drought`/`heatwave` peril-type request (spec.md FR-016) — `pass_available = false` rows carry null measurement fields but non-null provenance fields, so the attempt itself is always auditable. Never generated for other peril types (scope per FR-016).
+
+## Extension: DamageAssessmentComponentResult (`model_component_results`) — red-edge disclosure
+
+New column, added to the table `001` already defines:
+
+| Field | Type | Notes |
+|---|---|---|
+| `red_edge_index_type`, `red_edge_index_value` | string, float | Nullable — populated on the `AI_ML` component row whenever Sentinel-2 red-edge bands were available (spec.md FR-015); `red_edge_index_type` names the specific index used (e.g. `NDRE`), never left as a generic unnamed value |
+
+**Validation rules**: When populated, `red_edge_index_type` must name a specific, disclosed index — mirrors the same "no generic/undisclosed feature" discipline `001`'s `component_inputs` field already enforces.
+
 ## Entity Relationships (additions to `001`'s diagram)
 
 ```
 EvidenceRequest (1) ──< (0..*) FoundationModelFeatureSet        [one attempt per request; USED or FALLBACK_NOT_USED]
 EvidenceRequest (1) ──< (0..1) CropCalendarCrossCheck            [only when a declared crop type exists to compare]
 EvidenceRequest (1) ──< (0..*) SupplementaryEvidenceAttachment   [optional, channel-agnostic, any confidence tier]
+EvidenceRequest (1) ──< (0..1) ThermalStressSignal               [only for drought/heatwave peril_type; pass_available may be false]
 EvidencePackage  (1) ── confidence_tier, confidence_tier_guidance, cce_non_equivalence_statement   [new columns, not a new table]
 SatelliteAnalysisResult (1) ── source_class, access_model, considered_not_used                     [new columns, not a new table]
+DamageAssessmentComponentResult (1) ── red_edge_index_type, red_edge_index_value                   [new columns on AI_ML row, not a new table]
 ```
 
 No entity added or extended here references CCE data, and no new table leaves this module's own schema to reference another initiative's tables (Constitution §4/§5) — same boundary `001`'s data model already enforces, unchanged by this extension.
