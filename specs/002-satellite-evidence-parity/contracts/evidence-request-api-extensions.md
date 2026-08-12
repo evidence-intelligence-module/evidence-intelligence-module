@@ -157,6 +157,7 @@ Record what actually happened to the claim this request produced evidence for (`
 {
   "outcome": "UPHELD",
   "assessed_loss_fraction": 0.42,
+  "assessment_source": "PILOT_SURVEY",
   "recorded_at": "2026-11-04"
 }
 ```
@@ -165,15 +166,27 @@ Record what actually happened to the claim this request produced evidence for (`
 |---|---|---|
 | `outcome` | Yes | `UPHELD` \| `PARTIALLY_UPHELD` \| `REJECTED` \| `WITHDRAWN` \| `UNKNOWN`. A small closed enum — deliberately not the caller's own claim-status vocabulary |
 | `assessed_loss_fraction` | No | The independently assessed loss in [0,1], where the caller has one. This is the damage-magnitude label Component 2 needs; the enum above is the coarser signal that calibrates confidence tiers and the causation threshold |
+| `assessment_source` | **Yes when `assessed_loss_fraction` is present** | `PILOT_SURVEY` \| `INSURER_ASSESSED` \| `REMOTE_REVIEW` \| `CCE_DERIVED` \| `OTHER`. Where the loss figure came from |
 | `recorded_at` | No | When the outcome was determined. Defaults to receipt time |
 
-**Response — `201 Created`**, `404` for an unknown `request_id`, `400` for an outcome outside the enum.
+**Response — `201 Created`**, `404` for an unknown `request_id`, `400` for an outcome outside the enum or a missing `assessment_source` alongside a loss fraction.
+
+**Response — `422 Unprocessable Entity`**: the declared `assessment_source` is not in the deployment's `AUTHORIZED_OUTCOME_SOURCES` allowlist. The submission is **rejected, not stored** — a source the deployment has not authorised must not enter the record silently.
+
+```json
+{
+  "error": "assessment_source 'CCE_DERIVED' is not authorized for this deployment",
+  "authorized_sources": ["PILOT_SURVEY", "INSURER_ASSESSED", "REMOTE_REVIEW"]
+}
+```
+
+`CCE_DERIVED` is an explicit enum member and is **absent from the default allowlist** (Constitution §4). Naming it is what makes the boundary enforceable: leaving it out of the enum would not stop CCE-derived figures arriving, it would only ensure they arrived mislabelled as `INSURER_ASSESSED`. Authorising it is a config change gated on an explicit §8 decision, not something this contract presumes either way.
 
 **Constraints this endpoint holds to**:
 
 - **No caller schema, no personal data** (Constitution §5, and the same minimal-PII posture as the attachment endpoint above). It accepts a closed enum and a number — never a claim ID, policy field, surveyor identity, or farmer identifier. A caller correlates via `external_reference_id` on the original request, as everywhere else.
 - **It does not alter any issued package.** Recording an outcome never re-runs the pipeline, never changes a `confidence_tier`, and never supersedes a package. It is write-only observation, kept strictly separate from evidence generation so that recording what happened cannot retroactively shape what the module said would happen.
-- **It carries no CCE data** (Constitution §4). `assessed_loss_fraction` is whatever the caller independently assessed; whether *CCE-derived* outcomes may be supplied here is the open question in [`001`'s label query](../../001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md) and is **not** decided by this contract. The endpoint's existence does not presume that answer — it works identically for pilot-survey and insurer-assessed outcomes.
+- **It cannot become an unnoticed CCE ingress** (Constitution §4). `assessed_loss_fraction` is the one field here that could carry a CCE-derived figure, and this endpoint is deliberately built *before* the §4 decision is made — so the `assessment_source` allowlist above is what keeps that from being a loophole. Whether CCE-derived outcomes may be supplied remains the open question in [`001`'s label query](../../001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md); the gate means the answer is enforced by configuration and recorded per §8, rather than depending on callers volunteering it.
 
 ## Notes for implementers
 

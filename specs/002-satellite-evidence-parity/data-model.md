@@ -79,6 +79,32 @@ A `DISCREPANT` outcome MUST be surfaced with `source_dataset`, `source_version`,
 
 **On `uri`**: the endpoint takes a reference to an already-stored object, not an upload. That the module never fetches it is a security property worth asserting in the contract rather than leaving as an accident of the current implementation — an unconstrained caller-supplied URI that anything downstream dereferences is a server-side request forgery vector.
 
+## New: ClaimOutcome (`claim_outcomes`)
+
+Added 2026-08-13 for `tasks.md` `TV-01`. What actually happened to the claim this request produced evidence for.
+
+| Field | Type | Notes |
+|---|---|---|
+| `outcome_id` | string, PK | |
+| `request_id` | FK → EvidenceRequest | |
+| `outcome` | enum | `UPHELD` \| `PARTIALLY_UPHELD` \| `REJECTED` \| `WITHDRAWN` \| `UNKNOWN` — a small closed set, deliberately not the caller's own claim-status vocabulary (Constitution §5) |
+| `assessed_loss_fraction` | float, nullable | Independently assessed loss in [0,1] where the caller has one. This is the damage-magnitude label Component 2 needs; `outcome` above is the coarser signal that calibrates confidence tiers and the causation threshold |
+| `assessment_source` | enum, **required whenever `assessed_loss_fraction` is present** | `PILOT_SURVEY` \| `INSURER_ASSESSED` \| `REMOTE_REVIEW` \| `CCE_DERIVED` \| `OTHER`. Names where the loss figure came from, so the §4 boundary is enforceable rather than assumed |
+| `recorded_at` | date | When the outcome was determined; defaults to receipt time |
+| `received_at` | timestamp | When the module was told |
+
+**Why this table exists**: every evidence package eventually pairs with a settled claim, and that pairing is the only training and calibration data this module gets for free. Without it, operating the module generates evidence and discards its own labels — which is why [`001`'s label query](../001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md) would otherwise stay open indefinitely. It must exist **before** the Pilot & Validation phase (`documents/README.md` §8), or the pilot's labels are lost.
+
+**Validation rules**: At most one current outcome per request; a corrected outcome is a new row, never an update in place, matching the never-overwrite discipline `001`'s store already applies to component results and packages. Writing a row **never** re-runs the pipeline, alters a `confidence_tier`, or supersedes a package — recording what happened must not retroactively shape what the module said would happen, so the write path is strictly one-directional.
+
+**Boundaries**: carries no claim ID, policy field, surveyor identity, or farmer identifier (Constitution §5 — callers correlate via `external_reference_id` as everywhere else).
+
+**The Constitution §4 gate (added 2026-08-13)**: `assessed_loss_fraction` is the one field on this table that could carry a CCE-derived figure, and `TV-01` is deliberately sequenced *before* the §4 decision is made — so without a gate, building it opens an ingress for exactly the data whose permissibility is the repo's oldest open question, arriving unlabelled and unnoticed.
+
+`assessment_source` closes that. Writes are accepted only when the declared source appears in the configured `AUTHORIZED_OUTCOME_SOURCES` allowlist; anything else is rejected, not silently stored. `CCE_DERIVED` is an explicit enum member **and is absent from the default allowlist** — naming it is what makes the boundary enforceable. Omitting it would not prevent CCE-derived figures arriving; it would only guarantee they arrived mislabelled as `INSURER_ASSESSED`, which is strictly worse than rejecting them.
+
+This encodes the §4 boundary as a runtime constraint rather than a convention, and does **not** decide the open question — resolving [`001`'s label query](../001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md) in favour of offline CCE labels would be a one-line config change, with the decision recorded per Constitution §8 rather than inferred from the schema.
+
 ## New: ThermalStressSignal (`thermal_stress_signals`)
 
 | Field | Type | Notes |
@@ -112,6 +138,7 @@ EvidenceRequest (1) ──< (0..*) FoundationModelFeatureSet        [one attempt
 EvidenceRequest (1) ──< (0..1) CropCalendarCrossCheck            [only when a declared crop type exists to compare]
 EvidenceRequest (1) ──< (0..*) SupplementaryEvidenceAttachment   [optional, channel-agnostic, any confidence tier]
 EvidenceRequest (1) ──< (0..1) ThermalStressSignal               [only for drought/heatwave peril_type; pass_available may be false]
+EvidenceRequest (1) ──< (0..*) ClaimOutcome                      [optional, write-only; a correction is a new row, never an update]
 EvidencePackage  (1) ── confidence_tier, confidence_tier_guidance, cce_non_equivalence_statement   [new columns, not a new table]
 SatelliteAnalysisResult (1) ── source_class, access_model, considered_not_used                     [new columns, not a new table]
 DamageAssessmentComponentResult (1) ── red_edge_index_type, red_edge_index_value                   [new columns on AI_ML row, not a new table]

@@ -52,6 +52,16 @@ Validation scenarios proving each user story (`spec.md`) works end-to-end, on to
 5. Repeat for a non-drought/heatwave peril type (e.g. `hailstorm`).
 6. **Expected**: `package.thermal_stress_signal` is `null` — this field is scoped to drought/heatwave only (spec.md FR-016), not populated or attempted for other peril types.
 
+## Scenario 7 — Claim-outcome capture and the §4 gate (FR-024, `tasks.md` TV-01/TV-01a)
+
+1. Complete any request, then `POST /evidence-requests/{request_id}/outcome` with `{"outcome": "UPHELD", "assessed_loss_fraction": 0.42, "assessment_source": "PILOT_SURVEY"}`.
+2. **Expected**: `201 Created`. Re-fetch the request and confirm the package is **unchanged** — same `package_version`, same `confidence_tier`, same checksum. Recording what happened must never retroactively alter what the module said would happen.
+3. Repeat with `"assessment_source": "CCE_DERIVED"`.
+4. **Expected**: `422`, listing the authorized sources, and **no row written** — verify by querying `claim_outcomes` for that request. This is the Constitution §4 gate: the endpoint is built before the offline-CCE-labels decision is made, so an unauthorized source must be refused rather than stored.
+5. Repeat with `assessed_loss_fraction` present but `assessment_source` omitted.
+6. **Expected**: `400`. A loss figure with no stated origin is exactly what the gate exists to prevent.
+7. Run the label export (`TV-02`) and confirm it emits the `scripts/train_ai_ml_model.py` CSV format — one column per `FEATURE_NAMES` plus `damage_fraction` — from the outcomes captured above.
+
 ## Out of scope for this quickstart
 
 Field/damage-boundary segmentation assist (FR-014, SHOULD-priority) has no dedicated scenario here — it's a human-in-the-loop UI capability, not an automated pipeline behavior, and is validated via its own tooling once implemented, not via this API-level quickstart.
