@@ -1,0 +1,186 @@
+{
+  "_label": "pinned",
+  "_label_reason": "The main COMPLETE path: pre/post optical pair, all components run. Nothing in Phase 0.4 may change this output.",
+  "component_results": [
+    {
+      "affected_area_ha": null,
+      "component": "SEMI_PHYSICAL",
+      "confidence_or_accuracy": {
+        "calibration_confidence": 0.85,
+        "input_warnings": []
+      },
+      "damage_classification": null,
+      "methodology_version": "semi-physical-v1",
+      "point_estimate": 0.8011248594
+    },
+    {
+      "affected_area_ha": null,
+      "component": "AI_ML",
+      "confidence_or_accuracy": {
+        "features_supplied": [
+          "ndvi_deviation",
+          "rainfall_anomaly",
+          "temperature_anomaly",
+          "fapar_deviation",
+          "soil_moisture_deviation"
+        ],
+        "mae": null,
+        "note": "No labeled training data available yet; this is a disclosed fallback formula, not a calibrated model prediction.",
+        "nrmse": null,
+        "rmse": null,
+        "status": "untrained_placeholder"
+      },
+      "damage_classification": null,
+      "methodology_version": "ai-ml-rf-v1",
+      "point_estimate": 0.1008
+    },
+    {
+      "affected_area_ha": null,
+      "component": "ENSEMBLE",
+      "confidence_or_accuracy": {
+        "combined_confidence": 0.5
+      },
+      "damage_classification": "severe",
+      "methodology_version": "ensemble-v1",
+      "point_estimate": 0.6960761305
+    },
+    {
+      "affected_area_ha": null,
+      "component": "DSI",
+      "confidence_or_accuracy": {
+        "entropy_weights": {
+          "crop_condition_variability": -0.0,
+          "fapar_deviation": -0.0,
+          "lswi_deviation": -0.0,
+          "ndvi_deviation": 1.0,
+          "sar_vh_backscatter_deviation": -0.0,
+          "weather_anomaly_magnitude": -0.0
+        }
+      },
+      "damage_classification": null,
+      "methodology_version": "dsi-entropy-v1",
+      "point_estimate": 0.5
+    }
+  ],
+  "package_json": {
+    "accuracy_statement": [
+      "fAPAR and insolation are approximated from NDVI via a published linear relationship, not a dedicated fAPAR product (known limitation).",
+      "AI/ML model status: untrained_placeholder.",
+      "Component 2 features measured for this request: ndvi_deviation, rainfall_anomaly, temperature_anomaly, fapar_deviation, soil_moisture_deviation (5 of 17 declared). Features that could not be measured were omitted rather than defaulted.",
+      "Cloud/shadow-free coverage of the submitted geometry, after per-pixel masking \u2014 pre-event: 95% of field; post-event: 95% of field.",
+      "Yield loss = damage fraction \u00d7 Harvest Index, using an assumed Harvest Index of 0.4 applied uniformly to all crops. This is a modeling assumption, not a crop-specific published value \u2014 the evidence request carries no crop type to select one by (modeling-approach.md \u00a72).",
+      "Damage classification bands (negligible < 0.1 \u2264 minor < 0.33 \u2264 moderate < 0.66 \u2264 severe) are a presentational convention configured for this deployment, not a sourced standard. The underlying damage fraction and its confidence are the figures to weigh."
+    ],
+    "affected_area_ha": null,
+    "causation_confidence_score": 76,
+    "damage_classification": "severe",
+    "damage_severity_index": {
+      "label": "supporting_evidence_not_authoritative",
+      "value": 0.5
+    },
+    "disclaimer": "This yield-loss estimate and Damage Severity Index are supporting evidence components only. They are NOT an authoritative or indemnity-grade determination and do not replace or blend with any Crop Cutting Experiment (CCE) yield determination (Constitution \u00a74, FR-026).",
+    "evidence_inputs": [
+      {
+        "detail": "Sentinel-2 SR Harmonized (fake), 95% cloud-free coverage",
+        "input": "optical_pre_event",
+        "outcome": "USED"
+      },
+      {
+        "detail": "Sentinel-2 SR Harmonized (fake), 95% cloud-free coverage",
+        "input": "optical_post_event",
+        "outcome": "USED"
+      },
+      {
+        "detail": "not a flood-compatible peril",
+        "input": "sar_backscatter",
+        "outcome": "NOT_APPLICABLE"
+      },
+      {
+        "detail": "5 prior season(s)",
+        "input": "historical_baseline",
+        "outcome": "USED"
+      },
+      {
+        "detail": "CHIRPS Daily",
+        "input": "weather_precipitation",
+        "outcome": "USED"
+      },
+      {
+        "detail": "ERA5-Land Daily Aggregated",
+        "input": "weather_temperature",
+        "outcome": "USED"
+      },
+      {
+        "detail": "SMAP L4",
+        "input": "weather_soil_moisture",
+        "outcome": "USED"
+      },
+      {
+        "detail": "no station record returned",
+        "input": "imd_station_corroboration",
+        "outcome": "UNAVAILABLE"
+      },
+      {
+        "detail": null,
+        "input": "model_semi_physical",
+        "outcome": "USED"
+      },
+      {
+        "detail": "untrained placeholder formula, not a calibrated prediction",
+        "input": "model_ai_ml",
+        "outcome": "DEGRADED"
+      },
+      {
+        "detail": "advanced tier disabled",
+        "input": "model_csm_assimilation",
+        "outcome": "NOT_APPLICABLE"
+      }
+    ],
+    "generated_at": "<timestamp>",
+    "methodology_version": "v1.0.0",
+    "notes": [],
+    "package_tier": "COMPLETE",
+    "request_id": "<request-id>",
+    "source_attribution": [
+      {
+        "acquisition_date": "2026-06-30",
+        "source_dataset": "Sentinel-2 SR Harmonized (fake)",
+        "source_version": "fake-v1"
+      },
+      {
+        "acquisition_date": "2026-06-15",
+        "max_daily_mm": null,
+        "source_dataset": "CHIRPS Daily",
+        "source_version": "UCSB-CHG/CHIRPS/DAILY",
+        "window_total_mm": null
+      }
+    ],
+    "yield_loss_estimate": {
+      "combined_confidence": 0.5,
+      "label": "supporting_evidence_not_authoritative",
+      "value": 0.6960761305
+    }
+  },
+  "package_tier": "COMPLETE",
+  "request_status": "COMPLETE",
+  "satellite_results": [
+    {
+      "acquisition_date": "2026-06-30",
+      "flood_extent_geometry": null,
+      "post_event_index_value": 0.3,
+      "pre_event_index_value": 0.75,
+      "source_dataset": "Sentinel-2 SR Harmonized (fake)",
+      "source_version": "fake-v1"
+    }
+  ],
+  "weather_results": [
+    {
+      "anomaly_score": 0.0,
+      "causation_confidence_score": 76,
+      "historical_baseline": 45.0,
+      "observed_value": 45.0,
+      "source_dataset": "CHIRPS Daily",
+      "source_version": "UCSB-CHG/CHIRPS/DAILY"
+    }
+  ]
+}

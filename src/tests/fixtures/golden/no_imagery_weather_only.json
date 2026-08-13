@@ -1,0 +1,51 @@
+{
+  "_label": "known-wrong",
+  "_label_reason": "T0R-06 unifies the two package paths, so this WEATHER_ONLY_PRELIMINARY package gains the evidence-inputs manifest and the coverage statement it lacks today. It must NOT gain the Harvest Index / damage-band statements, which describe figures this tier does not contain.",
+  "component_results": [],
+  "package_json": {
+    "accuracy_statement": [
+      "No usable satellite imagery was available for this request's window; this package is weather-only and preliminary. It will be superseded by a complete package once imagery becomes available (FR-022)."
+    ],
+    "affected_area_ha": null,
+    "causation_confidence_score": 98,
+    "damage_classification": null,
+    "damage_severity_index": {
+      "label": "supporting_evidence_not_authoritative",
+      "value": null
+    },
+    "disclaimer": "This yield-loss estimate and Damage Severity Index are supporting evidence components only. They are NOT an authoritative or indemnity-grade determination and do not replace or blend with any Crop Cutting Experiment (CCE) yield determination (Constitution \u00a74, FR-026).",
+    "evidence_inputs": [],
+    "generated_at": "<timestamp>",
+    "methodology_version": "v1.0.0",
+    "notes": [
+      "Weather-only preliminary package."
+    ],
+    "package_tier": "WEATHER_ONLY_PRELIMINARY",
+    "request_id": "<request-id>",
+    "source_attribution": [
+      {
+        "acquisition_date": "n/a",
+        "source_dataset": "CHIRPS Daily",
+        "source_version": "UCSB-CHG/CHIRPS/DAILY"
+      }
+    ],
+    "yield_loss_estimate": {
+      "combined_confidence": null,
+      "label": "supporting_evidence_not_authoritative",
+      "value": null
+    }
+  },
+  "package_tier": "WEATHER_ONLY_PRELIMINARY",
+  "request_status": "INSUFFICIENT_DATA",
+  "satellite_results": [],
+  "weather_results": [
+    {
+      "anomaly_score": 0.0,
+      "causation_confidence_score": 98,
+      "historical_baseline": 45.0,
+      "observed_value": 45.0,
+      "source_dataset": "CHIRPS Daily",
+      "source_version": "UCSB-CHG/CHIRPS/DAILY"
+    }
+  ]
+}

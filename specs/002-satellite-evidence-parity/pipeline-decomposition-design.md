@@ -283,6 +283,27 @@ The disclosure is the substance of this fix. The number was never going to be
 wrong — it was going to be a single-indicator measurement presented as a
 six-indicator composite.
 
+### 6.4 A second DSI defect, pinned but not fixed here
+
+Found while recording the `T0R-01` fixtures, and recorded so it is not mistaken
+for something this design resolves.
+
+`pipeline.py` populates the `ndvi_deviation` historical archive with
+`historical_ndvi` — a list of **absolute NDVI index values** — while the current
+indicator for that name is a **deviation**. These are different physical
+quantities, which is precisely the `T0-03` mismatch appearing in a second place.
+
+The `varied_historical_archive` fixture pins the consequence: a 0.45 NDVI drop
+normalized against a 0.62–0.81 index range falls below the floor and clips, so
+the package reports a **Damage Severity Index of 0.0 for a field that lost 0.45
+NDVI**. It went unseen because every pre-existing test archive held five
+identical values, making `hi == lo` and returning the `0.5` midpoint regardless.
+
+Fixing it requires a source of historical *deviations* — each prior season's drop
+measured against its own baseline — which is data work adjacent to `T05-03` and
+`T05-05`, not a restructuring. It is deliberately out of scope here; where it
+lands should be decided before Phase 0.4 closes.
+
 ## 7. Persistence and packaging
 
 ### 7.1 Orchestrator

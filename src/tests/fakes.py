@@ -224,17 +224,30 @@ class FakeGEEClient:
             },
         )
 
+    # A varying archive, for scenarios that need the DSI's min-max
+    # normalization to actually do something. The default archive below is five
+    # identical values, so `hi == lo` and `_min_max_normalize` returns the 0.5
+    # midpoint no matter what the current indicator is — meaning every default
+    # scenario reports `dsi_score = 0.5` regardless of the entropy weighting,
+    # and no test can tell a working DSI from a collapsed one (tasks.md T0R-01).
+    VARIED_HISTORICAL_NDVI = (0.62, 0.68, 0.71, 0.76, 0.81)
+
     def historical_composite(self, geometry, start, end, years=5):
         if self.scenario == "no_history":
             return []
+        values = (
+            self.VARIED_HISTORICAL_NDVI[:years]
+            if self.scenario == "varied_history"
+            else [0.7] * years
+        )
         return [
             ImageryComposite(
                 source_dataset="Sentinel-2 SR Harmonized (fake)",
                 source_version="fake-v1",
                 acquisition_date=end,
-                index_value=0.7,
+                index_value=value,
             )
-            for _ in range(years)
+            for value in values
         ]
 
 
