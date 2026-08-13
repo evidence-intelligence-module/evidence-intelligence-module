@@ -19,6 +19,7 @@ description: "Task list for Satellite Evidence Parity Roadmap implementation"
 - **[Story]**: Which user story this task belongs to (US1, US2, US3, US4, US5)
 - **`T0-NN`**: Phase 0 base-pipeline corrections, added 2026-08-13 (see below). Numbered separately from the `TNNN` series so the original task numbering stays stable.
 - **`T05-NN`**: Phase 0.5 evidence-processing improvements. **`TV-NN`**: Phase 0.6 label capture and label-free validation. Distinct prefixes so `T0-06` and the Phase 0.6 tasks can't be confused.
+- **`T0R-NN`**: Phase 0.4 pipeline decomposition (`R` for refactor), added 2026-08-13. Kept distinct from `T0-NN` because these restructure code rather than correct a wrong figure — the two want different review standards, and conflating them in one sequence hides which commits changed an output.
 
 ## Path Conventions
 
@@ -79,6 +80,35 @@ Until these hold, `002`'s new sources, embeddings and tiers change the provenanc
 - [x] T0-14 [P] Remove the dead `notes = list(imagery.historical) and [] or [...]` expression in `pipeline.py`, immediately overwritten by the `if not has_historical_baseline` block below it
 
 **Checkpoint**: the pipeline produces figures that vary with the evidence. Phases 1–8 below are measurable from here.
+
+---
+
+## Phase 0.4: Pipeline Decomposition (added 2026-08-13)
+
+**Design**: [`pipeline-decomposition-design.md`](./pipeline-decomposition-design.md) — read it before starting; the tasks below are its migration table and nothing more.
+
+**Purpose**: Phase 0 fixed four defects of one shape — an input that was never measured being read as a measured value (`T0-02` NDVI→`0.0`, `T0-03` LSWI→the NDVI drop, `T0-04` 11 of 17 features→`0.0`, and a fifth found on 2026-08-13, below). Each was fixed at its call site with a conditional and a comment. The discipline that prevents the class is currently a convention repeated at six call sites in a 761-line `pipeline.py`, enforced by nothing. This phase makes it a property of a type.
+
+**The fifth defect, not previously tracked**: `models/dsi.py` handles a missing historical archive two ways at once — `_min_max_normalize` returns the FR-023 `0.5` midpoint, while `_entropy_weights` returns weight `0.0`, which nullifies it. `pipeline.py` passes `[]` for five of six historical arrays, so all weight lands on `ndvi_deviation` and **the DSI score equals the normalised NDVI deviation** — a single-indicator figure presented as a six-indicator composite, with nothing in the package saying so. `weather_anomaly_magnitude`, the one indicator the pipeline reliably populates, is among those zeroed. `test_dsi.py`'s only weight assertion uses fully-populated archives, the opposite of what the pipeline passes, so the suite cannot see it.
+
+**Sequencing** (does not follow section order — read this):
+
+- Land **before `T0-08`**, which restructures exactly the write path `T0R-07` centralises into `_persist`. Landing `T0-08` first builds that logic twice.
+- Land **before `T05-02`**, which afterwards becomes a single `obs.record(...)` call, into a DSI that reports `crop_condition_variability` as contributing rather than silently zero-weighting it.
+- `T0-06` is independent and can proceed in parallel.
+
+**Not blocking** Phases 1–8 in the way Phase 0 is: the pipeline already produces varying figures. What this buys is that the next defect of the same class is caught by a test rather than by re-reading the pipeline.
+
+- [ ] T0R-01 Record characterization fixtures **before any other change** — full JSON package snapshots per existing integration scenario, under `src/tests/fixtures/golden/`, each labelled `pinned` (any diff is a regression) or `known-wrong` (expected to flip, naming the task that flips it). These capture current behaviour including its known-wrong parts: a change-detector, not a correctness oracle. Gate: 46 existing tests pass, snapshots recorded
+- [ ] T0R-02 Add `src/evidence_intelligence/observation.py` with `Observation`/`Absent`/`FieldObservations`, and have `pipeline.py` build and read it. Absence carries a reason; the sole scalar accessor returns `float | None`; there is deliberately no `get(name, default)` and no `__getitem__`, since `pyproject.toml` runs ruff `E`/`F`/`I`/`UP` with no type checker and the API shape is therefore the enforcement. Absorbs `_ndvi_to_fapar`, `_insolation_proxy_mj`, `_cross_pol_ratio_deviation`, `ndvi_drop`, `fapar_deviation`, `weather_anomaly_normalized`, `optical_pair_available`, `FALLBACK_TEMPERATURE_C`. Gate: all `pinned` fixtures byte-identical
+- [ ] T0R-03 Add the three structural tests: **import-graph** (no module under `models/`, `causation/`, `packaging/` imports `ingestion` or `store`), **absence-propagation** (parametrized over every consumer — signal `Absent` ⇒ output `None`/excluded, never a number; this is the test that would have caught all five defects), **manifest-agreement** (every consumed signal appears `USED`; every `Absent` appears with its reason). Expected to fail initially for consumers still reading raw bundles — that failure is `T0R-04`'s specification
+- [ ] T0R-04 Add `src/evidence_intelligence/models/registry.py` with the `DamageEstimator` protocol (`component`, `methodology_version`, `estimate(obs) -> Estimate | NotRun`) and a separate `Trainable` protocol satisfied by `AiMlEstimator` alone — trainability becomes a declared capability rather than a special case in orchestration, referenced only by `scripts/train_ai_ml_model.py`. Three thin adapters wrap the existing `semi_physical`/`ai_ml`/`csm_assimilation` modules without touching their science. `csm_high_scrutiny_enabled` gating moves into registry construction so the loop carries no conditionals. `ensemble.semi_physical_weight`/`ai_ml_weight` move onto their estimators (the `0.15` untrained cap is a statement about Component 2's confidence, not blending policy), leaving `ensemble.combine` purely mechanical. **Per-component `methodology_version` and the `ModelComponent` enum are unchanged** — §65B re-derivability depends on them staying distinct. Gate: `pinned` fixtures identical
+- [ ] T0R-05 Fix the DSI inconsistency above: partition indicators into `contributing` (non-empty archive) and `excluded` (name → reason); compute entropy weights and the weighted sum over contributing only; return `score: float | None`. **FR-023 is untouched** — `normalized_indicators` still reports the `0.5` midpoint for every indicator. Disclose `contributing`/`excluded` in the package, since `report_generator.py` currently prints a bare `Damage Severity Index: {score}`. All three `test_dsi.py` tests pass unchanged (they assert on `normalized_indicators`, never on weights under an empty archive), and today's score is numerically identical since weight already collapsed to `ndvi_deviation = 1.0`. One `known-wrong` fixture flips: no archive for any indicator now yields `None` rather than a confident-looking `0.5`
+- [ ] T0R-06 Add `src/evidence_intelligence/packaging/assembly.py` building `PackageContent` for **both** tiers, and delete `_deliver_weather_only_preliminary` — a near-duplicate 60-line second path whose divergence is why the preliminary tier carries no `evidence_inputs` manifest today. Preliminary packages gain the manifest and the coverage statement; they do **not** gain the Harvest Index / damage-band statements, which describe figures that tier does not contain — a disclosure on an absent figure is noise, and noise trains readers to skip disclosures. Gate: preliminary `known-wrong` fixtures flip, complete stay `pinned`
+- [ ] T0R-07 Introduce `PipelineRecord` (satellite row, weather row, component rows, `PackageContent`, tier, terminal status) and a single `_persist`, the only function that calls `store.add_*`; stages become pure. Writes now batch at the end rather than landing incrementally, so a mid-run crash leaves no rows where today it leaves an orphaned satellite/weather row with no package — `run_pipeline_background` marks `FAILED` either way, and for a §65B record "no run" is a cleaner artifact than "a run that describes inputs but produced no evidence". `set_status(IN_PROGRESS)` stays outside the batch. Gate: `pinned` identical, write order asserted
+- [ ] T0R-08 Delete the helpers left dead by `T0R-02`/`T0R-04`/`T0R-06` from `pipeline.py`. Gate: ruff clean, 46 tests plus the new structural tests pass, `pipeline.py` ~120 lines
+
+**Checkpoint**: absent inputs cannot be read as measured values without a test failing, and `pipeline.py` is orchestration only.
 
 ---
 
