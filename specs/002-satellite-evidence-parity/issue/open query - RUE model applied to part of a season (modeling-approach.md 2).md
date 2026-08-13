@@ -1,6 +1,6 @@
 # Open Query: the RUE semi-physical model is applied to part of a season, which its source manual says it cannot be
 
-**Spec/Plan/Tasks**: [`documents/modeling-approach.md`](../../../documents/modeling-approach.md) §2, [`documents/standards/yestech_manual_2023.md`](../../../documents/standards/yestech_manual_2023.md) §4.1.1.2 and Appendix 1, [`../tasks.md`](../tasks.md) `T05-08`/`T05-09` — `src/evidence_intelligence/models/semi_physical.py`, `pipeline.py`
+**Spec/Plan/Tasks**: [`documents/modeling-approach.md`](../../../documents/modeling-approach.md) §2, [`documents/standards/yestech_manual_2023.md`](../../../documents/standards/yestech_manual_2023.md) §4.1.1.2 and Appendix 1, [`../tasks.md`](../tasks.md) `T05-08` (done), `T05-09` — `src/evidence_intelligence/models/semi_physical.py`, `pipeline.py`
 **Status**: **Open.** Surfaced 2026-08-13 while researching the Phase 0.4 findings. Unlike the other entries in this tracker, the resolution is a **`documents/` change** — it is a claim this repo makes about its own method, not a missing figure.
 
 Blocks: any statement that Component 1 implements "the same physical chain" as YES-TECH's RUE model. Does **not** block Phase 0.4, `T0R-03`…`T0R-08`, or any Phase 1–8 story.
@@ -29,7 +29,7 @@ This is not a defect with an unambiguous right answer, which is why it is here r
 |---|---|
 | `Σ` from sowing to the analysis date | Single-point evaluation, twice |
 | `PAR = Daily Surface Insolation × 0.48` | Constant `18.0` MJ; the `0.48` factor is absent entirely |
-| `LSWI = (NIR − SWIR) / (NIR + SWIR)` | NDVI substituted — SWIR is never requested from GEE |
+| `LSWI = (NIR − SWIR) / (NIR + SWIR)` | ~~NDVI substituted~~ **Fixed 2026-08-13 by `T05-08`** — SWIR (`B11`/`SR_B6`) is now requested and LSWI computed |
 | fAPAR from MODIS / Sentinel-3 OLCI | Linear approximation from NDVI (already disclosed, `FR-019`) |
 | Daily Tmin/Tmax | One value, passed identically as both pre- and post-event |
 
@@ -52,6 +52,14 @@ So Component 1 reduces to a closed-form function of pre/post NDVI:
 
 **Nothing in `documents/research/` addresses this.** The white paper and the parity precedent research discuss sourcing and resolution, not RUE applicability windows.
 
+**External literature review, 2026-08-13 — the decisive input, and it changed this file's recommendation.**
+
+- **No published precedent was found** for applying a Monteith/RUE chain to a short pre-event vs post-event window to detect acute damage. The accessible RUE literature treats it as season- or growth-phase-integrated throughout.
+- **The "ratio cancels `RUE_max`" argument does not hold.** An earlier version of this file recommended making exactly that argument in §2. RUE is **phenology-dependent**, not constant — it is quantified separately for vegetative and reproductive phases — so RUE(t) differs in *shape* between an undamaged reference and a damaged-but-recovering canopy, and does not divide out of a two-point ratio. The one regime where near-constancy is documented is *well-watered, unstressed* growth, which is the opposite of the case a damage model exists for.
+- **The practitioner standard for acute crop damage is spectral differencing**, not biomass modelling: ΔNDVI, the purpose-built Disaster Vegetation Damage Index (DVDI) and its flood-damage sibling, and LAI-via-NDVI after hail defoliation. India-specific and insurance-validated studies use the same family — a Haryana hailstorm study in the *J. Indian Society of Remote Sensing* (2025) and a Lombardy maize-hail study comparing against an insurer's own assessment, with ΔNDVI decision matrices reported around 86.7% accuracy for hail severity. Full-chain biomass modelling for damage, where used, goes through a surface-energy-balance model (SEBAL), not Monteith RUE.
+
+**This rehabilitates the component while confirming the label is wrong.** Component 1 as implemented — a ratio of fAPAR- and LSWI-derived terms with every non-optical term cancelling — is spectral differencing with extra steps. That is the *right family of method* by practitioner precedent. What is not supportable is calling it "the same physical chain" as YES-TECH's RUE model.
+
 ## Options
 
 | Option | Description |
@@ -65,7 +73,13 @@ So Component 1 reduces to a closed-form function of pre/post NDVI:
 
 **D, then A.** `T05-08` and `T05-09` are correct work under every option — LSWI and per-window temperature are named in §2, computable from data already ingested, and needed by B as much as by A. Landing them first removes the degeneracy that makes this query urgent, and converts the remaining decision from "is Component 1 evidence at all?" into the narrower "does §2 overclaim?".
 
-Then **A** rather than B, unless the seasonal integration is wanted for its own sake: B's prerequisites (sowing date per field, an insolation feed) are larger than the accuracy they would buy for a *damage-detection* comparison, which is a different problem from the *absolute yield estimation* the manual's constraint is written about. Worth stating explicitly in §2 if A is chosen: the manual's prohibition concerns absolute-yield estimation with a constant RUE, and a ratio between two evaluations is not obviously subject to the same constraint — but that argument has to be **made in the document**, not left implicit in code, because right now §2 claims the method rather than arguing the adaptation.
+Then **A** rather than B — but **not** on the argument this file originally proposed.
+
+An earlier version recommended arguing in §2 that the manual's prohibition concerns absolute-yield estimation, and that a ratio between two evaluations escapes it because `RUE_max` cancels. **The literature review above refutes that**: RUE is phenology-dependent, so it does not cancel between a healthy reference and a damaged canopy. Do not make that argument.
+
+The defensible reframing is the opposite direction, and it is stronger: **stop claiming the RUE chain at all.** State that Component 1 computes a pre/post biomass-proxy ratio from optical indices, that this places it in the ΔNDVI / DVDI family that is the documented practitioner standard for acute damage assessment — including in Indian insurance-validated studies — and that the RUE formulation is the *inspiration* for the term structure rather than an implementation of the manual's model. That is both true and citable, which the original argument was not.
+
+B remains available if seasonal integration is wanted for its own sake, but it should be chosen for the rigor it buys, not to rescue a claim §2 need not make.
 
 **Not recommended: C**, at least not before D. Retiring a component because its inputs were never wired is the wrong order of operations.
 

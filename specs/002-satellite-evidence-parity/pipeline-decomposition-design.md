@@ -430,6 +430,45 @@ both smaller:
 **`T0-06`** (causation's hardcoded temporal and spatial terms) is independent and
 can proceed in parallel.
 
+## 10a. Corrections to this design, from the 2026-08-13 cross-check
+
+A systematic re-reading of this design against `001`/`002`'s `spec.md`,
+`plan.md`, `data-model.md` and `contracts/` found four places where it is wrong
+or underspecified. They are corrections to the design above, not new scope.
+
+1. **Boundary rule 2 overstates the guarantee.** §3.2 says "only `pipeline.py`
+   may import `EvidenceStore`". That is already false and legitimately so:
+   `api/routes.py` imports it for `Depends(get_store)`, which is `001`'s
+   completed `T022`/`T023`, and `002`'s `T018` and `TV-01` will add more. The
+   rule is about the **six pipeline stages**, not the whole codebase — which is
+   what `T0R-03`'s import-graph test actually enforces (`models/`, `causation/`,
+   `packaging/`). Read §3.2 as scoped to those; the API layer is an explicit
+   exception.
+
+2. **`PipelineRecord` carries the wrong cardinality.** §7.1 says "the satellite
+   row", singular, matching today's single `add_satellite_result` call. `T0-08`
+   requires **one row per source considered** — up to seven per request
+   (pre-event, post-event, five historical composites). The field must be
+   `satellite_rows: list[...]`. §10's claim that landing `T0R-07` first makes
+   `T0-08` "smaller" holds only once this is fixed; as written the two designs
+   contradict.
+
+3. **`FieldObservations` is scalar-only and US3 needs vectors.** `value()`
+   returns `float | None` by deliberate design (§4.2). `002`'s `T022`/`T023` add
+   Presto foundation-model embeddings, which are vector-valued, as an additive
+   Component 2 feature source. Nothing here says how a vector feature is
+   represented. This is unresolved rather than merely unaddressed, and it
+   surfaces when `T023` is implemented — decide before then whether embeddings
+   live in a parallel `vectors:` mapping or outside `FieldObservations` entirely.
+
+4. **Nine `002` tasks target code this design supersedes.** `T012`, `T017`,
+   `T025`, `T029`, `T036`, `T043` all say "surface `<field>` … in
+   `packaging/report_generator.py`", which `T0R-06` replaces as the assembly
+   point — implementing them literally recreates the two-divergent-paths problem
+   `T0R-06` exists to close. `T024`, `T028`, `T035` write to `pipeline.py`
+   directly, bypassing `T0R-07`'s `_persist`. All nine need re-scoping; tracked
+   as `T0R-09`.
+
 ## 11. Open items this design does not resolve
 
 None of the following are blockers for the work above; they are recorded so the
