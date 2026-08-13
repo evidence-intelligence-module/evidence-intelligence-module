@@ -115,3 +115,70 @@ def test_signals_are_one_of_exactly_two_states():
     obs = builder.build()
     assert isinstance(obs.signals["a"], Observation)
     assert isinstance(obs.signals["b"], Absent)
+
+
+def test_lswi_is_measured_from_swir_not_substituted_from_ndvi():
+    """T05-08: `modeling-approach.md` §2 and the YES-TECH manual both specify
+    LSWI = (NIR-SWIR)/(NIR+SWIR). NDVI stood in for it until SWIR was requested,
+    and the two are different physical quantities — NDVI tracks greenness and
+    lags stress onset, LSWI tracks canopy and soil liquid water."""
+    from datetime import date
+
+    from evidence_intelligence.ingestion.imagery import ingest_imagery
+    from evidence_intelligence.ingestion.weather import ingest_weather
+    from evidence_intelligence.observation import (
+        LSWI_DEVIATION,
+        POST_EVENT_LSWI,
+        PRE_EVENT_LSWI,
+        observe,
+    )
+    from evidence_intelligence.store.schema import PerilType
+    from tests.conftest import SAMPLE_GEOMETRY
+    from tests.fakes import FakeGEEClient, FakeIMDClient, FakeWeatherClient
+
+    event = date(2026, 6, 15)
+    gee = FakeGEEClient(scenario="healthy", event_date=event)
+    imagery = ingest_imagery(gee, SAMPLE_GEOMETRY, event, PerilType.HAILSTORM,
+                             minimum_valid_pixel_fraction=None)
+    weather = ingest_weather(FakeWeatherClient(), FakeIMDClient(), SAMPLE_GEOMETRY, event,
+                             peril_type_is_cloudburst_or_hailstorm=True)
+    obs = observe(imagery, weather)
+
+    assert obs.value(PRE_EVENT_LSWI) == gee.pre_event_lswi
+    assert obs.value(POST_EVENT_LSWI) == gee.post_event_lswi
+    assert obs.value(PRE_EVENT_LSWI) != gee.pre_event_ndvi, "LSWI must not be the NDVI stand-in"
+    assert "LSWI = (NIR-SWIR)/(NIR+SWIR)" in obs.source(PRE_EVENT_LSWI)
+
+    # modeling-approach.md §6's DSI indicator, unpopulated before T05-08.
+    assert obs.value(LSWI_DEVIATION) == pytest.approx(
+        gee.pre_event_lswi - gee.post_event_lswi
+    )
+
+
+def test_absent_swir_falls_back_to_ndvi_but_says_so():
+    """The fallback is allowed — Component 1 still needs a water-stress term —
+    but a reader of a §65B package must be able to tell which quantity the
+    figure was computed from."""
+    from datetime import date
+
+    from evidence_intelligence.ingestion.imagery import ingest_imagery
+    from evidence_intelligence.ingestion.weather import ingest_weather
+    from evidence_intelligence.observation import LSWI_DEVIATION, PRE_EVENT_LSWI, observe
+    from evidence_intelligence.store.schema import PerilType
+    from tests.conftest import SAMPLE_GEOMETRY
+    from tests.fakes import FakeGEEClient, FakeIMDClient, FakeWeatherClient
+
+    event = date(2026, 6, 15)
+    gee = FakeGEEClient(scenario="no_swir", event_date=event)
+    imagery = ingest_imagery(gee, SAMPLE_GEOMETRY, event, PerilType.HAILSTORM,
+                             minimum_valid_pixel_fraction=None)
+    weather = ingest_weather(FakeWeatherClient(), FakeIMDClient(), SAMPLE_GEOMETRY, event,
+                             peril_type_is_cloudburst_or_hailstorm=True)
+    obs = observe(imagery, weather)
+
+    assert obs.value(PRE_EVENT_LSWI) == gee.pre_event_ndvi
+    assert "NDVI standing in for LSWI" in obs.source(PRE_EVENT_LSWI)
+    # The DSI indicator stays absent rather than becoming an NDVI deviation
+    # wearing an LSWI name — that substitution is exactly T0-03.
+    assert obs.value(LSWI_DEVIATION) is None
+    assert "no usable SWIR band" in obs.absent_reason(LSWI_DEVIATION)

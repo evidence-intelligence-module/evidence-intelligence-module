@@ -48,6 +48,33 @@ SAMPLE_GEOMETRY = {
 
 EVENT_DATE = date(2026, 6, 15)
 
+# Applies to every scenario that runs Component 1, i.e. that has a pre/post
+# optical pair. The flood and weather-only scenarios do not, so they do not
+# inherit it.
+LSWI_SUBSTITUTION_KNOWN_WRONG = {
+    "package_json.yield_loss_estimate.value": (
+        "T05-08: Component 1's water-stress scalar is fed NDVI where "
+        "modeling-approach.md §2 and yestech_manual_2023.md Appendix 1 both specify "
+        "LSWI = (NIR-SWIR)/(NIR+SWIR). SWIR is never requested from GEE, so this "
+        "figure is computed from a stand-in for one of its two spectral inputs."
+    ),
+    "package_json.damage_classification": (
+        "T05-08: derived from the yield-loss figure above, so it inherits the "
+        "LSWI substitution."
+    ),
+    "component_results.SEMI_PHYSICAL.point_estimate": (
+        "T05-08: Component 1's own damage fraction, computed with NDVI standing "
+        "in for LSWI in the water-stress scalar."
+    ),
+    "component_results.ENSEMBLE.point_estimate": (
+        "T05-08: the ensemble is a confidence-weighted average over Component 1, "
+        "so it inherits the LSWI substitution."
+    ),
+    "component_results.ENSEMBLE.damage_classification": (
+        "T05-08: the banded label for the ensemble figure above."
+    ),
+}
+
 # Fabricated on every path, so every scenario inherits it (see T0-06). Kept as a
 # shared constant rather than repeated per scenario, because the day it stops
 # being true it must stop being true everywhere at once.
@@ -90,7 +117,7 @@ SCENARIOS: tuple[Scenario, ...] = (
         gee_scenario="healthy",
         peril_type=PerilType.HAILSTORM,
         purpose="The main COMPLETE path: pre/post optical pair, all components run.",
-        known_wrong=dict(CAUSATION_KNOWN_WRONG),
+        known_wrong={**CAUSATION_KNOWN_WRONG, **LSWI_SUBSTITUTION_KNOWN_WRONG},
     ),
     Scenario(
         name="flood_sar_substitution",
@@ -115,7 +142,7 @@ SCENARIOS: tuple[Scenario, ...] = (
         purpose="The only coverage of the Component 3 path. T0R-04 moves this gating "
         "from an inline conditional into registry construction.",
         csm_enabled=True,
-        known_wrong=dict(CAUSATION_KNOWN_WRONG),
+        known_wrong={**CAUSATION_KNOWN_WRONG, **LSWI_SUBSTITUTION_KNOWN_WRONG},
     ),
     Scenario(
         name="partial_cloud_coverage",
@@ -144,6 +171,7 @@ SCENARIOS: tuple[Scenario, ...] = (
         "Without this, no fixture can tell a working DSI from a collapsed one.",
         known_wrong={
             **CAUSATION_KNOWN_WRONG,
+            **LSWI_SUBSTITUTION_KNOWN_WRONG,
             "package_json.damage_severity_index.value": (
                 "T05-10: the archive holds absolute NDVI index values while the "
                 "indicator is a deviation. Normalizing a 0.45 drop against a 0.62-0.81 "
@@ -171,6 +199,8 @@ SCENARIOS: tuple[Scenario, ...] = (
         peril_type=PerilType.HAILSTORM,
         purpose="No historical archive for any indicator.",
         known_wrong={
+            **CAUSATION_KNOWN_WRONG,
+            **LSWI_SUBSTITUTION_KNOWN_WRONG,
             **CAUSATION_KNOWN_WRONG,
             "package_json.damage_severity_index.value": (
                 "T0R-05: with no archive at all, _entropy_weights falls back to uniform "
@@ -269,9 +299,8 @@ def run_scenario(scenario: Scenario, tmp_root: Path) -> dict:
         "request_status": store.get_request(request.request_id).status.value,
         "package_tier": package.package_tier.value if package else None,
         "package_json": package_json,
-        "component_results": [
-            {
-                "component": r.component.value,
+        "component_results": {
+            r.component.value: {
                 "methodology_version": r.methodology_version,
                 "point_estimate": _round(r.point_estimate),
                 "damage_classification": r.damage_classification,
@@ -279,7 +308,7 @@ def run_scenario(scenario: Scenario, tmp_root: Path) -> dict:
                 "confidence_or_accuracy": _round(r.confidence_or_accuracy),
             }
             for r in store.list_component_results(request.request_id)
-        ],
+        },
         "satellite_results": [
             {
                 "source_dataset": r.source_dataset,

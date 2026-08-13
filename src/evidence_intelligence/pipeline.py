@@ -22,6 +22,7 @@ from evidence_intelligence.manifest import EvidenceInputsManifest, InputOutcome
 from evidence_intelligence.models import ai_ml, dsi, ensemble, semi_physical
 from evidence_intelligence.observation import (
     FAPAR_DEVIATION,
+    LSWI_DEVIATION,
     NDVI_DEVIATION,
     POST_EVENT_FAPAR,
     POST_EVENT_INSOLATION_MJ,
@@ -429,6 +430,7 @@ def run_pipeline(
             NDVI_DEVIATION,
             FAPAR_DEVIATION,
             SAR_VH_BACKSCATTER_DEVIATION,
+            LSWI_DEVIATION,
         )
     )
     # `or []` preserves `dsi.compute`'s current contract, which cannot tell an

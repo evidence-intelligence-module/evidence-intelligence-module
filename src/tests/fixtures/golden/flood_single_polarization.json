@@ -4,10 +4,9 @@
     "weather_results[0].causation_confidence_score": "T0-06: same figure, as persisted. See the package_json entry."
   },
   "_purpose": "VH absent (T0-15): the cross-pol feature and the VH DSI indicator must stay absent rather than falling back to the VV measurement.",
-  "component_results": [
-    {
+  "component_results": {
+    "AI_ML": {
       "affected_area_ha": null,
-      "component": "AI_ML",
       "confidence_or_accuracy": {
         "features_supplied": [
           "rainfall_anomaly",
@@ -24,19 +23,8 @@
       "methodology_version": "ai-ml-rf-v1",
       "point_estimate": 0.0
     },
-    {
+    "DSI": {
       "affected_area_ha": null,
-      "component": "ENSEMBLE",
-      "confidence_or_accuracy": {
-        "combined_confidence": 0.15
-      },
-      "damage_classification": "negligible",
-      "methodology_version": "ensemble-v1",
-      "point_estimate": 0.0
-    },
-    {
-      "affected_area_ha": null,
-      "component": "DSI",
       "confidence_or_accuracy": {
         "entropy_weights": {
           "crop_condition_variability": -0.0,
@@ -50,8 +38,17 @@
       "damage_classification": null,
       "methodology_version": "dsi-entropy-v1",
       "point_estimate": 0.5
+    },
+    "ENSEMBLE": {
+      "affected_area_ha": null,
+      "confidence_or_accuracy": {
+        "combined_confidence": 0.15
+      },
+      "damage_classification": "negligible",
+      "methodology_version": "ensemble-v1",
+      "point_estimate": 0.0
     }
-  ],
+  },
   "package_json": {
     "accuracy_statement": [
       "fAPAR and insolation are approximated from NDVI via a published linear relationship, not a dedicated fAPAR product (known limitation).",

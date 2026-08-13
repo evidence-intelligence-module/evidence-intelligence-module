@@ -158,6 +158,11 @@ class FakeGEEClient:
         self.event_date = event_date or date(2026, 6, 15)
         self.pre_event_ndvi = 0.75
         self.post_event_ndvi = 0.30
+        # LSWI is a distinct measurement, not a transform of NDVI — a flooded or
+        # water-stressed canopy moves them differently, which is the whole point
+        # of T05-08. Deliberately not proportional to the NDVI values above.
+        self.pre_event_lswi = 0.32
+        self.post_event_lswi = 0.11
         # Per-pixel cloud/shadow coverage the real client reports (T0-07).
         # Defaults to a well-observed field so existing scenarios are unchanged;
         # override to exercise the partial-visibility path.
@@ -173,12 +178,19 @@ class FakeGEEClient:
                 pass  # pre-event window still has usable optical
             else:
                 return None
-        index_value = self.pre_event_ndvi if end < self.event_date else self.post_event_ndvi
+        pre = end < self.event_date
         return ImageryComposite(
             source_dataset="Sentinel-2 SR Harmonized (fake)",
             source_version="fake-v1",
             acquisition_date=end,
-            index_value=index_value,
+            index_value=self.pre_event_ndvi if pre else self.post_event_ndvi,
+            # "no_swir" simulates a source with no usable SWIR band, where NDVI
+            # must still stand in and the package must say so (T05-08).
+            lswi_value=(
+                None
+                if self.scenario == "no_swir"
+                else (self.pre_event_lswi if pre else self.post_event_lswi)
+            ),
             valid_pixel_fraction=self.valid_pixel_fraction,
         )
 

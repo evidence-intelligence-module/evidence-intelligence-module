@@ -37,6 +37,7 @@ TEMPERATURE_ANOMALY = "temperature_anomaly"
 SOIL_MOISTURE_DEVIATION = "soil_moisture_deviation"
 VH_VV_BACKSCATTER_DEVIATION = "vh_vv_backscatter_deviation"
 SAR_VH_BACKSCATTER_DEVIATION = "sar_vh_backscatter_deviation"
+LSWI_DEVIATION = "lswi_deviation"
 WEATHER_ANOMALY_MAGNITUDE = "weather_anomaly_magnitude"
 
 PRE_EVENT_NDVI = "pre_event_ndvi"
@@ -240,18 +241,39 @@ def observe(imagery, weather) -> FieldObservations:
         source=f"{post_source}, approximated from NDVI (FR-019 known limitation)",
         absent_reason="no usable post-event optical composite",
     )
-    # LSWI has no wired source; Component 1's water-stress term is fed the NDVI
-    # value, which `modeling-approach.md` §2 treats as a stand-in. Named here so
-    # the substitution is visible rather than implied by an argument position.
+    # Real LSWI from SWIR (tasks.md T05-08). Falls back to NDVI only where the
+    # source carried no usable SWIR band, and says so in the provenance — the
+    # two are different physical quantities, so a reader must be able to tell
+    # which one a water-stress figure was computed from.
+    pre_lswi = imagery.pre_event.lswi_value if imagery.pre_event else None
+    post_lswi = imagery.post_event.lswi_value if imagery.post_event else None
     builder.record(
-        PRE_EVENT_LSWI, pre_ndvi,
-        source=f"{pre_source}, NDVI standing in for LSWI (no LSWI source wired)",
+        PRE_EVENT_LSWI,
+        pre_lswi if pre_lswi is not None else pre_ndvi,
+        source=(
+            f"{pre_source}, LSWI = (NIR-SWIR)/(NIR+SWIR)"
+            if pre_lswi is not None
+            else f"{pre_source}, NDVI standing in for LSWI (no usable SWIR band)"
+        ),
         absent_reason="no usable pre-event optical composite",
     )
     builder.record(
-        POST_EVENT_LSWI, post_ndvi,
-        source=f"{post_source}, NDVI standing in for LSWI (no LSWI source wired)",
+        POST_EVENT_LSWI,
+        post_lswi if post_lswi is not None else post_ndvi,
+        source=(
+            f"{post_source}, LSWI = (NIR-SWIR)/(NIR+SWIR)"
+            if post_lswi is not None
+            else f"{post_source}, NDVI standing in for LSWI (no usable SWIR band)"
+        ),
         absent_reason="no usable post-event optical composite",
+    )
+    # modeling-approach.md §6's DSI indicator, never populated before T05-08
+    # because no LSWI existed to deviate. Positive = moisture lost.
+    builder.record(
+        LSWI_DEVIATION,
+        pre_lswi - post_lswi if pre_lswi is not None and post_lswi is not None else None,
+        source=f"{pre_source} -> {post_source}, LSWI = (NIR-SWIR)/(NIR+SWIR)",
+        absent_reason="requires a real LSWI on both sides; no usable SWIR band",
     )
 
     builder.record(
@@ -369,7 +391,7 @@ def observe(imagery, weather) -> FieldObservations:
         FAPAR_DEVIATION,
         SAR_VH_BACKSCATTER_DEVIATION,
         WEATHER_ANOMALY_MAGNITUDE,
-        "lswi_deviation",
+        LSWI_DEVIATION,
         "crop_condition_variability",
     ):
         builder.record_history(name, None, absent_reason="no historical archive wired")

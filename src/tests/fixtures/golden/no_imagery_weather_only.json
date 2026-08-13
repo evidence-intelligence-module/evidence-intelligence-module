@@ -5,7 +5,7 @@
     "weather_results[0].causation_confidence_score": "T0-06: same figure, as persisted. See the package_json entry."
   },
   "_purpose": "No usable imagery of any kind: the WEATHER_ONLY_PRELIMINARY tier.",
-  "component_results": [],
+  "component_results": {},
   "package_json": {
     "accuracy_statement": [
       "No usable satellite imagery was available for this request's window; this package is weather-only and preliminary. It will be superseded by a complete package once imagery becomes available (FR-022)."

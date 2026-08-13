@@ -17,6 +17,16 @@ SENTINEL2_SR = "COPERNICUS/S2_SR_HARMONIZED"
 LANDSAT89_SR = "LANDSAT/LC09/C02/T1_L2"
 SENTINEL1_GRD = "COPERNICUS/S1_GRD"
 
+# LSWI = (NIR - SWIR)/(NIR + SWIR), Xiao et al. 2002/2004, defined on MODIS
+# B2 (841-876nm) and B6 (1628-1652nm). Sentinel-2 B11 (~1565-1655nm) is the
+# matching SWIR band; B12 (~2100-2280nm) does not overlap and is the wrong
+# choice. Landsat C2 L2 SR_B6 (1.57-1.65um) is the equivalent.
+# B11 is 20m against B8's 10m, so the reduction is pinned to 10m and GEE
+# resamples B11 up — standard practice, and the direction that preserves the
+# NIR resolution India's ~0.16ha median field size needs (tasks.md T05-08).
+SENTINEL2_SWIR_BAND = "B11"
+LANDSAT_SWIR_BAND = "SR_B6"
+
 # Scene Classification Layer values that make a Sentinel-2 pixel unusable for
 # vegetation analysis: 0 no-data, 1 saturated/defective, 2 cast shadow,
 # 3 cloud shadow, 8 cloud medium probability, 9 cloud high probability,
@@ -51,6 +61,14 @@ class ImageryComposite:
     acquisition_date: date
     index_value: float | None
     index_type: str = "NDVI"
+    lswi_value: float | None = None
+    """Land Surface Water Index over the same window and mask as `index_value`.
+
+    `None` where the source carried no usable SWIR band. modeling-approach.md §2
+    specifies LSWI for Component 1's water-stress scalar; before T05-08 SWIR was
+    never requested and NDVI stood in for it, which is a different physical
+    quantity (NDVI tracks greenness, LSWI tracks canopy and soil liquid water,
+    and NDVI lags stress onset)."""
     usable: bool = True
     valid_pixel_fraction: float | None = None
     """Fraction of the submitted geometry seen cloud- and shadow-free at least
@@ -163,12 +181,15 @@ class GEEClient:
             masked = collection.map(
                 lambda image: image.updateMask(self._sentinel2_valid_mask(image))
             )
-            ndvi = masked.median().normalizedDifference(["B8", "B4"])
+            composite = masked.median()
+            ndvi = composite.normalizedDifference(["B8", "B4"])
+            lswi = composite.normalizedDifference(["B8", SENTINEL2_SWIR_BAND])
             return ImageryComposite(
                 source_dataset="Sentinel-2 SR Harmonized",
                 source_version=SENTINEL2_SR,
                 acquisition_date=window_end,
                 index_value=self._reduce_mean(ndvi, region),
+                lswi_value=self._reduce_mean(lswi, region),
                 valid_pixel_fraction=self._valid_pixel_fraction(masked, "B8", region, scale=10),
             )
 
@@ -179,12 +200,15 @@ class GEEClient:
         )
         if landsat.size().getInfo() > 0:
             masked = landsat.map(lambda image: image.updateMask(self._landsat_valid_mask(image)))
-            ndvi = masked.median().normalizedDifference(["SR_B5", "SR_B4"])
+            composite = masked.median()
+            ndvi = composite.normalizedDifference(["SR_B5", "SR_B4"])
+            lswi = composite.normalizedDifference(["SR_B5", LANDSAT_SWIR_BAND])
             return ImageryComposite(
                 source_dataset="Landsat 8/9 Collection 2 Level-2",
                 source_version=LANDSAT89_SR,
                 acquisition_date=window_end,
                 index_value=self._reduce_mean(ndvi, region),
+                lswi_value=self._reduce_mean(lswi, region),
                 valid_pixel_fraction=self._valid_pixel_fraction(masked, "SR_B5", region, scale=30),
             )
 

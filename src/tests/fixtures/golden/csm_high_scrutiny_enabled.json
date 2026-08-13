@@ -1,24 +1,17 @@
 {
   "_known_wrong": {
+    "component_results.ENSEMBLE.damage_classification": "T05-08: the banded label for the ensemble figure above.",
+    "component_results.ENSEMBLE.point_estimate": "T05-08: the ensemble is a confidence-weighted average over Component 1, so it inherits the LSWI substitution.",
+    "component_results.SEMI_PHYSICAL.point_estimate": "T05-08: Component 1's own damage fraction, computed with NDVI standing in for LSWI in the water-stress scalar.",
     "package_json.causation_confidence_score": "T0-06: 55 of the 100 points are hardcoded at the call site (days_between=1 -> temporal 100, distance_km=0.0 -> spatial 100). The magnitude term additionally scores an unmeasured NDVI drop as a measured 0.0, and phenology_flag=None is read as 'checked and passed' (90) rather than 'never checked'. Net effect: a request with no imagery at all scores 98/100, higher than one with a full optical pair.",
+    "package_json.damage_classification": "T05-08: derived from the yield-loss figure above, so it inherits the LSWI substitution.",
+    "package_json.yield_loss_estimate.value": "T05-08: Component 1's water-stress scalar is fed NDVI where modeling-approach.md \u00a72 and yestech_manual_2023.md Appendix 1 both specify LSWI = (NIR-SWIR)/(NIR+SWIR). SWIR is never requested from GEE, so this figure is computed from a stand-in for one of its two spectral inputs.",
     "weather_results[0].causation_confidence_score": "T0-06: same figure, as persisted. See the package_json entry."
   },
   "_purpose": "The only coverage of the Component 3 path. T0R-04 moves this gating from an inline conditional into registry construction.",
-  "component_results": [
-    {
+  "component_results": {
+    "AI_ML": {
       "affected_area_ha": null,
-      "component": "SEMI_PHYSICAL",
-      "confidence_or_accuracy": {
-        "calibration_confidence": 0.85,
-        "input_warnings": []
-      },
-      "damage_classification": null,
-      "methodology_version": "semi-physical-v1",
-      "point_estimate": 0.8011248594
-    },
-    {
-      "affected_area_ha": null,
-      "component": "AI_ML",
       "confidence_or_accuracy": {
         "features_supplied": [
           "ndvi_deviation",
@@ -37,9 +30,8 @@
       "methodology_version": "ai-ml-rf-v1",
       "point_estimate": 0.1008
     },
-    {
+    "CSM_ASSIMILATION": {
       "affected_area_ha": null,
-      "component": "CSM_ASSIMILATION",
       "confidence_or_accuracy": {
         "calibration_confidence": 0.4
       },
@@ -47,19 +39,8 @@
       "methodology_version": "csm-assimilation-wofost-v1",
       "point_estimate": 0.45
     },
-    {
+    "DSI": {
       "affected_area_ha": null,
-      "component": "ENSEMBLE",
-      "confidence_or_accuracy": {
-        "combined_confidence": 0.4666666667
-      },
-      "damage_classification": "moderate",
-      "methodology_version": "ensemble-v1",
-      "point_estimate": 0.6257686646
-    },
-    {
-      "affected_area_ha": null,
-      "component": "DSI",
       "confidence_or_accuracy": {
         "entropy_weights": {
           "crop_condition_variability": -0.0,
@@ -73,8 +54,27 @@
       "damage_classification": null,
       "methodology_version": "dsi-entropy-v1",
       "point_estimate": 0.5
+    },
+    "ENSEMBLE": {
+      "affected_area_ha": null,
+      "confidence_or_accuracy": {
+        "combined_confidence": 0.4666666667
+      },
+      "damage_classification": "moderate",
+      "methodology_version": "ensemble-v1",
+      "point_estimate": 0.609831087
+    },
+    "SEMI_PHYSICAL": {
+      "affected_area_ha": null,
+      "confidence_or_accuracy": {
+        "calibration_confidence": 0.85,
+        "input_warnings": []
+      },
+      "damage_classification": null,
+      "methodology_version": "semi-physical-v1",
+      "point_estimate": 0.7748747316
     }
-  ],
+  },
   "package_json": {
     "accuracy_statement": [
       "fAPAR and insolation are approximated from NDVI via a published linear relationship, not a dedicated fAPAR product (known limitation).",
@@ -183,7 +183,7 @@
     "yield_loss_estimate": {
       "combined_confidence": 0.4666666667,
       "label": "supporting_evidence_not_authoritative",
-      "value": 0.6257686646
+      "value": 0.609831087
     }
   },
   "package_tier": "COMPLETE",
