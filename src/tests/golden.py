@@ -6,21 +6,30 @@ checked against "did any number change?" rather than against hope.
 
 These snapshots capture behaviour **as it is today, including the parts known
 to be wrong** — see `pipeline-decomposition-design.md` §8.1. They are a
-change-detector, not a correctness oracle. Each scenario therefore carries a
-label:
+change-detector, not a correctness oracle.
 
-- `pinned`      — any diff is a regression; the refactor must not move these.
-- `known-wrong` — expected to change, naming the task that changes it and why.
+**Labels are per-field, not per-fixture.** The first version of this harness
+labelled whole scenarios `pinned`/`known-wrong`, which was wrong in a way worth
+recording: every fixture's `causation_confidence_score` is fabricated (see
+`known_wrong` below), so labelling a scenario `pinned` because its *damage*
+figures were trusted also pinned a causation figure that is false. A snapshot
+is a mixture of trustworthy and untrustworthy values, and the label has to be
+able to say which is which.
 
-Regenerate with `python scripts/record_golden_fixtures.py` after a task that
-is *supposed* to flip a `known-wrong` fixture, and review the diff as part of
-that task rather than as a separate cleanup.
+So: **every recorded value is pinned unless it appears in the scenario's
+`known_wrong` map**, which names the task that will change it and why. Any diff
+outside that map is a regression. A diff inside it is the named task doing its
+job — re-record with `python scripts/record_golden_fixtures.py` *as part of that
+task*, and review the diff in that task's commit.
+
+Re-recording to make a red suite go green defeats the entire purpose.
 """
 
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, replace
+from collections.abc import Mapping
+from dataclasses import dataclass, field, replace
 from datetime import date
 from pathlib import Path
 
@@ -39,8 +48,22 @@ SAMPLE_GEOMETRY = {
 
 EVENT_DATE = date(2026, 6, 15)
 
-PINNED = "pinned"
-KNOWN_WRONG = "known-wrong"
+# Fabricated on every path, so every scenario inherits it (see T0-06). Kept as a
+# shared constant rather than repeated per scenario, because the day it stops
+# being true it must stop being true everywhere at once.
+CAUSATION_KNOWN_WRONG = {
+    "package_json.causation_confidence_score": (
+        "T0-06: 55 of the 100 points are hardcoded at the call site "
+        "(days_between=1 -> temporal 100, distance_km=0.0 -> spatial 100). The "
+        "magnitude term additionally scores an unmeasured NDVI drop as a "
+        "measured 0.0, and phenology_flag=None is read as 'checked and passed' "
+        "(90) rather than 'never checked'. Net effect: a request with no "
+        "imagery at all scores 98/100, higher than one with a full optical pair."
+    ),
+    "weather_results[0].causation_confidence_score": (
+        "T0-06: same figure, as persisted. See the package_json entry."
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -48,8 +71,14 @@ class Scenario:
     name: str
     gee_scenario: str
     peril_type: PerilType
-    label: str
-    reason: str
+    purpose: str
+    """What this scenario exists to cover — why it is in the set at all."""
+
+    known_wrong: Mapping[str, str] = field(default_factory=dict)
+    """Dotted paths into the snapshot whose recorded value is known to be wrong,
+    mapped to the task that will change it and why. Everything not listed here
+    is pinned: a diff outside this map is a regression."""
+
     csm_enabled: bool = False
     valid_pixel_fraction: float | None = 0.95
     minimum_valid_pixel_fraction: float | None = None
@@ -60,79 +89,98 @@ SCENARIOS: tuple[Scenario, ...] = (
         name="healthy_hailstorm",
         gee_scenario="healthy",
         peril_type=PerilType.HAILSTORM,
-        label=PINNED,
-        reason="The main COMPLETE path: pre/post optical pair, all components run. "
-        "Nothing in Phase 0.4 may change this output.",
+        purpose="The main COMPLETE path: pre/post optical pair, all components run.",
+        known_wrong=dict(CAUSATION_KNOWN_WRONG),
     ),
     Scenario(
         name="flood_sar_substitution",
         gee_scenario="flood",
         peril_type=PerilType.FLOOD,
-        label=PINNED,
-        reason="Post-event optical unusable, SAR substitutes. Exercises the path where "
-        "Component 1 is absent from the ensemble and NDVI-derived signals stay absent.",
+        purpose="Post-event optical unusable, SAR substitutes; Component 1 absent from "
+        "the ensemble and NDVI-derived signals stay absent.",
+        known_wrong=dict(CAUSATION_KNOWN_WRONG),
     ),
     Scenario(
         name="flood_single_polarization",
         gee_scenario="flood_single_pol",
         peril_type=PerilType.FLOOD,
-        label=PINNED,
-        reason="VH absent (T0-15): the cross-pol feature and the VH DSI indicator must "
+        purpose="VH absent (T0-15): the cross-pol feature and the VH DSI indicator must "
         "stay absent rather than falling back to the VV measurement.",
+        known_wrong=dict(CAUSATION_KNOWN_WRONG),
     ),
     Scenario(
         name="csm_high_scrutiny_enabled",
         gee_scenario="healthy",
         peril_type=PerilType.HAILSTORM,
-        label=PINNED,
-        reason="The only coverage of the Component 3 path. T0R-04 moves this gating from "
-        "an inline conditional into registry construction; the output must not move with it.",
+        purpose="The only coverage of the Component 3 path. T0R-04 moves this gating "
+        "from an inline conditional into registry construction.",
+        csm_enabled=True,
+        known_wrong=dict(CAUSATION_KNOWN_WRONG),
     ),
     Scenario(
         name="partial_cloud_coverage",
         gee_scenario="healthy",
         peril_type=PerilType.HAILSTORM,
-        label=PINNED,
-        reason="Low valid_pixel_fraction with the usability gate set (T0-07), so the "
+        purpose="Low valid_pixel_fraction with the usability gate set (T0-07), so the "
         "coverage disclosure and the gating decision are both captured.",
         valid_pixel_fraction=0.35,
         minimum_valid_pixel_fraction=0.5,
+        known_wrong={
+            **CAUSATION_KNOWN_WRONG,
+            "package_json.evidence_inputs": (
+                "T0R-06: the WEATHER_ONLY_PRELIMINARY path builds its package through a "
+                "duplicate assembly path that never passes the evidence-inputs manifest, "
+                "so this records [] where a manifest belongs."
+            ),
+        },
     ),
     Scenario(
         name="varied_historical_archive",
         gee_scenario="varied_history",
         peril_type=PerilType.HAILSTORM,
-        label=PINNED,
-        reason="The only scenario where the DSI's min-max normalization has a real range "
-        "to work against — every other archive is five identical values, so `hi == lo` "
-        "and normalization returns the 0.5 midpoint whatever the weights are. Without "
-        "this, no fixture can tell a working DSI from a collapsed one, and T0R-05's gate "
-        "would be vacuous. Also pins the quantity mismatch described in T0R-05's note: "
-        "the archive holds absolute NDVI index values while the current indicator is a "
-        "deviation, so the normalized result clips rather than ranking.",
+        purpose="The only scenario where the DSI's min-max normalization has a real "
+        "range to work against — every other archive is five identical values, so "
+        "hi == lo and normalization returns the 0.5 midpoint whatever the weights are. "
+        "Without this, no fixture can tell a working DSI from a collapsed one.",
+        known_wrong={
+            **CAUSATION_KNOWN_WRONG,
+            "package_json.damage_severity_index.value": (
+                "T05-10: the archive holds absolute NDVI index values while the "
+                "indicator is a deviation. Normalizing a 0.45 drop against a 0.62-0.81 "
+                "index range clips below the floor, so this records DSI 0.0 for a field "
+                "that lost 0.45 NDVI — and it errs against the claimant."
+            ),
+        },
     ),
     Scenario(
         name="no_imagery_weather_only",
         gee_scenario="no_imagery",
         peril_type=PerilType.DROUGHT,
-        label=KNOWN_WRONG,
-        reason="T0R-06 unifies the two package paths, so this WEATHER_ONLY_PRELIMINARY "
-        "package gains the evidence-inputs manifest and the coverage statement it lacks "
-        "today. It must NOT gain the Harvest Index / damage-band statements, which "
-        "describe figures this tier does not contain.",
+        purpose="No usable imagery of any kind: the WEATHER_ONLY_PRELIMINARY tier.",
+        known_wrong={
+            **CAUSATION_KNOWN_WRONG,
+            "package_json.evidence_inputs": (
+                "T0R-06: as partial_cloud_coverage — the duplicate preliminary assembly "
+                "path never passes the manifest."
+            ),
+        },
     ),
     Scenario(
         name="no_historical_archive",
         gee_scenario="no_history",
         peril_type=PerilType.HAILSTORM,
-        label=KNOWN_WRONG,
-        reason="T0R-05: with no archive for any indicator, _entropy_weights currently "
-        "falls back to uniform 1/6 over six 0.5 midpoints, producing a confident-looking "
-        "dsi_score of 0.5 from no historical evidence at all. After the fix no indicator "
-        "contributes and the score becomes null.",
+        purpose="No historical archive for any indicator.",
+        known_wrong={
+            **CAUSATION_KNOWN_WRONG,
+            "package_json.damage_severity_index.value": (
+                "T0R-05: with no archive at all, _entropy_weights falls back to uniform "
+                "1/6 over six 0.5 midpoints, producing a confident-looking 0.5 from no "
+                "historical evidence whatsoever. After the fix no indicator contributes "
+                "and the score becomes null."
+            ),
+        },
     ),
 )
-
 
 def _settings(scenario: Scenario) -> Settings:
     return Settings(
@@ -216,8 +264,8 @@ def run_scenario(scenario: Scenario, tmp_root: Path) -> dict:
         )
 
     return {
-        "_label": scenario.label,
-        "_label_reason": scenario.reason,
+        "_purpose": scenario.purpose,
+        "_known_wrong": dict(scenario.known_wrong),
         "request_status": store.get_request(request.request_id).status.value,
         "package_tier": package.package_tier.value if package else None,
         "package_json": package_json,
@@ -257,6 +305,35 @@ def run_scenario(scenario: Scenario, tmp_root: Path) -> dict:
     }
 
 
+_MISSING = object()
+
+
+def resolve_path(snapshot: dict, path: str):
+    """Resolve a dotted path like `weather_results[0].causation_confidence_score`.
+
+    Returns `_MISSING` when any step does not exist, which is what lets the test
+    suite catch a `known_wrong` entry that has gone stale — an excuse for a
+    fabricated value must stop existing when the value does.
+    """
+    current = snapshot
+    for step in path.split("."):
+        name, _, index = step.partition("[")
+        if name:
+            if not isinstance(current, dict) or name not in current:
+                return _MISSING
+            current = current[name]
+        if index:
+            position = int(index.rstrip("]"))
+            if not isinstance(current, list) or position >= len(current):
+                return _MISSING
+            current = current[position]
+    return current
+
+
+def path_exists(snapshot: dict, path: str) -> bool:
+    return resolve_path(snapshot, path) is not _MISSING
+
+
 def fixture_path(scenario: Scenario) -> Path:
     return FIXTURE_DIR / f"{scenario.name}.json"
 
@@ -273,11 +350,11 @@ def write_fixture(scenario: Scenario, snapshot: dict) -> None:
 
 
 __all__ = [
-    "KNOWN_WRONG",
-    "PINNED",
+    "CAUSATION_KNOWN_WRONG",
     "SCENARIOS",
     "Scenario",
     "fixture_path",
+    "resolve_path",
     "load_fixture",
     "replace",
     "run_scenario",

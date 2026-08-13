@@ -1,6 +1,10 @@
 {
-  "_label": "known-wrong",
-  "_label_reason": "T0R-05: with no archive for any indicator, _entropy_weights currently falls back to uniform 1/6 over six 0.5 midpoints, producing a confident-looking dsi_score of 0.5 from no historical evidence at all. After the fix no indicator contributes and the score becomes null.",
+  "_known_wrong": {
+    "package_json.causation_confidence_score": "T0-06: 55 of the 100 points are hardcoded at the call site (days_between=1 -> temporal 100, distance_km=0.0 -> spatial 100). The magnitude term additionally scores an unmeasured NDVI drop as a measured 0.0, and phenology_flag=None is read as 'checked and passed' (90) rather than 'never checked'. Net effect: a request with no imagery at all scores 98/100, higher than one with a full optical pair.",
+    "package_json.damage_severity_index.value": "T0R-05: with no archive at all, _entropy_weights falls back to uniform 1/6 over six 0.5 midpoints, producing a confident-looking 0.5 from no historical evidence whatsoever. After the fix no indicator contributes and the score becomes null.",
+    "weather_results[0].causation_confidence_score": "T0-06: same figure, as persisted. See the package_json entry."
+  },
+  "_purpose": "No historical archive for any indicator.",
   "component_results": [
     {
       "affected_area_ha": null,
@@ -72,7 +76,17 @@
       "Damage classification bands (negligible < 0.1 \u2264 minor < 0.33 \u2264 moderate < 0.66 \u2264 severe) are a presentational convention configured for this deployment, not a sourced standard. The underlying damage fraction and its confidence are the figures to weigh."
     ],
     "affected_area_ha": null,
-    "causation_confidence_score": 76,
+    "causation_confidence_score": 46,
+    "causation_terms": {
+      "contributing": [
+        "magnitude_correlation",
+        "physiological_plausibility"
+      ],
+      "excluded": {
+        "spatial_alignment": "the weather anomaly's spatial footprint was not computed",
+        "temporal_alignment": "no break-point date \u2014 the drop's timing is unknown between acquisitions"
+      }
+    },
     "damage_classification": "severe",
     "damage_severity_index": {
       "label": "supporting_evidence_not_authoritative",
@@ -139,7 +153,8 @@
     "generated_at": "<timestamp>",
     "methodology_version": "v1.0.0",
     "notes": [
-      "No historical baseline was available for this geometry; anomaly-vs-history scoring was omitted (FR-023)."
+      "No historical baseline was available for this geometry; anomaly-vs-history scoring was omitted (FR-023).",
+      "Causation confidence (46) was computed from 2 of 4 alignment terms, reweighted over those measured. Terms not measured: temporal_alignment (no break-point date \u2014 the drop's timing is unknown between acquisitions); spatial_alignment (the weather anomaly's spatial footprint was not computed)."
     ],
     "package_tier": "COMPLETE",
     "request_id": "<request-id>",
@@ -178,7 +193,7 @@
   "weather_results": [
     {
       "anomaly_score": 0.0,
-      "causation_confidence_score": 76,
+      "causation_confidence_score": 46,
       "historical_baseline": 45.0,
       "observed_value": 45.0,
       "source_dataset": "CHIRPS Daily",

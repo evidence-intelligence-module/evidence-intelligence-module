@@ -156,7 +156,9 @@ class WeatherCorrelationResult(Base):
     observed_value: Mapped[float] = mapped_column(Float)
     historical_baseline: Mapped[float | None] = mapped_column(Float, nullable=True)
     anomaly_score: Mapped[float | None] = mapped_column(Float, nullable=True)
-    causation_confidence_score: Mapped[int] = mapped_column(Integer)
+    # Nullable: a request where no causation term could be measured has no
+    # score, and a fabricated one is worse than none (tasks.md T0-06).
+    causation_confidence_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     request: Mapped[EvidenceRequest] = relationship(back_populates="weather_results")
 

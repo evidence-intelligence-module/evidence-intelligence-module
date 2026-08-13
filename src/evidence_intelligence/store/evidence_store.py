@@ -167,7 +167,7 @@ class EvidenceStore:
         observed_value: float,
         historical_baseline: float | None,
         anomaly_score: float | None,
-        causation_confidence_score: int,
+        causation_confidence_score: int | None,
     ) -> WeatherCorrelationResult:
         result = WeatherCorrelationResult(
             request_id=request_id,

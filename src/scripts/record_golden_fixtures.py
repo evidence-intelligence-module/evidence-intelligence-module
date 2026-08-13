@@ -5,15 +5,14 @@ Usage:
     python scripts/record_golden_fixtures.py --check    # report drift, write nothing
 
 Run the recorder only as part of a task that is *supposed* to change output —
-a `known-wrong` fixture flipping is the evidence that the task did what it
-claimed. Re-recording to make a red suite go green defeats the entire purpose
-of the harness; if a `pinned` fixture drifts, the change is the bug.
+a flagged field flipping is the evidence that the task did what it claimed.
+Re-recording to make a red suite go green defeats the entire purpose of the
+harness; a diff in a field the scenario does not list as known-wrong is the bug.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 import tempfile
 from pathlib import Path
@@ -45,30 +44,28 @@ def main() -> int:
 
             if args.check:
                 if not fixture_path(scenario).exists():
-                    print(f"MISSING  {scenario.name} [{scenario.label}]")
+                    print(f"MISSING  {scenario.name}")
                     drifted.append(scenario.name)
                 elif load_fixture(scenario) != snapshot:
-                    print(f"DRIFTED  {scenario.name} [{scenario.label}]")
+                    print(f"DRIFTED  {scenario.name}")
                     drifted.append(scenario.name)
                 else:
-                    print(f"ok       {scenario.name} [{scenario.label}]")
+                    print(f"ok       {scenario.name}")
                 continue
 
             write_fixture(scenario, snapshot)
-            print(f"recorded {scenario.name} [{scenario.label}] -> {fixture_path(scenario).name}")
+            print(f"recorded {scenario.name} ({len(scenario.known_wrong)} known-wrong field(s))")
 
     if args.check and drifted:
         print(f"\n{len(drifted)} fixture(s) differ from what the pipeline now produces.")
         print("If this was intended by the task you are on, re-run without --check and")
-        print("review the diff. If a `pinned` fixture is listed, the change is the bug.")
+        print("review the diff against that scenario's known_wrong map. A diff in a")
+        print("field that is not listed there is the bug.")
         return 1
 
     if not args.check:
-        summary = json.dumps(
-            {s.label: sum(1 for x in SCENARIOS if x.label == s.label) for s in SCENARIOS},
-            sort_keys=True,
-        )
-        print(f"\n{len(SCENARIOS)} fixtures recorded: {summary}")
+        flagged = sum(len(s.known_wrong) for s in SCENARIOS)
+        print(f"\n{len(SCENARIOS)} fixtures recorded, {flagged} field(s) flagged known-wrong.")
     return 0
 
 

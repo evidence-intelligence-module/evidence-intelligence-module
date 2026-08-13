@@ -1,6 +1,9 @@
 {
-  "_label": "pinned",
-  "_label_reason": "VH absent (T0-15): the cross-pol feature and the VH DSI indicator must stay absent rather than falling back to the VV measurement.",
+  "_known_wrong": {
+    "package_json.causation_confidence_score": "T0-06: 55 of the 100 points are hardcoded at the call site (days_between=1 -> temporal 100, distance_km=0.0 -> spatial 100). The magnitude term additionally scores an unmeasured NDVI drop as a measured 0.0, and phenology_flag=None is read as 'checked and passed' (90) rather than 'never checked'. Net effect: a request with no imagery at all scores 98/100, higher than one with a full optical pair.",
+    "weather_results[0].causation_confidence_score": "T0-06: same figure, as persisted. See the package_json entry."
+  },
+  "_purpose": "VH absent (T0-15): the cross-pol feature and the VH DSI indicator must stay absent rather than falling back to the VV measurement.",
   "component_results": [
     {
       "affected_area_ha": null,
@@ -60,7 +63,17 @@
       "Post-event optical imagery was unusable; Sentinel-1 SAR substituted for flood-extent detection. No NDVI-equivalent post-event value exists from SAR, so the semi-physical model (Component 1) and all NDVI-derived signals were omitted from this package rather than estimated from a substituted value \u2014 the damage estimate here rests on the SAR flood extent and the weather correlation alone."
     ],
     "affected_area_ha": null,
-    "causation_confidence_score": 98,
+    "causation_confidence_score": 90,
+    "causation_terms": {
+      "contributing": [
+        "physiological_plausibility"
+      ],
+      "excluded": {
+        "magnitude_correlation": "requires both a measured weather anomaly and a measured NDVI drop",
+        "spatial_alignment": "the weather anomaly's spatial footprint was not computed",
+        "temporal_alignment": "no break-point date \u2014 the drop's timing is unknown between acquisitions"
+      }
+    },
     "damage_classification": "negligible",
     "damage_severity_index": {
       "label": "supporting_evidence_not_authoritative",
@@ -126,7 +139,9 @@
     ],
     "generated_at": "<timestamp>",
     "methodology_version": "v1.0.0",
-    "notes": [],
+    "notes": [
+      "Causation confidence (90) was computed from 1 of 4 alignment terms, reweighted over those measured. Terms not measured: temporal_alignment (no break-point date \u2014 the drop's timing is unknown between acquisitions); spatial_alignment (the weather anomaly's spatial footprint was not computed); magnitude_correlation (requires both a measured weather anomaly and a measured NDVI drop)."
+    ],
     "package_tier": "COMPLETE",
     "request_id": "<request-id>",
     "source_attribution": [
@@ -164,7 +179,7 @@
   "weather_results": [
     {
       "anomaly_score": 0.0,
-      "causation_confidence_score": 98,
+      "causation_confidence_score": 90,
       "historical_baseline": 45.0,
       "observed_value": 45.0,
       "source_dataset": "CHIRPS Daily",

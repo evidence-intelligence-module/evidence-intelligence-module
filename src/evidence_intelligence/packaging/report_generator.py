@@ -37,6 +37,11 @@ class PackageContent:
     dsi_score: float | None
     damage_classification: str | None
     affected_area_ha: float | None
+    causation_terms_contributing: list[str] = field(default_factory=list)
+    causation_terms_excluded: dict = field(default_factory=dict)
+    """Which of the four alignment terms were measured, and why the rest were
+    not. A 60 computed from one term is a different claim from a 60 computed
+    from four, and the score alone cannot distinguish them (T0-06)."""
     source_attribution: list[dict] = field(default_factory=list)
     accuracy_statement: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
@@ -78,6 +83,10 @@ def _build_json_record(content: PackageContent) -> dict:
         "methodology_version": content.methodology_version,
         "generated_at": content.generated_at.isoformat(),
         "causation_confidence_score": content.causation_confidence_score,
+        "causation_terms": {
+            "contributing": content.causation_terms_contributing,
+            "excluded": content.causation_terms_excluded,
+        },
         "yield_loss_estimate": {
             "value": content.ensemble_damage_fraction,
             "combined_confidence": content.ensemble_combined_confidence,
@@ -110,7 +119,21 @@ def _build_pdf(content: PackageContent) -> bytes:
         Spacer(1, 12),
         Paragraph("Causation Analysis", styles["Heading2"]),
         Paragraph(
-            f"Causation confidence score: {content.causation_confidence_score}", styles["Normal"]
+            "Causation confidence score: "
+            + (
+                "not computed — no alignment term could be measured"
+                if content.causation_confidence_score is None
+                else f"{content.causation_confidence_score} "
+                f"(from {len(content.causation_terms_contributing)} of 4 alignment terms, "
+                "reweighted over those measured)"
+            ),
+            styles["Normal"],
+        ),
+        *(
+            [
+                Paragraph(f"Term not measured — {name}: {reason}", styles["Italic"])
+                for name, reason in content.causation_terms_excluded.items()
+            ]
         ),
         Spacer(1, 12),
         Paragraph("Yield-Loss Estimate and Damage Severity Index", styles["Heading2"]),

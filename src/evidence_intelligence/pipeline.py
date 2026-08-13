@@ -449,15 +449,21 @@ def run_pipeline(
 
     # -- Causation analysis ---------------------------------------------------
     causation_result = causation_scoring.score(
-        days_between_event_and_ndvi_drop=1,
-        distance_km_to_weather_anomaly=0.0,
+        # Both unmeasured, and passing them as such rather than as 1 / 0.0 is
+        # the point: those literals scored 100 each, i.e. 55 of the 100 points
+        # were a constant on every request (tasks.md T0-06). The temporal term
+        # needs a break-point date (T05-05); the spatial term needs the
+        # anomaly's footprint, which nothing computes.
+        days_between_event_and_ndvi_drop=None,
+        distance_km_to_weather_anomaly=None,
         normalized_weather_anomaly=weather_anomaly_normalized,
         # No optical pair means no observed damage magnitude to correlate the
-        # weather anomaly against — scored as 0 (uncorroborated), not as a
-        # synthesized drop.
-        normalized_ndvi_drop=min(1.0, ndvi_drop / 0.5) if ndvi_drop is not None else 0.0,
+        # weather anomaly against. Previously scored as a measured 0.0, which
+        # read as *perfect* correlation whenever the anomaly was also near zero.
+        normalized_ndvi_drop=min(1.0, ndvi_drop / 0.5) if ndvi_drop is not None else None,
         peril_type=peril_type,
-        phenology_flag=imagery.phenology_flag,
+        phenology_flag=obs.phenology_flag,
+        phenology_checked=True,
         low_confidence_threshold=causation_low_confidence_threshold,
     )
     store.add_weather_result(
@@ -479,6 +485,20 @@ def run_pipeline(
         )
     if imagery.phenology_flag:
         notes.append(imagery.phenology_flag)
+    if causation_result.score is None:
+        notes.append(
+            "Causation confidence was not computed: none of the four alignment terms "
+            f"could be measured ({'; '.join(causation_result.excluded.values())}). "
+            "The damage and yield-loss figures in this package do not depend on it."
+        )
+    elif causation_result.excluded:
+        notes.append(
+            f"Causation confidence ({causation_result.score}) was computed from "
+            f"{len(causation_result.contributing)} of 4 alignment terms, reweighted over "
+            "those measured. Terms not measured: "
+            + "; ".join(f"{name} ({reason})" for name, reason in causation_result.excluded.items())
+            + "."
+        )
     if causation_result.low_confidence:
         notes.append(
             f"Causation confidence ({causation_result.score}) is below the configured "
@@ -518,6 +538,8 @@ def run_pipeline(
         methodology_version="v1.0.0",
         generated_at=datetime.utcnow(),
         causation_confidence_score=causation_result.score,
+        causation_terms_contributing=causation_result.contributing,
+        causation_terms_excluded=causation_result.excluded,
         ensemble_damage_fraction=ensemble_result.damage_fraction,
         ensemble_combined_confidence=ensemble_result.combined_confidence,
         dsi_score=dsi_result.score,
@@ -585,12 +607,16 @@ def _deliver_weather_only_preliminary(
     """FR-022: weather-only preliminary package when no usable satellite
     imagery exists — never a bare failure."""
     causation_result = causation_scoring.score(
-        days_between_event_and_ndvi_drop=1,
-        distance_km_to_weather_anomaly=0.0,
+        days_between_event_and_ndvi_drop=None,
+        distance_km_to_weather_anomaly=None,
         normalized_weather_anomaly=weather_anomaly_normalized,
-        normalized_ndvi_drop=0.0,
+        normalized_ndvi_drop=None,
         peril_type=peril_type,
         phenology_flag=None,
+        # There is no imagery on this tier, so the phenology check never ran.
+        # Passing it as "checked, nothing wrong" scored 90 of a possible 100
+        # on the tier with the weakest evidence in the system.
+        phenology_checked=False,
         low_confidence_threshold=settings.causation_low_confidence_threshold,
     )
     store.add_weather_result(
@@ -609,6 +635,8 @@ def _deliver_weather_only_preliminary(
         methodology_version="v1.0.0",
         generated_at=datetime.utcnow(),
         causation_confidence_score=causation_result.score,
+        causation_terms_contributing=causation_result.contributing,
+        causation_terms_excluded=causation_result.excluded,
         ensemble_damage_fraction=None,
         ensemble_combined_confidence=None,
         dsi_score=None,

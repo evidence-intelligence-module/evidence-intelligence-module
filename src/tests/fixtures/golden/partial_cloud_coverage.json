@@ -1,13 +1,26 @@
 {
-  "_label": "pinned",
-  "_label_reason": "Low valid_pixel_fraction with the usability gate set (T0-07), so the coverage disclosure and the gating decision are both captured.",
+  "_known_wrong": {
+    "package_json.causation_confidence_score": "T0-06: 55 of the 100 points are hardcoded at the call site (days_between=1 -> temporal 100, distance_km=0.0 -> spatial 100). The magnitude term additionally scores an unmeasured NDVI drop as a measured 0.0, and phenology_flag=None is read as 'checked and passed' (90) rather than 'never checked'. Net effect: a request with no imagery at all scores 98/100, higher than one with a full optical pair.",
+    "package_json.evidence_inputs": "T0R-06: the WEATHER_ONLY_PRELIMINARY path builds its package through a duplicate assembly path that never passes the evidence-inputs manifest, so this records [] where a manifest belongs.",
+    "weather_results[0].causation_confidence_score": "T0-06: same figure, as persisted. See the package_json entry."
+  },
+  "_purpose": "Low valid_pixel_fraction with the usability gate set (T0-07), so the coverage disclosure and the gating decision are both captured.",
   "component_results": [],
   "package_json": {
     "accuracy_statement": [
       "No usable satellite imagery was available for this request's window; this package is weather-only and preliminary. It will be superseded by a complete package once imagery becomes available (FR-022)."
     ],
     "affected_area_ha": null,
-    "causation_confidence_score": 98,
+    "causation_confidence_score": null,
+    "causation_terms": {
+      "contributing": [],
+      "excluded": {
+        "magnitude_correlation": "requires both a measured weather anomaly and a measured NDVI drop",
+        "physiological_plausibility": "no imagery to infer a growth stage from, so the check never ran",
+        "spatial_alignment": "the weather anomaly's spatial footprint was not computed",
+        "temporal_alignment": "no break-point date \u2014 the drop's timing is unknown between acquisitions"
+      }
+    },
     "damage_classification": null,
     "damage_severity_index": {
       "label": "supporting_evidence_not_authoritative",
@@ -41,7 +54,7 @@
   "weather_results": [
     {
       "anomaly_score": 0.0,
-      "causation_confidence_score": 98,
+      "causation_confidence_score": null,
       "historical_baseline": 45.0,
       "observed_value": 45.0,
       "source_dataset": "CHIRPS Daily",

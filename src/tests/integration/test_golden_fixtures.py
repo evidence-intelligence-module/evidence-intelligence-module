@@ -4,20 +4,30 @@ Each scenario's full observable pipeline output is compared against a recorded
 snapshot. This is the safety net every later T0R task's gate is checked
 against — see `specs/002-satellite-evidence-parity/pipeline-decomposition-design.md`
 §8.1 for why a change-detector rather than a correctness oracle.
+
+Labels are per-field: every recorded value is pinned unless it appears in the
+scenario's `known_wrong` map. See `tests/golden.py` for why that is not the
+same as the per-scenario labelling this harness started with.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from tests.golden import KNOWN_WRONG, PINNED, SCENARIOS, fixture_path, load_fixture, run_scenario
+from tests.golden import (
+    SCENARIOS,
+    fixture_path,
+    load_fixture,
+    path_exists,
+    run_scenario,
+)
 
 
 @pytest.mark.parametrize("scenario", SCENARIOS, ids=lambda s: s.name)
 def test_pipeline_output_matches_recorded_fixture(scenario, tmp_path):
-    """Any diff here is a behaviour change. For a `pinned` scenario that is a
-    regression; for a `known-wrong` one it is the task doing its job, and the
-    fixture is re-recorded as part of that task."""
+    """Any diff is a behaviour change. Outside the `known_wrong` map that is a
+    regression; inside it, it is the named task doing its job, and the fixture
+    is re-recorded as part of that task."""
     assert fixture_path(scenario).exists(), (
         f"no recorded fixture for {scenario.name} — run "
         f"`python scripts/record_golden_fixtures.py`"
@@ -26,15 +36,29 @@ def test_pipeline_output_matches_recorded_fixture(scenario, tmp_path):
 
 
 @pytest.mark.parametrize("scenario", SCENARIOS, ids=lambda s: s.name)
-def test_every_fixture_declares_a_label_and_reason(scenario):
-    """A fixture nobody labelled is a fixture nobody will know how to treat
+def test_known_wrong_paths_still_resolve(scenario):
+    """A stale excuse is worse than none: if a `known_wrong` path no longer
+    exists in the snapshot, the entry is describing a value that is gone, and
+    nobody will notice the map has rotted."""
+    recorded = load_fixture(scenario)
+    for path in scenario.known_wrong:
+        assert path_exists(recorded, path), (
+            f"{scenario.name}: known_wrong path {path!r} does not resolve in the "
+            "recorded snapshot — remove the entry or fix the path"
+        )
+
+
+@pytest.mark.parametrize("scenario", SCENARIOS, ids=lambda s: s.name)
+def test_every_scenario_declares_purpose_and_reasons(scenario):
+    """A fixture nobody explained is a fixture nobody will know how to treat
     when it flips."""
-    assert scenario.label in (PINNED, KNOWN_WRONG)
-    assert scenario.reason.strip()
+    assert scenario.purpose.strip()
+    for path, reason in scenario.known_wrong.items():
+        assert reason.strip(), f"{scenario.name}: {path} has an empty reason"
 
     recorded = load_fixture(scenario)
-    assert recorded["_label"] == scenario.label
-    assert recorded["_label_reason"] == scenario.reason
+    assert recorded["_purpose"] == scenario.purpose
+    assert recorded["_known_wrong"] == dict(scenario.known_wrong)
 
 
 def test_pipeline_is_deterministic_across_runs(tmp_path):
@@ -44,8 +68,16 @@ def test_pipeline_is_deterministic_across_runs(tmp_path):
     assert run_scenario(scenario, tmp_path) == run_scenario(scenario, tmp_path)
 
 
-def test_both_labels_are_represented():
-    """If nothing is `known-wrong`, the design's expected flips were not
-    captured; if nothing is `pinned`, nothing is actually protected."""
-    labels = {s.label for s in SCENARIOS}
-    assert labels == {PINNED, KNOWN_WRONG}
+def test_causation_is_flagged_wrong_on_every_scenario():
+    """Not a style check — a regression guard on the harness itself.
+
+    The first version of this file labelled whole scenarios, so five of eight
+    were `pinned` while recording a causation score that is fabricated on every
+    path. If a scenario is ever added without inheriting CAUSATION_KNOWN_WRONG,
+    it silently re-pins that figure as correct.
+    """
+    for scenario in SCENARIOS:
+        assert "package_json.causation_confidence_score" in scenario.known_wrong, (
+            f"{scenario.name} does not flag its causation score as known-wrong; "
+            "every path fabricates it until T0-06 lands"
+        )
