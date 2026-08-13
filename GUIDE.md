@@ -49,7 +49,7 @@ Without these, the service still runs and its test suite still passes (tests inj
 .venv/Scripts/python -m pytest tests/
 ```
 
-46 tests (unit/contract/integration) — all pass without any of the above configured.
+117 tests — 80 unit, 25 integration, 12 contract — all pass without any of the above configured.
 
 ### Run the service
 

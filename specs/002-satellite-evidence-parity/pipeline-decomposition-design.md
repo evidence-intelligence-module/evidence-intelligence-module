@@ -370,8 +370,9 @@ coverage statement (§7.2); DSI returning `None` where no indicator has an archi
 
 ### 8.3 Existing suite
 
-All 46 existing tests pass at every step, except where a fixture is explicitly
-labelled `known-wrong`.
+All 117 existing tests (80 unit, 25 integration, 12 contract, verified
+2026-08-13) pass at every step, except where a fixture is explicitly labelled
+`known-wrong`.
 
 ## 9. Migration
 
