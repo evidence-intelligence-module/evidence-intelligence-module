@@ -159,6 +159,45 @@ def _build_manifest(imagery, weather, ai_ml_result, semi_physical_result, settin
     return manifest
 
 
+def _assumed_harvest_index() -> float:
+    """The single Harvest Index applied to every crop (tasks.md T0-18).
+
+    Read from `CropParameters` rather than repeated as a literal so Component 1
+    and Component 2 cannot drift apart — they previously carried the same 0.4
+    in two unconnected places.
+
+    `modeling-approach.md` §2 commits to Harvest Index being "sourced from
+    published crop-variety reference values and regional agronomic literature,
+    clearly labeled as a modeling assumption". Neither half held: one constant
+    was applied to wheat, paddy, cotton and everything else, and no package
+    said so. Per-crop resolution is not a lookup away either — the Evidence
+    Request Interface carries no crop-type field to look one up *from*, which
+    is the open part (see specs/001-evidence-generation-pipeline/issue/
+    "harvest index source and per-crop resolution"). This function closes the
+    labelling half only."""
+    return semi_physical.CropParameters().harvest_index
+
+
+def _modeling_assumption_statements(bands: tuple[float, float, float]) -> list[str]:
+    """Assumptions that shape reported figures but aren't derived from this
+    request's own data — stated in the package rather than left in the code.
+
+    Both were live in shipped output before T0-17/T0-18: a yield-loss figure
+    scaled by an un-crop-specific constant, and a severity word produced by
+    cut points that appear in no source document. A reader can discount a
+    disclosed assumption; an undisclosed one just looks like a measurement."""
+    return [
+        f"Yield loss = damage fraction × Harvest Index, using an assumed "
+        f"Harvest Index of {_assumed_harvest_index()} applied uniformly to all crops. "
+        "This is a modeling assumption, not a crop-specific published value — the "
+        "evidence request carries no crop type to select one by (modeling-approach.md §2).",
+        f"Damage classification bands (negligible < {bands[0]} ≤ minor < {bands[1]} "
+        f"≤ moderate < {bands[2]} ≤ severe) are a presentational convention configured "
+        "for this deployment, not a sourced standard. The underlying damage fraction and "
+        "its confidence are the figures to weigh.",
+    ]
+
+
 def _coverage_statement(imagery) -> str:
     """How much of the field was actually seen, for the accuracy statement.
 
@@ -354,7 +393,7 @@ def run_pipeline(
         if cross_pol is not None:
             feature_vector["vh_vv_backscatter_deviation"] = cross_pol
 
-    ai_ml_result = ai_ml_model.predict(feature_vector, harvest_index=0.4)
+    ai_ml_result = ai_ml_model.predict(feature_vector, harvest_index=_assumed_harvest_index())
     store.add_component_result(
         request_id=request_id,
         component=ModelComponent.AI_ML,
@@ -402,7 +441,9 @@ def run_pipeline(
         methodology_version=ensemble.METHODOLOGY_VERSION,
         point_estimate=ensemble_result.damage_fraction,
         confidence_or_accuracy={"combined_confidence": ensemble_result.combined_confidence},
-        damage_classification=_classify(ensemble_result.damage_fraction),
+        damage_classification=_classify(
+            ensemble_result.damage_fraction, settings.damage_classification_bands
+        ),
         affected_area_ha=None,
     )
 
@@ -493,6 +534,7 @@ def run_pipeline(
         f"({len(supplied_features)} of {len(ai_ml.FEATURE_NAMES)} declared). "
         "Features that could not be measured were omitted rather than defaulted.",
         _coverage_statement(imagery),
+        *_modeling_assumption_statements(settings.damage_classification_bands),
     ]
     if imagery.post_event is None and imagery.sar is not None:
         accuracy_statement.append(
@@ -518,7 +560,9 @@ def run_pipeline(
         ensemble_damage_fraction=ensemble_result.damage_fraction,
         ensemble_combined_confidence=ensemble_result.combined_confidence,
         dsi_score=dsi_result.score,
-        damage_classification=_classify(ensemble_result.damage_fraction),
+        damage_classification=_classify(
+            ensemble_result.damage_fraction, settings.damage_classification_bands
+        ),
         affected_area_ha=None,
         source_attribution=[
             {
@@ -632,14 +676,23 @@ def _deliver_weather_only_preliminary(
     )
 
 
-def _classify(damage_fraction: float) -> str:
-    if damage_fraction < 0.1:
-        return "negligible"
-    if damage_fraction < 0.33:
-        return "minor"
-    if damage_fraction < 0.66:
-        return "moderate"
-    return "severe"
+DAMAGE_CLASSIFICATION_LABELS = ("negligible", "minor", "moderate", "severe")
+
+
+def _classify(damage_fraction: float, bands: tuple[float, float, float]) -> str:
+    """Map a damage fraction to one of four labels.
+
+    The cut points are configuration, not a standard (tasks.md T0-17). They
+    appear nowhere in `documents/`, and `yestech_manual_2023.md` defines no
+    transferable severity vocabulary this module could adopt — so a field at
+    0.34 reading as "moderate" while one at 0.32 reads as "minor" rests on
+    nothing sourced. Every package now discloses that, because a categorical
+    label is the one output a reviewer cannot weigh for themselves: a fraction
+    invites judgement, a word substitutes for it."""
+    for threshold, label in zip(bands, DAMAGE_CLASSIFICATION_LABELS, strict=False):
+        if damage_fraction < threshold:
+            return label
+    return DAMAGE_CLASSIFICATION_LABELS[-1]
 
 
 def retry_insufficient_data(

@@ -16,6 +16,7 @@ class Settings:
     csm_high_scrutiny_enabled: bool
     ai_ml_model_path: str | None
     minimum_valid_pixel_fraction: float | None
+    damage_classification_bands: tuple[float, float, float]
 
 
 def load_settings() -> Settings:
@@ -55,7 +56,36 @@ def load_settings() -> Settings:
             if "MINIMUM_VALID_PIXEL_FRACTION" in os.environ
             else None
         ),
+        # tasks.md T0-17: cut points mapping a damage fraction to the
+        # negligible/minor/moderate/severe label in every package. Unlike the
+        # thresholds above these cannot ship unset — `damage_classification` is
+        # populated on every ENSEMBLE row, so *some* mapping must exist. The
+        # defaults are the values already in shipped code, retained so behaviour
+        # is unchanged, but they appear nowhere in `documents/` and
+        # `yestech_manual_2023.md` defines no transferable severity banding —
+        # they are a presentational convention, and every package now says so
+        # (see specs/001-evidence-generation-pipeline/issue/ "damage
+        # classification band thresholds").
+        damage_classification_bands=_parse_bands(
+            os.environ.get("DAMAGE_CLASSIFICATION_BANDS")
+        ),
     )
+
+
+DEFAULT_DAMAGE_CLASSIFICATION_BANDS = (0.1, 0.33, 0.66)
+
+
+def _parse_bands(raw: str | None) -> tuple[float, float, float]:
+    """Three ascending cut points as `"0.1,0.33,0.66"`, or the default."""
+    if not raw:
+        return DEFAULT_DAMAGE_CLASSIFICATION_BANDS
+    parts = tuple(float(part) for part in raw.split(","))
+    if len(parts) != 3 or list(parts) != sorted(parts):
+        raise ValueError(
+            "DAMAGE_CLASSIFICATION_BANDS must be three ascending values, "
+            f'e.g. "0.1,0.33,0.66" — got {raw!r}'
+        )
+    return parts
 
 
 settings = load_settings()

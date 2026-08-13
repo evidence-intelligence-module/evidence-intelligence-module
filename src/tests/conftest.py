@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from evidence_intelligence.api import create_app
 from evidence_intelligence.api.dependencies import get_settings, get_store
-from evidence_intelligence.config import Settings
+from evidence_intelligence.config import DEFAULT_DAMAGE_CLASSIFICATION_BANDS, Settings
 from tests.fakes import FakeEvidenceStore
 
 SAMPLE_GEOMETRY = {
@@ -33,6 +33,7 @@ def test_settings() -> Settings:
         # disclosed but does not gate usability until a deployment chooses a
         # threshold (T0-07). Tests that need the gate set it explicitly.
         minimum_valid_pixel_fraction=None,
+        damage_classification_bands=DEFAULT_DAMAGE_CLASSIFICATION_BANDS,
     )
 
 

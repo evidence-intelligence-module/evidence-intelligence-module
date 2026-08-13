@@ -4,7 +4,7 @@ AI_ML_MODEL_PATH (config.py) and the trained-model artifact (ai_ml.py)."""
 import numpy as np
 import pytest
 
-from evidence_intelligence.config import Settings
+from evidence_intelligence.config import DEFAULT_DAMAGE_CLASSIFICATION_BANDS, Settings
 from evidence_intelligence.models.ai_ml import FEATURE_NAMES, AiMlModel
 from evidence_intelligence.pipeline import _ai_ml_model_cache, _load_ai_ml_model
 
@@ -26,6 +26,7 @@ def _settings(ai_ml_model_path=None) -> Settings:
         csm_high_scrutiny_enabled=False,
         ai_ml_model_path=ai_ml_model_path,
         minimum_valid_pixel_fraction=None,
+        damage_classification_bands=DEFAULT_DAMAGE_CLASSIFICATION_BANDS,
     )
 
 
