@@ -110,6 +110,8 @@ These questions have no sourced answer in `documents/` or `yestech_manual_2023.m
 - **Open — reframed** — CSM high-scrutiny trigger criteria (FR-011). The trigger is not what blocks Component 3: `csm_assimilation.run()` is a placeholder that echoes its input, so enabling the tier would add false corroboration to a confidence-weighted ensemble. **Leave `CSM_HIGH_SCRUTINY_ENABLED` off** until the component is genuinely implemented.
 - **Open — narrowed** — Causation confidence low-confidence threshold (FR-024). Cannot be calibrated until `002`'s `T0-06` lands; 55 of the score's 100 points are currently hardcoded, so there is no distribution to calibrate against.
 - **Open — narrowed** — Expected request volume and concurrency target. Now capacity sizing only; the durability/architecture half is settled on other grounds (`002` `T05-06`).
+- **Open — live in shipped code** — Damage classification band thresholds. `_classify`'s 0.1/0.33/0.66 appear nowhere in `documents/`, and YES-TECH defines no transferable severity banding — so a categorical label in a §65B package rests on invented figures. Disclosure fix is `002` `T0-17`.
+- **Open — live in shipped code** — Harvest Index source and per-crop resolution. A flat `0.4` for every crop, against `modeling-approach.md` §2's commitment to per-variety values "clearly labeled as a modeling assumption". Scales every yield-loss figure. Disclosure fix is `002` `T0-18`; per-crop resolution needs a request-contract field, to be decided with `002`'s User Story 4.
 
 **Satellite Evidence Parity Roadmap** — [`specs/002-satellite-evidence-parity/issue/README.md`](specs/002-satellite-evidence-parity/issue/README.md):
 
