@@ -94,6 +94,7 @@ Everything above lives directly under `documents/`:
 | Location | What's in it |
 |---|---|
 | `constitution.md`, `hld.md`, `modeling-approach.md`, `evidence-flow-spec.md` | The design docs the Reading Order above walks through |
+| [`technical-flow-diagrams.md`](technical-flow-diagrams.md) | Mermaid diagrams of the **as-built** service in `src/` — runtime topology, status machine, tier decision, ingestion internals, observation/model/causation wiring, packaging, schema, config gates. Derived from the code, so it tracks the implementation rather than the design above |
 | [`standards/`](standards/) | `yestech_manual_2023.md` (verbatim, unedited) — an **external, authoritative** government manual, kept visibly separate from anything this team authored |
 | [`research/`](research/) | The original Evidence Collection & Generation white paper, plus a trimmed remote-sensing/ML technique reference — **internal** source research this initiative was derived from |
 | [`notes/decision-log.md`](notes/decision-log.md) | Running decision log |
