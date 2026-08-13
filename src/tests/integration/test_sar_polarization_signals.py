@@ -12,8 +12,9 @@ where VH wasn't acquired the VH-derived signals stay absent."""
 from datetime import date
 
 from evidence_intelligence.models.ai_ml import FEATURE_NAMES
+from evidence_intelligence.observation import cross_pol_ratio_deviation
 from evidence_intelligence.packaging.report_generator import LocalObjectStorage
-from evidence_intelligence.pipeline import _cross_pol_ratio_deviation, run_pipeline
+from evidence_intelligence.pipeline import run_pipeline
 from evidence_intelligence.store.schema import ModelComponent, PerilType
 from tests.conftest import SAMPLE_GEOMETRY
 from tests.fakes import FakeGEEClient, FakeIMDClient, FakeWeatherClient
@@ -123,7 +124,7 @@ def test_cross_pol_ratio_reduces_to_the_difference_of_the_two_drops():
         vh_drop_db = 8.0
         vv_drop_db = 5.0
 
-    assert _cross_pol_ratio_deviation(_Sar()) == 3.0
+    assert cross_pol_ratio_deviation(_Sar()) == 3.0
 
 
 def test_cross_pol_ratio_is_absent_when_either_polarization_is_missing():
@@ -135,8 +136,8 @@ def test_cross_pol_ratio_is_absent_when_either_polarization_is_missing():
         vh_drop_db = 8.0
         vv_drop_db = None
 
-    assert _cross_pol_ratio_deviation(_VvOnly()) is None
-    assert _cross_pol_ratio_deviation(_VhOnly()) is None
+    assert cross_pol_ratio_deviation(_VvOnly()) is None
+    assert cross_pol_ratio_deviation(_VhOnly()) is None
 
 
 def test_cross_pol_feature_name_matches_the_declared_feature_set():

@@ -20,6 +20,25 @@ from evidence_intelligence.ingestion.imagery import ingest_imagery
 from evidence_intelligence.ingestion.weather import IMDClient, WeatherClient, ingest_weather
 from evidence_intelligence.manifest import EvidenceInputsManifest, InputOutcome
 from evidence_intelligence.models import ai_ml, dsi, ensemble, semi_physical
+from evidence_intelligence.observation import (
+    FAPAR_DEVIATION,
+    NDVI_DEVIATION,
+    POST_EVENT_FAPAR,
+    POST_EVENT_INSOLATION_MJ,
+    POST_EVENT_LSWI,
+    POST_EVENT_TEMP_C,
+    PRE_EVENT_FAPAR,
+    PRE_EVENT_INSOLATION_MJ,
+    PRE_EVENT_LSWI,
+    PRE_EVENT_TEMP_C,
+    RAINFALL_ANOMALY,
+    SAR_VH_BACKSCATTER_DEVIATION,
+    SOIL_MOISTURE_DEVIATION,
+    TEMPERATURE_ANOMALY,
+    VH_VV_BACKSCATTER_DEVIATION,
+    WEATHER_ANOMALY_MAGNITUDE,
+    observe,
+)
 from evidence_intelligence.packaging.report_generator import (
     LocalObjectStorage,
     PackageContent,
@@ -53,27 +72,6 @@ def _load_ai_ml_model(settings: Settings) -> ai_ml.AiMlModel:
             logger.exception("ai_ml_model_load_failed path=%s falling back to untrained", path)
             _ai_ml_model_cache[path] = ai_ml.AiMlModel()
     return _ai_ml_model_cache[path]
-
-
-def _ndvi_to_fapar(ndvi: float | None) -> float | None:
-    """`None` in, `None` out — an absent NDVI has no fAPAR, and substituting
-    0.0 made "we could not see the field" indistinguishable from "the field
-    has no green vegetation left", i.e. total damage (tasks.md T0-02)."""
-    if ndvi is None:
-        return None
-    return max(0.0, min(1.0, 1.24 * ndvi - 0.168))
-
-
-def _insolation_proxy_mj() -> float:
-    """No dedicated insolation feed wired yet — a fixed regional-average
-    proxy, disclosed as a known limitation (FR-019)."""
-    return 18.0
-
-
-# Used only when ERA5-Land returns no reading for the window at all. Kept as an
-# explicit `is None` check rather than `or`, since 0 °C is a valid temperature
-# that `or` would silently replace with this default.
-FALLBACK_TEMPERATURE_C = 25.0
 
 
 def _build_manifest(imagery, weather, ai_ml_result, semi_physical_result, settings):
@@ -219,24 +217,6 @@ def _coverage_statement(imagery) -> str:
     )
 
 
-def _cross_pol_ratio_deviation(sar) -> float | None:
-    """`vh_vv_backscatter_deviation` (modeling-approach.md §3's Component 2
-    feature table) — how much the cross-polarized ratio changed over the event.
-
-    In dB the ratio is a difference, so the change in (VH − VV) between the
-    pre- and post-event composites reduces exactly to `vh_drop − vv_drop`; no
-    additional acquisition is needed beyond the two `sar_composite` already
-    measures. Positive means VH fell further than VV — canopy volume
-    scattering lost relative to surface return — matching the
-    positive-to-damage direction the rest of the feature set uses.
-
-    `None` unless both polarizations were measured; the feature is omitted
-    rather than defaulted in that case."""
-    if sar.vh_drop_db is None or sar.vv_drop_db is None:
-        return None
-    return sar.vh_drop_db - sar.vv_drop_db
-
-
 def run_pipeline(
     request_id: str,
     geometry: dict,
@@ -273,10 +253,12 @@ def run_pipeline(
         event_date,
         peril_type_is_cloudburst_or_hailstorm=peril_type in CLOUDBURST_HAILSTORM_PERILS,
     )
+    # Every derived signal for this request, in one place (tasks.md T0R-02).
+    # Nothing below re-derives "was this measured?" from the raw bundles.
+    obs = observe(imagery, weather)
+
     causation_low_confidence_threshold = settings.causation_low_confidence_threshold
-    weather_anomaly_normalized = min(
-        1.0, abs(weather.precipitation.anomaly_score or 0.0)
-    )
+    weather_anomaly_normalized = obs.value(WEATHER_ANOMALY_MAGNITUDE)
 
     if not imagery.usable:
         # FR-022: no usable imagery and not flood-compatible (SAR did not
@@ -309,30 +291,22 @@ def run_pipeline(
         ),
     )
 
+    # Deliberately still read from the bundle, not from `obs`: this counts
+    # historical *composites*, while `obs.history(NDVI_DEVIATION)` counts those
+    # with a usable index value. They differ when a composite returns no value,
+    # and T0R-02 is a lift, not a correction — see T0R-05's note.
     has_historical_baseline = len(imagery.historical) > 0
 
     # -- Optical-derived signals, where an optical pair actually exists -----
     # When SAR substituted for post-event optical (flood/cloud-cover case)
     # there is no NDVI-equivalent post-event value. Every NDVI-derived signal
-    # below stays absent in that case rather than defaulting to 0, which
-    # previously made the apparent NDVI drop equal the whole pre-event NDVI —
-    # i.e. synthesized a maximum-damage reading out of missing data, in the
+    # stays absent in that case rather than defaulting to 0, which previously
+    # made the apparent NDVI drop equal the whole pre-event NDVI — i.e.
+    # synthesized a maximum-damage reading out of missing data, in the
     # claimant's favour, and reported it as measured (tasks.md T0-02).
-    pre_ndvi = imagery.pre_event.index_value if imagery.pre_event else None
-    post_ndvi = imagery.post_event.index_value if imagery.post_event else None
-    pre_fapar = _ndvi_to_fapar(pre_ndvi)
-    post_fapar = _ndvi_to_fapar(post_ndvi)
-    optical_pair_available = pre_ndvi is not None and post_ndvi is not None
-
-    ndvi_drop = max(0.0, pre_ndvi - post_ndvi) if optical_pair_available else None
-    fapar_deviation = (
-        pre_fapar - post_fapar if pre_fapar is not None and post_fapar is not None else None
-    )
-    observed_temp_c = (
-        weather.reanalysis.observed_value
-        if weather.reanalysis.observed_value is not None
-        else FALLBACK_TEMPERATURE_C
-    )
+    # `observe()` now owns that rule; here it is only read.
+    ndvi_drop = obs.value(NDVI_DEVIATION)
+    optical_pair_available = obs.is_present(NDVI_DEVIATION)
 
     contributions: list[ensemble.ComponentContribution] = []
 
@@ -343,14 +317,14 @@ def run_pipeline(
     semi_physical_result = None
     if optical_pair_available:
         semi_physical_result = semi_physical.run(
-            pre_event_insolation_mj=_insolation_proxy_mj(),
-            pre_event_fapar=pre_fapar,
-            pre_event_lswi=pre_ndvi,
-            pre_event_temp_c=observed_temp_c,
-            post_event_insolation_mj=_insolation_proxy_mj(),
-            post_event_fapar=post_fapar,
-            post_event_lswi=post_ndvi,
-            post_event_temp_c=observed_temp_c,
+            pre_event_insolation_mj=obs.value(PRE_EVENT_INSOLATION_MJ),
+            pre_event_fapar=obs.value(PRE_EVENT_FAPAR),
+            pre_event_lswi=obs.value(PRE_EVENT_LSWI),
+            pre_event_temp_c=obs.value(PRE_EVENT_TEMP_C),
+            post_event_insolation_mj=obs.value(POST_EVENT_INSOLATION_MJ),
+            post_event_fapar=obs.value(POST_EVENT_FAPAR),
+            post_event_lswi=obs.value(POST_EVENT_LSWI),
+            post_event_temp_c=obs.value(POST_EVENT_TEMP_C),
         )
         store.add_component_result(
             request_id=request_id,
@@ -377,21 +351,16 @@ def run_pipeline(
     # pipeline cannot compute is omitted, never defaulted to 0.0 — the model's
     # 0.0 means "no deviation observed", which is a claim about the field, not
     # about our coverage of it (tasks.md T0-03).
-    feature_vector: dict[str, float] = {}
-    if ndvi_drop is not None:
-        feature_vector["ndvi_deviation"] = ndvi_drop
-    if fapar_deviation is not None:
-        feature_vector["fapar_deviation"] = fapar_deviation
-    if weather.precipitation.anomaly_score is not None:
-        feature_vector["rainfall_anomaly"] = weather.precipitation.anomaly_score
-    if weather.reanalysis.anomaly_score is not None:
-        feature_vector["temperature_anomaly"] = weather.reanalysis.anomaly_score
-    if weather.soil_moisture.anomaly_score is not None:
-        feature_vector["soil_moisture_deviation"] = weather.soil_moisture.anomaly_score
-    if imagery.sar is not None:
-        cross_pol = _cross_pol_ratio_deviation(imagery.sar)
-        if cross_pol is not None:
-            feature_vector["vh_vv_backscatter_deviation"] = cross_pol
+    feature_vector = obs.present(
+        (
+            NDVI_DEVIATION,
+            FAPAR_DEVIATION,
+            RAINFALL_ANOMALY,
+            TEMPERATURE_ANOMALY,
+            SOIL_MOISTURE_DEVIATION,
+            VH_VV_BACKSCATTER_DEVIATION,
+        )
+    )
 
     ai_ml_result = ai_ml_model.predict(feature_vector, harvest_index=_assumed_harvest_index())
     store.add_component_result(
@@ -448,34 +417,26 @@ def run_pipeline(
     )
 
     # -- Damage Severity Index (Component 5) --------------------------------
-    historical_ndvi = [c.index_value for c in imagery.historical if c.index_value is not None]
     # Indicators the pipeline cannot currently measure are omitted, not passed
     # as 0.0 — `dsi.compute` already treats an absent indicator as neutral
     # (0.5 normalized), whereas 0.0 asserts a measured zero deviation.
     # `lswi_deviation` in particular was being fed the NDVI drop, a different
-    # physical quantity, in both this dict and the Component 2 feature vector
-    # (tasks.md T0-03). No LSWI source is wired yet, so it stays absent.
-    dsi_indicators: dict[str, float] = {
-        "weather_anomaly_magnitude": weather_anomaly_normalized,
-    }
-    if ndvi_drop is not None:
-        dsi_indicators["ndvi_deviation"] = ndvi_drop
-    if fapar_deviation is not None:
-        dsi_indicators["fapar_deviation"] = fapar_deviation
-    if imagery.sar is not None and imagery.sar.vh_drop_db is not None:
-        # modeling-approach.md §6's indicator is cross-polarized VH, which
-        # tracks canopy volume scattering. VV — the flood detector's
-        # polarization — was standing in for it, which reported a surface-water
-        # measurement as a crop-structure one. Absent VH now leaves the
-        # indicator absent (tasks.md T0-15).
-        dsi_indicators["sar_vh_backscatter_deviation"] = imagery.sar.vh_drop_db
+    # physical quantity (tasks.md T0-03), and `sar_vh_backscatter_deviation`
+    # the VV drop (T0-15). `observe()` owns both distinctions now.
+    dsi_indicators = obs.present(
+        (
+            WEATHER_ANOMALY_MAGNITUDE,
+            NDVI_DEVIATION,
+            FAPAR_DEVIATION,
+            SAR_VH_BACKSCATTER_DEVIATION,
+        )
+    )
+    # `or []` preserves `dsi.compute`'s current contract, which cannot tell an
+    # absent archive from a zero-variance one. That conflation is the defect
+    # T0R-05 fixes; T0R-02 only moves where the archives come from.
     dsi_historical = {
-        "ndvi_deviation": historical_ndvi,
-        "lswi_deviation": [],
-        "sar_vh_backscatter_deviation": [],
-        "fapar_deviation": [],
-        "crop_condition_variability": [],
-        "weather_anomaly_magnitude": [],
+        name: list(obs.history(name) or [])
+        for name in dsi.INDICATOR_DIRECTIONS
     }
     dsi_result = dsi.compute(dsi_indicators, dsi_historical)
     store.add_component_result(
