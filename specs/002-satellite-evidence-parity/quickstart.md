@@ -6,7 +6,7 @@ Validation scenarios proving each user story (`spec.md`) works end-to-end, on to
 
 - The `001-evidence-generation-pipeline` service running per its own `quickstart.md`/`GUIDE.md`.
 - `AI_ML_MODEL_PATH` pointing at a trained Component 2 model (`GUIDE.md` "Training the AI/ML Model") — foundation-model feature augmentation (Scenario 3) is evaluated against this.
-- `BHOONIDHI_API_KEY` for ISRO's free Resourcesat-2A LISS-4/EOS-04 access (`research.md` §6.3) — Scenario 1 can be validated with Sentinel-1 SAR alone if this isn't configured, since SAR is the load-bearing default, not the enhanced tier. No commercial (Planet/Maxar/ICEYE) credentials are needed or used anywhere in this quickstart — commercial tasking is deferred (`issue/`, resolved 2026-08-12).
+- `BHOONIDHI_API_KEY` for ISRO's free Resourcesat-2A LISS-4/EOS-04 access (`research.md` §6.3) — Scenario 1 can be validated with Sentinel-1 SAR alone if this isn't configured, since SAR is the load-bearing default, not the enhanced tier. No commercial provider credentials exist anywhere in this module: commercial satellite procurement is out of scope per `constitution.md` §9.2.
 
 ## Scenario 1 — Monsoon cloud cover fallback (User Story 1)
 
@@ -19,7 +19,7 @@ Validation scenarios proving each user story (`spec.md`) works end-to-end, on to
 1. Submit two requests: one expected to score high on existing ensemble confidence (clear, well-covered field/event), one expected to score low (sparse data, ambiguous signal).
 2. Retrieve both completed packages.
 3. **Expected**: the first returns `confidence_tier: "HIGH"` with `confidence_tier_guidance: null`; the second returns `confidence_tier: "LOW"` with non-null guidance text and `cce_non_equivalence_statement: true`, per spec.md Acceptance Scenarios 2.1/2.2.
-4. Attach supplementary evidence to the low-confidence request via `POST /evidence-requests/{request_id}/supplementary-evidence` and confirm `201 Created` with no requirement to specify which intimation channel originated it.
+*(Step 4, attaching supplementary evidence to the low-confidence request, was removed 2026-08-13 with FR-006 — out of scope per `constitution.md` §9.1.)*
 
 ## Scenario 3 — Foundation-model feature augmentation (User Story 3)
 
@@ -40,8 +40,8 @@ Validation scenarios proving each user story (`spec.md`) works end-to-end, on to
 
 ## Scenario 5 — Graceful degradation (Edge Cases)
 
-1. Submit a request for a field/date where no enhanced source (SAR, VHR, or commercial) is available or authorized.
-2. **Expected**: the request still completes using only the `001` baseline pipeline; `package.sources_considered_not_used` may be non-empty (recording that a commercial source was evaluated and skipped), but the request is never failed solely because an enhanced source was unavailable, per spec.md Edge Cases.
+1. Submit a request for a field/date where no enhanced source (SAR or sovereign VHR) is available.
+2. **Expected**: the request still completes using only the `001` baseline pipeline; `package.sources_considered_not_used` may be non-empty (recording that an enhanced source was evaluated and skipped), but the request is never failed solely because an enhanced source was unavailable, per spec.md Edge Cases.
 
 ## Scenario 6 — Thermal/red-edge stress signals for drought and heatwave claims (User Story 5)
 
@@ -52,16 +52,10 @@ Validation scenarios proving each user story (`spec.md`) works end-to-end, on to
 5. Repeat for a non-drought/heatwave peril type (e.g. `hailstorm`).
 6. **Expected**: `package.thermal_stress_signal` is `null` — this field is scoped to drought/heatwave only (spec.md FR-016), not populated or attempted for other peril types.
 
-## Scenario 7 — Claim-outcome capture and the §4 gate (FR-024, `tasks.md` TV-01/TV-01a)
+## ~~Scenario 7 — Claim-outcome capture and the §4 gate~~ — removed 2026-08-13
 
-1. Complete any request, then `POST /evidence-requests/{request_id}/outcome` with `{"outcome": "UPHELD", "assessed_loss_fraction": 0.42, "assessment_source": "PILOT_SURVEY"}`.
-2. **Expected**: `201 Created`. Re-fetch the request and confirm the package is **unchanged** — same `package_version`, same `confidence_tier`, same checksum. Recording what happened must never retroactively alter what the module said would happen.
-3. Repeat with `"assessment_source": "CCE_DERIVED"`.
-4. **Expected**: `422`, listing the authorized sources, and **no row written** — verify by querying `claim_outcomes` for that request. This is the Constitution §4 gate: the endpoint is built before the offline-CCE-labels decision is made, so an unauthorized source must be refused rather than stored.
-5. Repeat with `assessed_loss_fraction` present but `assessment_source` omitted.
-6. **Expected**: `400`. A loss figure with no stated origin is exactly what the gate exists to prevent.
-7. Run the label export (`TV-02`) and confirm it emits the `scripts/train_ai_ml_model.py` CSV format — one column per `FEATURE_NAMES` plus `damage_fraction` — from the outcomes captured above.
+Removed with FR-024 and `TV-01`/`TV-01a`/`TV-02`. Claim-outcome capture and label export are out of scope per `constitution.md` §9.2; there is no outcome endpoint, no `claim_outcomes` table, and no in-module label export to validate. Labeled data arrives from an external supplier.
 
 ## Out of scope for this quickstart
 
-Field/damage-boundary segmentation assist (FR-014, SHOULD-priority) has no dedicated scenario here — it's a human-in-the-loop UI capability, not an automated pipeline behavior, and is validated via its own tooling once implemented, not via this API-level quickstart.
+Nothing in this quickstart validates a boundary listed in `constitution.md` §9. Two scenarios that existed here previously — supplementary-evidence attachment and claim-outcome capture — were removed on 2026-08-13 rather than left as untestable steps, and field/damage-boundary segmentation assist (formerly FR-014) is gone for the same reason.

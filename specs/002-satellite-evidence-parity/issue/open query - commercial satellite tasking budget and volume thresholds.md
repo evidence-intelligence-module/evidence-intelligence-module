@@ -1,5 +1,7 @@
 # Open Query: Commercial satellite tasking budget and volume thresholds
 
+> **SUPERSEDED 2026-08-13 by a boundary, not a budget.** Commercial satellite procurement is out of scope per `constitution.md` §9.2 — permanent, crossable only by a §8 amendment. There is no budget to size, no volume threshold to set, and no disabled stub retained. The free-only decision recorded below (2026-08-12) reached the same near-term behaviour by a weaker route and is kept as history.
+
 **Plan/Tasks**: [../plan.md](../plan.md) Scale/Scope, [../research.md](../research.md) §5
 **Status**: **Resolved 2026-08-12 — Option A.** No longer blocking; recorded below for audit trail.
 

@@ -1,5 +1,7 @@
 # Open Query: what personal data may enter the module via opaque attachment metadata, and what governs its retention
 
+> **PARTIALLY CLOSED 2026-08-13.** The attachment endpoint is gone: FR-006 is out of scope per `constitution.md` §9.1, so there is no `caller_supplied_metadata`, no `uri`, and no attachment surface to govern. **Option B remains open and is unchanged** — reconciling Constitution §7's ten-year retention floor with the DPDP Act's purpose-limitation and erasure obligations, for `geometry` itself. This file's own finding is why: geometry plus event date plus peril type already identifies a specific farm, so the module processes personal data today regardless of attachments. §9.1 is data *minimisation*, not absence, and deliberately does not claim to resolve this. It is a `documents/` change and still needs a data-protection section that does not exist.
+
 **Spec/Plan/Tasks**: [../spec.md](../spec.md) FR-006, [../data-model.md](../data-model.md) `supplementary_evidence_attachments`, [../contracts/evidence-request-api-extensions.md](../contracts/evidence-request-api-extensions.md), [../tasks.md](../tasks.md) T018/T019 — `src/evidence_intelligence/api/routes.py`
 **Status**: **Provisional default adopted 2026-08-13 (Options C + A) — no longer blocking `T018`.** Option B (reconciling Constitution §7's retention floor with DPDP obligations in `documents/`) remains open and is larger than this endpoint.
 

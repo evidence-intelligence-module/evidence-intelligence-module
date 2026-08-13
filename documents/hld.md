@@ -2,7 +2,7 @@
 
 **Governed by:** [constitution.md](./constitution.md) — read that first; this document implements it and does not restate its boundaries.
 
-**Implemented by:** [`specs/001-evidence-generation-pipeline/`](../../../specs/001-evidence-generation-pipeline/) — the Spec Kit plan (`plan.md`, `data-model.md`, `contracts/`, `tasks.md`) translating this architecture into `src/`. This document is the source of truth for the architecture; that directory tracks its concrete, executable implementation and may lag behind if this document changes.
+**Implemented by:** [`specs/001-evidence-generation-pipeline/`](../specs/001-evidence-generation-pipeline/) — the Spec Kit plan (`plan.md`, `data-model.md`, `contracts/`, `tasks.md`) translating this architecture into `src/`. This document is the source of truth for the architecture; that directory tracks its concrete, executable implementation and may lag behind if this document changes.
 
 ---
 
@@ -152,7 +152,7 @@ Generic request/response, deliberately decoupled from any caller's schema:
 }
 ```
 
-Status polling and/or a webhook callback are both acceptable integration patterns; neither is mandatory on the caller.
+Status polling and/or a webhook callback are both acceptable integration patterns; neither is mandatory on the caller. A callback is a **readiness notification** — it announces that a package exists and is retrievable. It never carries the package, and delivering evidence to an end recipient is the consumer's responsibility, not this module's (constitution.md §9.3).
 
 ## 6. Output Artifact Spec
 

@@ -22,8 +22,8 @@ The `package` object in the `COMPLETE` and `INSUFFICIENT_DATA` responses (`001` 
     "confidence_tier": "HIGH",
     "confidence_tier_guidance": null,
     "sources_used": [
-      { "name": "Sentinel-1 SAR", "source_class": "BASELINE", "access_model": "FREE" },
-      { "name": "Resourcesat-2A LISS-4", "source_class": "ENHANCED", "access_model": "FREE" }
+      { "name": "Sentinel-1 SAR", "source_class": "BASELINE" },
+      { "name": "Resourcesat-2A LISS-4", "source_class": "ENHANCED" }
     ],
     "sources_considered_not_used": [],
     "foundation_model_features": { "model_name": "presto", "model_version": "v1.0", "status": "USED" },
@@ -103,7 +103,7 @@ The `package` object in the `COMPLETE` and `INSUFFICIENT_DATA` responses (`001` 
 |---|---|
 | `confidence_tier` | `HIGH` \| `MEDIUM` \| `LOW` — always present, every tier, every package including `WEATHER_ONLY_PRELIMINARY` (data-model.md) |
 | `confidence_tier_guidance` | `null` for `HIGH`; plain-language text for `MEDIUM`/`LOW` (spec.md FR-005) |
-| `sources_used` / `sources_considered_not_used` | Full provenance list, including commercial sources evaluated but not used (spec.md FR-013) |
+| `sources_used` / `sources_considered_not_used` | Full provenance list, including enhanced sources evaluated but not used (spec.md FR-013). The `access_model` field was removed 2026-08-13 with the commercial tier (`constitution.md` §9.2) — every source is free or sovereign |
 | `foundation_model_features` | `status: "USED"` or `"FALLBACK_NOT_USED"` — always present (spec.md FR-007/FR-008) |
 | `crop_calendar_cross_check` | Present only when a declared crop type existed to compare against (data-model.md). `outcome` is `CONSISTENT` \| `INCONCLUSIVE` \| `DISCREPANT` — **not a boolean.** `INCONCLUSIVE` covers "the reference product has no class for this field" and "too few pure pixels to judge", which a boolean flag could only have represented as a mismatch. A `DISCREPANT` outcome MUST carry `reference_accuracy`, `pure_pixel_count`, and the not-a-fraud-determination note |
 | `red_edge_index` | `null` when Sentinel-2 red-edge bands were unavailable; otherwise names the specific index used (never a generic/undisclosed value) — spec.md FR-015 |
@@ -112,91 +112,28 @@ The `package` object in the `COMPLETE` and `INSUFFICIENT_DATA` responses (`001` 
 
 **This is a strictly additive change** — a caller written against `001`'s contract alone continues to work unmodified; these are new fields on the same response shape, not a new response shape.
 
-## New: `POST /evidence-requests/{request_id}/supplementary-evidence`
+## ~~New: `POST /evidence-requests/{request_id}/supplementary-evidence`~~ — removed 2026-08-13
 
-Attach optional, channel-agnostic supplementary evidence (e.g., a geotagged photo) to an existing request (spec.md FR-006, User Story 2).
+Out of scope per `constitution.md` §9.1 (data minimisation), with spec.md FR-006. A geotagged photograph is personal data about an identifiable individual, arriving from outside, into a store with a ten-year retention floor. The earlier fix — dropping `caller_supplied_metadata` — bounded what could arrive through the field; the boundary closes the surface entirely.
 
-**Request body**:
-```json
-{
-  "attachment_type": "PHOTO",
-  "uri": "s3://evidence-store/.../submitted-photo.jpg"
-}
-```
+## ~~New: `POST /evidence-requests/{request_id}/outcome`~~ — removed 2026-08-13
 
-| Field | Required | Notes |
-|---|---|---|
-| `attachment_type` | Yes | `PHOTO` \| `OTHER` |
-| `uri` | Yes | Reference to the already-stored evidence object; this endpoint does not accept raw file uploads. Restricted to the module's own object store or a configured allowlist, and **never dereferenced by the module** — an unconstrained caller-supplied URI that anything downstream fetches is a server-side request forgery vector and a route to reading objects the caller cannot otherwise reach through this service |
+Out of scope per `constitution.md` §9.2 (training-label sourcing) and §9.1, with spec.md FR-024 and `tasks.md` `TV-01`. Labeled data arrives from an external supplier; the module does not capture, store, or export it.
 
-**`caller_supplied_metadata` was removed 2026-08-13** ([`issue/open query - personal data in caller-supplied attachment metadata (FR-006).md`](../issue/open%20query%20-%20personal%20data%20in%20caller-supplied%20attachment%20metadata%20%28FR-006%29.md)). It was an unvalidated opaque JSON field that nothing in this design read — a write-only personal-data ingress into a store with a ten-year retention floor, which callers would predictably have filled with farmer identifiers, importing exactly the data Constitution §5's boundary exists to keep out. `external_reference_id` on the original request already covers the legitimate correlation need with the same opacity and a bounded shape. Removing a field with no reader costs no capability, which is why this needed no trade-off decision.
+The `assessment_source` allowlist on this endpoint was the Constitution §4 gate, refusing `CCE_DERIVED` figures at ingress. With no ingress, that gate has nothing to guard. Its purpose survives in a weaker but honest form: `label_provenance` on the saved model artifact, recording what a supplier *declared* about their labels' origin — a declaration the module cannot verify and does not claim to.
 
-**Response — `201 Created`**:
-```json
-{
-  "attachment_id": "SEA-2026-0810-000091",
-  "request_id": "EIM-2026-0810-000472",
-  "status": "ATTACHED"
-}
-```
-
-**Response — `404 Not Found`**: `request_id` does not exist.
-
-**Response — `400 Bad Request`**: `attachment_type` or `uri` missing/malformed.
-
-**This endpoint accepts an attachment at any confidence tier and at any request status** — it does not require the request to be `INSUFFICIENT_DATA` or `LOW`-tier, since a caller may reasonably submit supplementary evidence proactively. It does not trigger re-processing on its own; if a deployment wants attaching evidence to trigger re-evaluation, that is a separate, not-yet-specified capability, not implied by this endpoint.
-
-## New: `POST /evidence-requests/{request_id}/outcome`
-
-Record what actually happened to the claim this request produced evidence for (`tasks.md` `TV-01`). Added 2026-08-13.
-
-**Why this exists**: every evidence package eventually pairs with a settled claim, and that pairing is the only training and calibration data this module will ever get for free. Without this endpoint the module generates evidence and discards it — so the label question stays permanently open, and the Pilot & Validation phase (`documents/README.md` §8) would run against real claims and keep none of the labels it generates.
-
-**Request body**:
-```json
-{
-  "outcome": "UPHELD",
-  "assessed_loss_fraction": 0.42,
-  "assessment_source": "PILOT_SURVEY",
-  "recorded_at": "2026-11-04"
-}
-```
-
-| Field | Required | Notes |
-|---|---|---|
-| `outcome` | Yes | `UPHELD` \| `PARTIALLY_UPHELD` \| `REJECTED` \| `WITHDRAWN` \| `UNKNOWN`. A small closed enum — deliberately not the caller's own claim-status vocabulary |
-| `assessed_loss_fraction` | No | The independently assessed loss in [0,1], where the caller has one. This is the damage-magnitude label Component 2 needs; the enum above is the coarser signal that calibrates confidence tiers and the causation threshold |
-| `assessment_source` | **Yes when `assessed_loss_fraction` is present** | `PILOT_SURVEY` \| `INSURER_ASSESSED` \| `REMOTE_REVIEW` \| `CCE_DERIVED` \| `OTHER`. Where the loss figure came from |
-| `recorded_at` | No | When the outcome was determined. Defaults to receipt time |
-
-**Response — `201 Created`**, `404` for an unknown `request_id`, `400` for an outcome outside the enum or a missing `assessment_source` alongside a loss fraction.
-
-**Response — `422 Unprocessable Entity`**: the declared `assessment_source` is not in the deployment's `AUTHORIZED_OUTCOME_SOURCES` allowlist. The submission is **rejected, not stored** — a source the deployment has not authorised must not enter the record silently.
-
-```json
-{
-  "error": "assessment_source 'CCE_DERIVED' is not authorized for this deployment",
-  "authorized_sources": ["PILOT_SURVEY", "INSURER_ASSESSED", "REMOTE_REVIEW"]
-}
-```
-
-`CCE_DERIVED` is an explicit enum member and is **absent from the default allowlist** (Constitution §4). Naming it is what makes the boundary enforceable: leaving it out of the enum would not stop CCE-derived figures arriving, it would only ensure they arrived mislabelled as `INSURER_ASSESSED`. Authorising it is a config change gated on an explicit §8 decision, not something this contract presumes either way.
-
-**Constraints this endpoint holds to**:
-
-- **No caller schema, no personal data** (Constitution §5, and the same minimal-PII posture as the attachment endpoint above). It accepts a closed enum and a number — never a claim ID, policy field, surveyor identity, or farmer identifier. A caller correlates via `external_reference_id` on the original request, as everywhere else.
-- **It does not alter any issued package.** Recording an outcome never re-runs the pipeline, never changes a `confidence_tier`, and never supersedes a package. It is write-only observation, kept strictly separate from evidence generation so that recording what happened cannot retroactively shape what the module said would happen.
-- **It cannot become an unnoticed CCE ingress** (Constitution §4). `assessed_loss_fraction` is the one field here that could carry a CCE-derived figure, and this endpoint is deliberately built *before* the §4 decision is made — so the `assessment_source` allowlist above is what keeps that from being a loophole. Whether CCE-derived outcomes may be supplied remains the open question in [`001`'s label query](../../001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md); the gate means the answer is enforced by configuration and recorded per §8, rather than depending on callers volunteering it.
+**The request surface is therefore unchanged from `001`'s**: `geometry`, `event_date`, `peril_type`, `external_reference_id`. This extension adds response fields only.
 
 ## Notes for implementers
 
 - No field or endpoint in this extension accepts or returns a caller's internal claim ID, farmer ID, or policy schema — matching `001`'s existing boundary.
 - No field or endpoint in this extension reads from or writes to CCE data of any kind (Constitution §4) — `crop_calendar_cross_check` compares against an open crop-type mapping product (WorldCereal, research.md §3), never CCE.
-- `sources_considered_not_used` existing as an empty array is a valid, common response (most requests won't need to consider a commercial source) — its presence is mandatory, not its non-emptiness. Note that with commercial tasking disabled by configuration (FR-019) it is *always* empty, which records nothing; the useful record in that state is the policy itself ("commercial tier disabled by configuration"), not a per-request empty list.
-- **On "strictly additive"**: the claim above is about `001`'s contract, and it still holds — a caller written against `001` alone is unaffected by everything here. Within this extension, `caller_supplied_metadata` was removed and `crop_calendar_cross_check.discrepancy_flag` became a three-state `outcome` on 2026-08-13. Neither had shipped, so no caller existed to break; both are recorded rather than silently swapped so that anyone who read an earlier draft knows the shape changed and why.
+- `sources_considered_not_used` existing as an empty array is a valid, common response — its presence is mandatory, not its non-emptiness. Since 2026-08-13 it records only free and sovereign enhanced sources: a Bhoonidhi LISS-4 scene evaluated and skipped because the baseline sufficed is a real entry, whereas the commercial tier that would previously have populated it no longer exists (`constitution.md` §9.2).
+- **On "strictly additive"**: the claim above is about `001`'s contract, and it still holds — a caller written against `001` alone is unaffected by everything here. Within this extension, the supplementary-evidence and outcome endpoints were removed entirely, `access_model` was dropped, and `crop_calendar_cross_check.discrepancy_flag` became a three-state `outcome`, all on 2026-08-13. Neither had shipped, so no caller existed to break; both are recorded rather than silently swapped so that anyone who read an earlier draft knows the shape changed and why.
 
 ## Changelog
 
 | Date | Change |
 |---|---|
 | 2026-08-13 | Removed `caller_supplied_metadata` (personal-data ingress with no reader). Constrained `uri` and asserted non-dereference. `discrepancy_flag` boolean → three-state `outcome` with mandatory framing fields. Added package lineage (`package_version`, `package_status`, `supersedes_package_id`). Added `overpass_local_solar_time`/`baseline_overpass_window` to the thermal signal. `thermal_stress_signal` now distinguishes "not applicable" (`null`) from "checked, unavailable" (`pass_available: false`). Added `POST /evidence-requests/{request_id}/outcome` |
+| 2026-08-13 | Removed `POST .../supplementary-evidence` and `POST .../outcome` entirely, and dropped `access_model`, per `constitution.md` §9. The request surface returns to `001`'s four fields; this extension is response-only |

@@ -1,5 +1,7 @@
 # Open Query: what ground truth the "parity" claim and User Story 3's accuracy improvement are measured against
 
+> **CLOSED 2026-08-13** with [`001`'s label query](../../001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md), which this file mirrored. Label sourcing is out of scope per `constitution.md` §9.2; the parity claim is validated against whatever labeled held-out split the external supplier provides, on the module's existing MAE/RMSE/NRMSE reporting.
+
 **Spec/Plan/Tasks**: [../spec.md](../spec.md) User Story 3, SC-001, SC-002, [../quickstart.md](../quickstart.md) Scenario 3, [../tasks.md](../tasks.md) T020–T025
 **Upstream**: the same underlying question as [`001`'s AI/ML training-data query](../../001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md), which is still Open. This entry records that `002` now *depends* on it rather than merely being adjacent to it.
 **Status**: Open — blocks User Story 3 (T020–T025) and makes SC-001/SC-002 unmeasurable as written.

@@ -50,7 +50,9 @@ Resolves the technical choices flagged in `plan.md`'s Technical Context. Every d
 
 ## 5. Commercial satellite tasking budget / scale
 
-**Decision (resolved 2026-08-12): Option A — no commercial tasking in the near-term rollout.** Enhanced-tier sourcing is free-only: existing GEE baseline + ISRO sovereign sources (Resourcesat-2A LISS-4, EOS-04) via a new Bhoonidhi client (§6.3 below). `commercial_tasking_client.py` remains an inactive, disabled-by-default stub.
+**Superseded 2026-08-13: commercial satellite procurement is out of scope per `constitution.md` §9.2** — a permanent boundary crossable only by a §8 amendment, not a budget question. `commercial_tasking_client.py` is removed rather than retained as a stub: a disabled mechanism waiting for a budget decision is exactly what a permanent boundary must not leave in place. The rest of this section is retained as the record of how the question was handled before it became a boundary.
+
+**Decision (resolved 2026-08-12): Option A — no commercial tasking in the near-term rollout.** Enhanced-tier sourcing is free-only: existing GEE baseline + ISRO sovereign sources (Resourcesat-2A LISS-4, EOS-04) via a new Bhoonidhi client (§6.3 below).
 
 **Rationale**: No source document ever stated a tasking budget, per-claim cost ceiling, or volume threshold, and inventing one would have violated `CLAUDE.md`'s no-invented-figures convention. Rather than block on that missing figure, the decision was made to run free-only for the near-term rollout and revisit once real budget or Pilot & Validation data exists — the same logic the issue file's Option A/C recommendation laid out. The Satellite Source Registry and commercial tasking client were already designed to accept a budget/authorization decision as configuration, not a hardcoded assumption, so this decision required no design change, only a scope reduction for this rollout.
 

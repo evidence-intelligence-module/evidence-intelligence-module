@@ -14,6 +14,8 @@ One active initiative: the **Evidence Intelligence Module** — a satellite + we
 
 Full reasoning for all three lives in the Constitution — see below. If a task seems to require relaxing one of these, that's a scope decision for the user to make explicitly, not something to infer from a single request.
 
+**The full boundary set is `constitution.md` §9** — 28 permanent boundaries across four groups (upstream supply, downstream consumption, adjacent products, platform), under one principle: *the module owns the transformation, not the supply chain at either end.* The three above are the ones that shape day-to-day work here, which is why they're restated; §9 is where you check anything else, including training-data sourcing, commercial procurement, authentication, and the data-minimisation rule. Crossing any of them requires a §8 amendment.
+
 ## Directory map
 
 **Domain documentation** — what's being built and why; hand-authored, changes rarely:

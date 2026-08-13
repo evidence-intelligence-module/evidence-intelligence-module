@@ -1,5 +1,7 @@
 # Open Query: AI/ML training data source, and whether historical CCE outcomes may be used as offline training labels
 
+> **CLOSED 2026-08-13 — resolved by scope decision, not by answering it.** Training-label *sourcing* is out of scope per `constitution.md` §9.2: labeled data arrives from an external supplier and this repo neither produces, procures, nor verifies it. The Constitution §4 question this file carried — whether historical CCE outcomes may serve as offline labels — is therefore no longer this module's to decide; a supplier's labels may or may not be CCE-derived, and the module records only what the supplier *declares* via `label_provenance` on the saved model artifact. Retained for its reasoning, particularly the target-variable and sampling-error objections, which remain the strongest argument against CCE labels wherever that decision is now made. See [`documents/notes/2026-08-13-scope-boundaries-design.md`](../../../documents/notes/2026-08-13-scope-boundaries-design.md).
+
 **Plan/Tasks**: [../plan.md](../plan.md), [../tasks.md](../tasks.md) T017 — `src/evidence_intelligence/models/ai_ml.py`
 **Status**: **Split and narrowed 2026-08-13.** Now scoped to **one** thing: per-field damage/yield-loss magnitude labels for Component 2, and whether historical CCE outcomes may supply them. Still not blocking `001` today (the model ships transparently untrained). Still the hardest of the three, but no longer the root of everything — two of the three label types it used to carry don't need this decision at all.
 

@@ -1,5 +1,7 @@
 # Open Query: causation-confidence "low-confidence" numeric threshold (FR-024)
 
+> **Update 2026-08-13 — still open, and now without a data source.** Calibrating this threshold wanted claim-outcome data, which `002`'s `TV-01` was to capture. `TV-01` was struck when training-label sourcing went out of scope (`constitution.md` §9.2), so unless the external supplier contract carries claim outcomes, there is no path to a calibrated value. That is survivable: the shipped code leaves the threshold unset, never auto-rejects a package, and simply omits the low-confidence label — the "unset rather than invented" posture this file already recommends.
+
 **Spec**: [../spec.md](../spec.md) — FR-024
 **Status**: Deferred to planning — not a spec-blocking [NEEDS CLARIFICATION] marker
 

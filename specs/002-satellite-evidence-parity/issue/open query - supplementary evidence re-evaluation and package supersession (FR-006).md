@@ -1,5 +1,7 @@
 # Open Query: does attaching supplementary evidence re-evaluate a package, and how are superseded evidence packages versioned
 
+> **CLOSED 2026-08-13.** The live half — whether attaching evidence re-evaluates anything — is moot: FR-006 is out of scope per `constitution.md` §9.1 and there is no attachment endpoint. The other half was already split out as a defect: **`T0-16` (package lineage) survives and must still be built**, since `retry_insufficient_data` writes a second package today with nothing recording the relationship.
+
 **Spec/Plan/Tasks**: [../spec.md](../spec.md) User Story 2, FR-006, [../contracts/evidence-request-api-extensions.md](../contracts/evidence-request-api-extensions.md), [../tasks.md](../tasks.md) T018 — `src/evidence_intelligence/api/routes.py`
 **Status**: **Split 2026-08-13.** This file bundled a decision with a defect:
 

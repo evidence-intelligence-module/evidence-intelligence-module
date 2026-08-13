@@ -8,11 +8,11 @@ New columns, added to the table `001` already defines:
 
 | Field | Type | Notes |
 |---|---|---|
-| `source_class` | enum | `BASELINE` (Sentinel-1/2, Landsat, MODIS — the existing `001` sources) \| `ENHANCED` (higher-resolution optical, commercial SAR, ISRO sovereign sources beyond the `001` baseline) |
-| `access_model` | enum | `FREE` \| `COMMERCIAL_TASKED` |
-| `considered_not_used` | boolean, default `false` | `true` when a commercial/enhanced source was evaluated for this request but not used (e.g., budget-gated, unauthorized, or unnecessary because a baseline source sufficed) — required so provenance records the *decision*, not just the outcome (spec.md FR-013, Edge Cases) |
+| `source_class` | enum | `BASELINE` (Sentinel-1/2, Landsat, MODIS — the existing `001` sources) \| `ENHANCED` (higher-resolution optical and ISRO sovereign sources beyond the `001` baseline) |
+| ~~`access_model`~~ | — | **Removed 2026-08-13.** It distinguished `FREE` from `COMMERCIAL_TASKED`; commercial procurement is out of scope per `constitution.md` §9.2, so every source is free or sovereign and the column would record a constant |
+| `considered_not_used` | boolean, default `false` | `true` when an enhanced source was evaluated for this request but not used (unavailable for the field/date/region, or unnecessary because a baseline source sufficed) — required so provenance records the *decision*, not just the outcome (spec.md FR-013, Edge Cases) |
 
-**Validation rules**: `source_class` and `access_model` are required on every row, including `considered_not_used = true` rows — a commercial source that was evaluated but skipped still gets a row, not a silent omission (spec.md Edge Cases: "MUST record that a commercial source was considered but not used").
+**Validation rules**: `source_class` is required on every row, including `considered_not_used = true` rows — an enhanced source that was evaluated but skipped still gets a row, not a silent omission (spec.md Edge Cases).
 
 ## New: FoundationModelFeatureSet (`foundation_model_feature_sets`)
 
@@ -63,47 +63,19 @@ New columns, added to the table `001` already defines:
 
 A `DISCREPANT` outcome MUST be surfaced with `source_dataset`, `source_version`, `reference_accuracy`, an explicit statement that it is not a fraud determination, and a statement that it did not alter the damage estimate — the same provenance discipline Constitution Principle I/II requires of every other satellite-derived figure, which this output was the one exception to.
 
-## New: SupplementaryEvidenceAttachment (`supplementary_evidence_attachments`)
+## ~~New: SupplementaryEvidenceAttachment (`supplementary_evidence_attachments`)~~ — removed 2026-08-13
 
-| Field | Type | Notes |
-|---|---|---|
-| `attachment_id` | string, PK | |
-| `request_id` | FK → EvidenceRequest | |
-| `attachment_type` | enum | `PHOTO` \| `OTHER` |
-| `uri` | string | Object storage reference, restricted to the module's own store or a configured allowlist. Never dereferenced by the module |
-| `submitted_at` | timestamp | |
+**Out of scope per `constitution.md` §9.1 (data minimisation), with spec.md FR-006.** The table is not created and the endpoint is not built.
 
-**Validation rules**: Attachable to a request at any confidence tier, but only surfaced as tier-improvement guidance for `MEDIUM`/`LOW` packages (`evidence_packages.confidence_tier_guidance`). The module never requires this table to be populated — it exists purely as an optional channel-agnostic input (spec.md FR-006).
+The reasoning that removed `caller_supplied_metadata` from this table earlier the same day generalises to the table itself: a geotagged photograph is personal data about an identifiable individual, arriving from outside, into a store with a ten-year retention floor. The narrower fix bounded what could arrive through the field; the boundary closes the surface. The module accepts `geometry`, `event_date`, `peril_type`, and `external_reference_id`, and does not widen.
 
-**`caller_supplied_metadata` removed 2026-08-13**, per [`issue/open query - personal data in caller-supplied attachment metadata (FR-006).md`](./issue/open%20query%20-%20personal%20data%20in%20caller-supplied%20attachment%20metadata%20%28FR-006%29.md). It was an unvalidated opaque JSON field with no reader anywhere in this design — callers would predictably have placed farmer identifiers in it, importing personal data into a store with a ten-year retention floor, which is precisely what Constitution §5's boundary exists to prevent. `external_reference_id` on `EvidenceRequest` already covers the legitimate correlation need with the same opacity and a bounded shape. Removing a field nothing reads costs no capability.
+## ~~New: ClaimOutcome (`claim_outcomes`)~~ — removed 2026-08-13
 
-**On `uri`**: the endpoint takes a reference to an already-stored object, not an upload. That the module never fetches it is a security property worth asserting in the contract rather than leaving as an accident of the current implementation — an unconstrained caller-supplied URI that anything downstream dereferences is a server-side request forgery vector.
+**Out of scope per `constitution.md` §9.2 (training-label sourcing) and §9.1 (data minimisation), with spec.md FR-024 and `tasks.md` `TV-01`.** The table is not created and the outcome endpoint is not built.
 
-## New: ClaimOutcome (`claim_outcomes`)
+The table existed to turn the module's own operation into training labels. Labeled data now arrives from an external supplier, so there is nothing for it to capture. Its `assessment_source` field was designed as the Constitution §4 gate — refusing `CCE_DERIVED` figures at ingress — and that purpose survives in a weaker but honest form: `label_provenance` on the saved model artifact records what a supplier *declared* about their labels' origin. The module cannot verify that declaration, and does not claim to.
 
-Added 2026-08-13 for `tasks.md` `TV-01`. What actually happened to the claim this request produced evidence for.
-
-| Field | Type | Notes |
-|---|---|---|
-| `outcome_id` | string, PK | |
-| `request_id` | FK → EvidenceRequest | |
-| `outcome` | enum | `UPHELD` \| `PARTIALLY_UPHELD` \| `REJECTED` \| `WITHDRAWN` \| `UNKNOWN` — a small closed set, deliberately not the caller's own claim-status vocabulary (Constitution §5) |
-| `assessed_loss_fraction` | float, nullable | Independently assessed loss in [0,1] where the caller has one. This is the damage-magnitude label Component 2 needs; `outcome` above is the coarser signal that calibrates confidence tiers and the causation threshold |
-| `assessment_source` | enum, **required whenever `assessed_loss_fraction` is present** | `PILOT_SURVEY` \| `INSURER_ASSESSED` \| `REMOTE_REVIEW` \| `CCE_DERIVED` \| `OTHER`. Names where the loss figure came from, so the §4 boundary is enforceable rather than assumed |
-| `recorded_at` | date | When the outcome was determined; defaults to receipt time |
-| `received_at` | timestamp | When the module was told |
-
-**Why this table exists**: every evidence package eventually pairs with a settled claim, and that pairing is the only training and calibration data this module gets for free. Without it, operating the module generates evidence and discards its own labels — which is why [`001`'s label query](../001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md) would otherwise stay open indefinitely. It must exist **before** the Pilot & Validation phase (`documents/README.md` §8), or the pilot's labels are lost.
-
-**Validation rules**: At most one current outcome per request; a corrected outcome is a new row, never an update in place, matching the never-overwrite discipline `001`'s store already applies to component results and packages. Writing a row **never** re-runs the pipeline, alters a `confidence_tier`, or supersedes a package — recording what happened must not retroactively shape what the module said would happen, so the write path is strictly one-directional.
-
-**Boundaries**: carries no claim ID, policy field, surveyor identity, or farmer identifier (Constitution §5 — callers correlate via `external_reference_id` as everywhere else).
-
-**The Constitution §4 gate (added 2026-08-13)**: `assessed_loss_fraction` is the one field on this table that could carry a CCE-derived figure, and `TV-01` is deliberately sequenced *before* the §4 decision is made — so without a gate, building it opens an ingress for exactly the data whose permissibility is the repo's oldest open question, arriving unlabelled and unnoticed.
-
-`assessment_source` closes that. Writes are accepted only when the declared source appears in the configured `AUTHORIZED_OUTCOME_SOURCES` allowlist; anything else is rejected, not silently stored. `CCE_DERIVED` is an explicit enum member **and is absent from the default allowlist** — naming it is what makes the boundary enforceable. Omitting it would not prevent CCE-derived figures arriving; it would only guarantee they arrived mislabelled as `INSURER_ASSESSED`, which is strictly worse than rejecting them.
-
-This encodes the §4 boundary as a runtime constraint rather than a convention, and does **not** decide the open question — resolving [`001`'s label query](../001-evidence-generation-pipeline/issue/open%20query%20-%20AI-ML%20training%20data%20source%20and%20CCE-label%20question.md) in favour of offline CCE labels would be a one-line config change, with the decision recorded per Constitution §8 rather than inferred from the schema.
+**Consequence, recorded rather than hidden**: the causation low-confidence threshold and the confidence-tier values both wanted the coarse `outcome` signal. Neither now has an in-module source, so either the supplier contract carries outcomes or both thresholds stay permanently unset.
 
 ## New: ThermalStressSignal (`thermal_stress_signals`)
 
@@ -136,11 +108,9 @@ New column, added to the table `001` already defines:
 ```
 EvidenceRequest (1) ──< (0..*) FoundationModelFeatureSet        [one attempt per request; USED or FALLBACK_NOT_USED]
 EvidenceRequest (1) ──< (0..1) CropCalendarCrossCheck            [only when a declared crop type exists to compare]
-EvidenceRequest (1) ──< (0..*) SupplementaryEvidenceAttachment   [optional, channel-agnostic, any confidence tier]
 EvidenceRequest (1) ──< (0..1) ThermalStressSignal               [only for drought/heatwave peril_type; pass_available may be false]
-EvidenceRequest (1) ──< (0..*) ClaimOutcome                      [optional, write-only; a correction is a new row, never an update]
 EvidencePackage  (1) ── confidence_tier, confidence_tier_guidance, cce_non_equivalence_statement   [new columns, not a new table]
-SatelliteAnalysisResult (1) ── source_class, access_model, considered_not_used                     [new columns, not a new table]
+SatelliteAnalysisResult (1) ── source_class, considered_not_used                                   [new columns, not a new table]
 DamageAssessmentComponentResult (1) ── red_edge_index_type, red_edge_index_value                   [new columns on AI_ML row, not a new table]
 ```
 

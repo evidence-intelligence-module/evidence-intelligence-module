@@ -29,6 +29,10 @@ uv venv .venv
 uv pip install -e ".[dev]" --python .venv
 ```
 
+### Security posture — read before exposing the service
+
+**The service performs no authentication and issues no identities.** Every endpoint is open to whoever can reach it, and it emits legally-sensitive §65B evidence artifacts. Authentication and authorization are a gateway concern, out of scope for this repository per [`constitution.md`](documents/constitution.md) §9.5 — which makes them somebody's job, not nobody's. Run this behind a gateway that terminates authentication, on a trusted network. Do not expose it directly.
+
 ### Set environment variables
 
 The service needs three things to run for real — none are provisioned in this repo:
@@ -49,7 +53,7 @@ Without these, the service still runs and its test suite still passes (tests inj
 .venv/Scripts/python -m pytest tests/
 ```
 
-117 tests — 80 unit, 25 integration, 12 contract — all pass without any of the above configured.
+159 tests — 96 unit, 51 integration, 12 contract — all pass without any of the above configured.
 
 ### Run the service
 
@@ -106,26 +110,34 @@ These questions have no sourced answer in `documents/` or `yestech_manual_2023.m
 
 **Evidence Generation Pipeline** — [`specs/001-evidence-generation-pipeline/issue/README.md`](specs/001-evidence-generation-pipeline/issue/README.md):
 
-- **Open — split & narrowed** — AI/ML training data source and CCE-label question. The model ships transparently untrained today (see "Training the AI/ML Model" above). Split on 2026-08-13 once "labels" turned out to be three separate datasets: **per-field damage magnitude** stays here and is the only one the Constitution §4 CCE decision governs; **claim outcomes** are work rather than a decision (`002` `TV-01`/`TV-02`); **reference-product accuracy** is a literature lookup tracked in `002`'s crop cross-check query. Recommendation moved harder toward non-CCE sources — training on CCE outcomes makes CCE the model's target variable, which is the equivalence §4 forbids, just routed through a regression.
+- **Closed 2026-08-13 — scope decision** — AI/ML training data source and CCE-label question. Training-label *sourcing* is out of scope per [`constitution.md`](documents/constitution.md) §9.2: labeled data arrives from an external supplier, and this repo neither produces, procures, nor verifies it. The model still ships transparently untrained (see "Training the AI/ML Model" above) — what changed is that *where the data comes from* is no longer this repo's question. The module records only a supplier-declared `label_provenance` on the saved artifact, and cannot verify it. The file is retained for its reasoning, particularly the argument that training on CCE outcomes makes CCE the model's target variable — still the strongest objection wherever that decision is now made.
 - **Open — reframed** — CSM high-scrutiny trigger criteria (FR-011). The trigger is not what blocks Component 3: `csm_assimilation.run()` is a placeholder that echoes its input, so enabling the tier would add false corroboration to a confidence-weighted ensemble. **Leave `CSM_HIGH_SCRUTINY_ENABLED` off** until the component is genuinely implemented.
-- **Open — narrowed** — Causation confidence low-confidence threshold (FR-024). Cannot be calibrated until `002`'s `T0-06` lands; 55 of the score's 100 points are currently hardcoded, so there is no distribution to calibrate against.
+- **Open — narrowed, and now sourceless** — Causation confidence low-confidence threshold (FR-024). Calibrating it wanted claim-outcome data, which `TV-01` was going to capture; `TV-01` was struck on 2026-08-13 when label sourcing went out of scope. Either the supplier contract carries claim outcomes or this stays permanently unset — which the shipped code already handles: a package is never auto-rejected and simply carries no low-confidence label.
 - **Open — narrowed** — Expected request volume and concurrency target. Now capacity sizing only; the durability/architecture half is settled on other grounds (`002` `T05-06`).
 - **Open — live in shipped code** — Damage classification band thresholds. `_classify`'s 0.1/0.33/0.66 appear nowhere in `documents/`, and YES-TECH defines no transferable severity banding — so a categorical label in a §65B package rests on invented figures. Disclosure fix is `002` `T0-17`.
 - **Open — live in shipped code** — Harvest Index source and per-crop resolution. A flat `0.4` for every crop, against `modeling-approach.md` §2's commitment to per-variety values "clearly labeled as a modeling assumption". Scales every yield-loss figure. Disclosure fix is `002` `T0-18`; per-crop resolution needs a request-contract field, to be decided with `002`'s User Story 4.
 
 **Satellite Evidence Parity Roadmap** — [`specs/002-satellite-evidence-parity/issue/README.md`](specs/002-satellite-evidence-parity/issue/README.md):
 
-- **Open** — What the parity claim is validated against (SC-002, US3): the `002`-side view of `001`'s root label question above. Resolve there.
+- **Closed 2026-08-13** — What the parity claim is validated against (SC-002, US3): closed with `001`'s label question above. User Story 3 and SC-002 are now *unblocked* — they are evaluated on whatever labeled held-out split the supplier provides.
 - **Open** 2026-08-13 — RUE model applied to part of a season. `yestech_manual_2023.md` §4.1.1.2 states the RUE model "cannot be applied for part of the season because constant RUE is applicable only when the entire crop-growing season is considered"; `modeling-approach.md` §2 claims "the same physical chain" while applying it to a pre/post event window. Compounding it, four of §2's five terms are not implemented as specified — insolation is a constant, temperature is passed identically to both sides, and LSWI is NDVI — so every non-NDVI term cancels and Component 1 reduces to a closed-form NDVI transform contributing `calibration_confidence` 0.85 to a confidence-weighted ensemble. **Resolution is a `documents/` change**, not a missing figure. Blocks no Phase 0.4 or story work; `T05-08`/`T05-09` are correct under every option.
 - **Narrowed** ×2 — SAR damage semantics for non-flood perils (FR-001): polarization half fixed as a defect (T0-15), magnitude-calibration half moved to the label question. Live: whether SAR is reached for non-flood perils — decidable now, and separating it means US1 no longer waits on the label decision.
-- **Split** — Supplementary evidence re-evaluation and package supersession (FR-006): package lineage was a defect → `T0-16`. Live: whether attaching evidence re-evaluates anything.
+- **Closed 2026-08-13** — Supplementary evidence re-evaluation and package supersession (FR-006): FR-006 is out of scope per §9.1, so there is no attachment to re-evaluate from. **`T0-16` (package lineage) is unaffected and must still be built.**
 - **Provisional default** — Confidence tier threshold values (FR-004): tier assigned by a rule table over the evidence-inputs manifest, needing no unsourced cut point. No longer blocks `T016`.
 - **Provisional default** — Crop cross-check harm posture (FR-010): three-state `outcome` + mandatory framing adopted. Open: the accuracy floor, and whether to ship User Story 4 at all.
-- **Provisional default** — Personal data in caller-supplied attachment metadata (FR-006): `caller_supplied_metadata` dropped (nothing read it), `uri` constrained. Open: reconciling the 10-year retention floor with DPDP obligations, which is a `documents/` change.
-- **Resolved** 2026-08-12 — Commercial satellite tasking budget: free-only for this rollout; retained for its rationale.
+- **Open — narrowed to the DPDP question** — Personal data (FR-006): the attachment endpoint is gone with FR-006 (§9.1). Still open, and explicitly *not* resolved by §9.1: reconciling Constitution §7's 10-year retention floor with DPDP purpose-limitation and erasure for `geometry` itself, since geometry plus event date plus peril type already identifies a farm. A `documents/` change.
+- **Superseded 2026-08-13** — Commercial satellite tasking budget: commercial procurement is out of scope per §9.2, permanently. `T037` struck and the disabled stub removed. Retained for its rationale.
 
 Each tracker's `README.md` carries the same Open / Narrowed / Resolved status per entry. The `open query - ` filename prefix is a naming convention, not a status — files aren't renamed when they close, because `spec.md`/`plan.md`/`tasks.md` link them by path.
 
-Separately, [`specs/002-satellite-evidence-parity/tasks.md`](specs/002-satellite-evidence-parity/tasks.md) carries four pre-feature task groups that are **not** open questions and are blocked by none of the above: **Phase 0** base-pipeline corrections (defects with unambiguous right answers; several block the rest of `002` from being measurable at all), **Phase 0.4** pipeline decomposition (see [`pipeline-decomposition-design.md`](specs/002-satellite-evidence-parity/pipeline-decomposition-design.md) — restructures `pipeline.py` so an absent input cannot be read as a measured value without a test failing, and corrects a fifth defect of that class in the Damage Severity Index), **Phase 0.5** evidence-processing improvements, and **Phase 0.6** label capture and label-free validation.
+Separately, [`specs/002-satellite-evidence-parity/tasks.md`](specs/002-satellite-evidence-parity/tasks.md) carries four pre-feature task groups that are **not** open questions and are blocked by none of the above: **Phase 0** base-pipeline corrections (defects with unambiguous right answers; several block the rest of `002` from being measurable at all), **Phase 0.4** pipeline decomposition (see [`pipeline-decomposition-design.md`](specs/002-satellite-evidence-parity/pipeline-decomposition-design.md) — restructures `pipeline.py` so an absent input cannot be read as a measured value without a test failing, and corrects a fifth defect of that class in the Damage Severity Index), **Phase 0.5** evidence-processing improvements, and **Phase 0.6** label-free validation.
 
-One item there is time-sensitive rather than merely useful: **`TV-01` (claim-outcome capture) must land before the Pilot & Validation phase.** There is no outcome field on `EvidenceRequest` and no outcome endpoint in the contract today, so the module generates evidence and discards the only training labels it will ever get for free. If the pilot runs first, its labels are lost and the label question is exactly as open afterwards.
+## Scope boundaries
+
+[`constitution.md`](documents/constitution.md) §9 enumerates 28 permanent out-of-scope boundaries under one principle: *the module owns the transformation, not the supply chain at either end.* Crossing any of them needs a §8 amendment. Three consequences an operator will actually hit:
+
+- **No authentication** — see the security posture note above.
+- **Training data is supplied, never sourced here.** The training loop in "Training the AI/ML Model" is fully in scope; obtaining the CSV is not. Record what your supplier declared in `label_provenance`.
+- **No claim-outcome capture.** The module does not learn from its own operation, by design. If you want outcome-derived calibration, it has to arrive through the same supplier contract as the labels.
+
+The rationale, the alternatives rejected, and the full prune this triggered are in [`documents/notes/2026-08-13-scope-boundaries-design.md`](documents/notes/2026-08-13-scope-boundaries-design.md).

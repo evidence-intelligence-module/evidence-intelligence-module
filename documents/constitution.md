@@ -13,7 +13,7 @@ It exists to close the **evidence gap**, not the *fraud* gap: the working assump
 
 **In scope now:** automated generation of satellite-derived and weather-derived evidence artifacts (pre/post-event crop-health imagery, damage classification, causation analysis, yield-loss estimate, packaged report) triggered by a reported crop-loss event.
 
-**Out of scope now:** everything listed under Section 4 (CCE), Section 3 (prediction), and any specific claim-intimation channel's internal implementation (Section 5).
+**Out of scope:** the full boundary set is enumerated in [Section 9](#9-scope-boundaries) — including the three this document states in their own right (Section 3, prediction; Section 4, CCE; Section 5, any specific claim-intimation channel's internal implementation).
 
 ## 2. Non-Negotiables
 
@@ -77,3 +77,67 @@ This module does not assume, depend on, or reference any specific claim-intimati
 - This Constitution may be amended only by an explicit, recorded decision — not silently superseded by a later document that merely contradicts it.
 - Any proposal to integrate this module more tightly with a specific intimation channel (relaxing Section 5), to add predictive alerting (relaxing Section 3), or to touch CCE data (relaxing Section 4) must amend this document first, with the rationale stated, before implementation.
 - `hld.md` and `evidence-flow-spec.md` in this same folder implement this Constitution; where they appear to conflict with it, this document controls.
+
+## 9. Scope Boundaries
+
+**The module owns the transformation, not the supply chain at either end.** Labeled data arrives; an evidence package leaves. Who produces the one and who consumes the other are outside this module.
+
+Every boundary below is **permanent**. Crossing one requires a Section 8 amendment — an explicit, recorded decision with rationale, made before implementation, not inferred from silence. There is deliberately no "for now" tier: Section 8 asks only for a written decision and a reason, which is what anyone should produce before adding fraud scoring or a second country in any case.
+
+Rationale, alternatives considered, and the prune this section triggered are recorded in [`notes/2026-08-13-scope-boundaries-design.md`](notes/2026-08-13-scope-boundaries-design.md). That file explains this section; it does not govern.
+
+### 9.1 Data minimisation
+
+The module accepts exactly `geometry`, `event_date`, `peril_type`, and an opaque `external_reference_id`, and **never widens that surface**.
+
+This is stated as minimisation rather than as an absence of personal data, deliberately. A field boundary plus an event date plus a peril type identifies a specific farm, so this module processes personal data today, inherently, as a condition of doing its job. Personal-data *processing* is acknowledged; personal-data *accumulation* is barred.
+
+Reconciling Section 7's ten-year retention floor with the DPDP Act, 2023's purpose-limitation and erasure obligations remains unaddressed by this document and is not resolved by this section.
+
+### 9.2 Upstream — how inputs are produced
+
+| Out of scope | What it means |
+|---|---|
+| Training-label sourcing, curation, annotation | A supplier delivers labeled data in the documented feature contract. Its origin is recorded as *declared*, never verified. No annotation tooling, no labeling pipeline |
+| Ground-truth survey operations | Field visits, agronomist networks, plot sampling |
+| Commercial satellite procurement | Vendor contracts, tasking budgets, licence negotiation |
+| Hosting or mirroring source archives | Section 7 references sources rather than copying them; this module is not a tile server or an imagery archive |
+| Owning master reference data | Crop calendars, crop-type maps, agro-climatic zone definitions — consumed as published products, never authored. Consuming such a product remains fully in scope |
+| Field boundary derivation and land records | Geometry arrives with the request; cadastral and land-title systems are separate |
+| Sensor operations | Ingesting an image someone else captured is in scope; flying drones or deploying ground sensors is not |
+
+### 9.3 Downstream — what happens to the package
+
+| Out of scope | What it means |
+|---|---|
+| The consuming service | See Section 5 |
+| Claim adjudication and settlement | This module evidences; it never decides |
+| Indemnity and payout computation | Sum insured, threshold yield, premium, deductible |
+| Delivery and notification | The package is retrieved from a URI. An optional callback announces that a package exists; that is a readiness notification, not delivery |
+| Farmer- or surveyor-facing UI | No app, no review screen, no override workflow |
+| Dashboards, BI, portfolio analytics | |
+| Dispute filing, certification, representation | This module produces §65B-admissible *content*. A §65B certificate is signed by a legal person; software does not issue one |
+| Human override of an issued figure | Packages are append-only. Disagreement is recorded downstream, never as an edit to an issued package |
+
+### 9.4 Lateral — adjacent uses of the same data
+
+| Out of scope | What it means |
+|---|---|
+| Predictive / early-warning alerting | See Section 3 |
+| CCE ingestion, validation, blending | See Section 4 |
+| Fraud detection, claimant risk scoring | Section 1 is explicit that this module closes the evidence gap, not the fraud gap. It may report that data *contradicts* a claim — Section 3 provides for corroborating or contradicting what was reported — but it must never score a claimant |
+| Underwriting, risk rating, premium pricing | The same archive used in the opposite direction; it would make this an actuarial tool |
+| Parametric / index-insurance trigger computation | Computing a payout trigger is acting as a determination authority, which Section 4 exists to prevent |
+| Agronomic advisory | Irrigation, pesticide, or harvest-timing recommendations |
+| Yield forecasting for markets or procurement | |
+| Continuous monitoring without a claimed event | Section 3 in new clothing, and it breaks Section 2.3's requirement that every package tie to a specific event. This governs *issuing evidence*: running the pipeline over unclaimed fields as an internal specificity check produces no package and is in scope |
+| Other insurance lines and other geographies | PMFBY/RWBCIS, India. Not livestock, property, or health lines; not other countries |
+
+### 9.5 Platform — what this module is not, as software
+
+| Out of scope | What it means |
+|---|---|
+| ML platform services | Feature store, experiment tracker, model registry, serving mesh. This module ships a training entry point, a saved model artifact, and a feature contract |
+| SaaS product surface | Tenancy, billing, metering, subscriptions |
+| Deployment and infrastructure | Infrastructure-as-code, orchestration, CI/CD, secrets management, autoscaling |
+| Authentication and identity | A gateway concern. The service assumes an authenticated caller and issues no identities |

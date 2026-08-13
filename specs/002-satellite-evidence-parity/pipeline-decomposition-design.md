@@ -439,7 +439,9 @@ or underspecified. They are corrections to the design above, not new scope.
 1. **Boundary rule 2 overstates the guarantee.** §3.2 says "only `pipeline.py`
    may import `EvidenceStore`". That is already false and legitimately so:
    `api/routes.py` imports it for `Depends(get_store)`, which is `001`'s
-   completed `T022`/`T023`, and `002`'s `T018` and `TV-01` will add more. The
+   completed `T022`/`T023`. (`002`'s `T018` and `TV-01` would have added more;
+   both were struck on 2026-08-13 per `constitution.md` §9, so the API layer's
+   set of store consumers is unchanged.) The
    rule is about the **six pipeline stages**, not the whole codebase — which is
    what `T0R-03`'s import-graph test actually enforces (`models/`, `causation/`,
    `packaging/`). Read §3.2 as scoped to those; the API layer is an explicit

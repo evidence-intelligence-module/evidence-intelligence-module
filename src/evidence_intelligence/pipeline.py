@@ -519,6 +519,16 @@ def run_pipeline(
         _coverage_statement(imagery),
         *_modeling_assumption_statements(settings.damage_classification_bands),
     ]
+    label_provenance = ai_ml_result.confidence_or_accuracy.get("label_provenance")
+    if label_provenance:
+        # Only present on the trained path. Reported as declared by the data
+        # supplier and never verified — sourcing training data is out of scope
+        # (constitution.md §9.2), so this string is the whole of what this
+        # package can say about the data behind Component 2's accuracy figures.
+        accuracy_statement.append(
+            f"Component 2 training-label provenance, as declared by the data supplier "
+            f"and not verified by this module: {label_provenance}."
+        )
     if imagery.post_event is None and imagery.sar is not None:
         accuracy_statement.append(
             "Post-event optical imagery was unusable; Sentinel-1 SAR substituted for "

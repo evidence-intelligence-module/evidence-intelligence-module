@@ -42,7 +42,7 @@ def test_configured_path_loads_trained_model(tmp_path):
     trained.fit(rng.rand(30, len(FEATURE_NAMES)), rng.rand(30))
     trained.evaluate(rng.rand(10, len(FEATURE_NAMES)), rng.rand(10))
     save_path = tmp_path / "model.joblib"
-    trained.save(save_path)
+    trained.save(save_path, label_provenance="test fixture labels, synthetic")
 
     model = _load_ai_ml_model(_settings(ai_ml_model_path=str(save_path)))
     result = model.predict({name: 0.1 for name in FEATURE_NAMES}, harvest_index=0.4)
@@ -60,7 +60,7 @@ def test_model_is_cached_across_calls(tmp_path):
     trained = AiMlModel()
     trained.fit(rng.rand(30, len(FEATURE_NAMES)), rng.rand(30))
     save_path = tmp_path / "model.joblib"
-    trained.save(save_path)
+    trained.save(save_path, label_provenance="test fixture labels, synthetic")
 
     settings = _settings(ai_ml_model_path=str(save_path))
     first = _load_ai_ml_model(settings)

@@ -87,7 +87,7 @@ def test_save_untrained_model_raises(tmp_path):
 
     model = AiMlModel()
     with pytest.raises(RuntimeError):
-        model.save(tmp_path / "model.joblib")
+        model.save(tmp_path / "model.joblib", label_provenance="test fixture labels, synthetic")
 
 
 def test_save_and_load_round_trip_preserves_predictions(tmp_path):
@@ -101,7 +101,7 @@ def test_save_and_load_round_trip_preserves_predictions(tmp_path):
     model.evaluate(rng.rand(10, len(FEATURE_NAMES)), rng.rand(10))
 
     save_path = tmp_path / "model.joblib"
-    model.save(save_path)
+    model.save(save_path, label_provenance="test fixture labels, synthetic")
     loaded = AiMlModel.load(save_path)
 
     feature_vector = {name: 0.3 for name in FEATURE_NAMES}
@@ -116,6 +116,97 @@ def test_save_and_load_round_trip_preserves_predictions(tmp_path):
     )
 
 
+def test_save_requires_label_provenance(tmp_path):
+    """Sourcing training data is out of scope (constitution.md §9.2), so the
+    module cannot verify where labels came from — which is exactly why it must
+    refuse to persist an artifact that does not say. A calibrated accuracy
+    figure in a §65B package with no statement about the data behind it is the
+    outcome this guards against."""
+    import numpy as np
+    import pytest
+
+    from evidence_intelligence.models.ai_ml import FEATURE_NAMES
+
+    rng = np.random.RandomState(0)
+    model = AiMlModel()
+    model.fit(rng.rand(50, len(FEATURE_NAMES)), rng.rand(50))
+
+    for empty in ("", "   "):
+        with pytest.raises(ValueError, match="label_provenance is required"):
+            model.save(tmp_path / "model.joblib", label_provenance=empty)
+
+    assert not (tmp_path / "model.joblib").exists()
+
+
+def test_label_provenance_round_trips_into_every_prediction(tmp_path):
+    """It has to reach `confidence_or_accuracy`, because that dict is what the
+    pipeline copies into the package's accuracy statement. Recorded in the
+    artifact but absent from the prediction would disclose nothing."""
+    import numpy as np
+
+    from evidence_intelligence.models.ai_ml import FEATURE_NAMES
+
+    rng = np.random.RandomState(0)
+    model = AiMlModel()
+    model.fit(rng.rand(50, len(FEATURE_NAMES)), rng.rand(50))
+    model.evaluate(rng.rand(10, len(FEATURE_NAMES)), rng.rand(10))
+
+    save_path = tmp_path / "model.joblib"
+    model.save(save_path, label_provenance="  insurer pilot survey, Maharashtra, non-CCE  ")
+    loaded = AiMlModel.load(save_path)
+
+    result = loaded.predict({name: 0.3 for name in FEATURE_NAMES}, harvest_index=0.4)
+    assert (
+        result.confidence_or_accuracy["label_provenance"]
+        == "insurer pilot survey, Maharashtra, non-CCE"
+    )
+
+
+def test_untrained_model_reports_no_label_provenance():
+    """The untrained placeholder has no training data, so it must not claim a
+    provenance for one. This also keeps the untrained path — the one every
+    golden fixture exercises — byte-identical to before the field existed."""
+    result = AiMlModel().predict({"ndvi_deviation": 0.4}, harvest_index=0.4)
+
+    assert result.confidence_or_accuracy["status"] == "untrained_placeholder"
+    assert "label_provenance" not in result.confidence_or_accuracy
+
+
+def test_load_of_artifact_without_provenance_says_so(tmp_path):
+    """Artifacts saved before the field was mandatory still load — and report
+    'not recorded' rather than an empty string, because a blank provenance
+    reads as one that was declared and left empty."""
+    import joblib
+    import numpy as np
+    from sklearn.ensemble import RandomForestRegressor
+
+    from evidence_intelligence.models.ai_ml import (
+        FEATURE_NAMES,
+        HYPERPARAMETERS,
+        METHODOLOGY_VERSION,
+    )
+
+    rng = np.random.RandomState(0)
+    legacy = RandomForestRegressor(**HYPERPARAMETERS)
+    legacy.fit(rng.rand(50, len(FEATURE_NAMES)), rng.rand(50))
+
+    save_path = tmp_path / "legacy.joblib"
+    joblib.dump(
+        {
+            "model": legacy,
+            "validation_metrics": {"mae": 0.1, "rmse": 0.2, "nrmse": 0.3},
+            "feature_names": FEATURE_NAMES,
+            "methodology_version": METHODOLOGY_VERSION,
+        },
+        save_path,
+    )
+
+    result = AiMlModel.load(save_path).predict(
+        {name: 0.3 for name in FEATURE_NAMES}, harvest_index=0.4
+    )
+    assert result.confidence_or_accuracy["label_provenance"] == "not recorded"
+
+
 def test_load_rejects_mismatched_feature_names(tmp_path, monkeypatch):
     import numpy as np
     import pytest
@@ -126,7 +217,7 @@ def test_load_rejects_mismatched_feature_names(tmp_path, monkeypatch):
     model = AiMlModel()
     model.fit(rng.rand(20, len(ai_ml_module.FEATURE_NAMES)), rng.rand(20))
     save_path = tmp_path / "model.joblib"
-    model.save(save_path)
+    model.save(save_path, label_provenance="test fixture labels, synthetic")
 
     monkeypatch.setattr(ai_ml_module, "FEATURE_NAMES", ["a_completely_different_feature_set"])
     with pytest.raises(ValueError):

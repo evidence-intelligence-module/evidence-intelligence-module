@@ -12,13 +12,13 @@
 
 Extends the existing evidence-generation pipeline with five additive capabilities, in priority order: (1) source-selection logic that prioritizes cloud-penetrating SAR and, where in scope, higher-resolution optical/SAR sources over the current 10–30m optical-only baseline, so monsoon-season and small-field claims don't go dark from sensor blindness; (2) a plain-language confidence tier (High/Medium/Low) attached to every evidence package, mirroring the tiered-confidence-plus-fallback pattern every reviewed global precedent uses, derived from — not replacing — the existing ensemble confidence figure; (3) an additive open-foundation-model embedding feature source (Presto first) feeding the existing AI/ML damage model (Component 2) alongside its current hand-crafted features; (4) an independent crop-type/calendar cross-check against an open crop-type mapping product, flagging discrepancies rather than resolving them silently; (5) dedicated red-edge vegetation indices and NASA ECOSTRESS canopy-temperature data as additive stress signals specifically for drought and heatwave claims, where the pipeline currently has no thermal signal at all. No new service, no new external interface shape beyond additive fields/endpoints on the existing Evidence Request Interface, and no change to the Constitution §4 no-CCE boundary.
 
-**Decision update (2026-08-12)**: commercial satellite tasking (VHR optical, commercial SAR) is **not** part of the near-term rollout — decided free-only (`issue/open query - commercial satellite tasking budget and volume thresholds.md`, Resolution). Enhanced-tier sourcing for this rollout is limited to the existing GEE-hosted baseline plus ISRO's free sovereign sources (Resourcesat-2A LISS-4, EOS-04/RISAT-1A) accessed via a separate Bhoonidhi client — GEE does not host ISRO's own satellite data (confirmed directly against Earth Engine's Data Catalog, which lists NASA/USGS/ESA-primary datasets only). `commercial_tasking_client.py` remains in the design as a disabled-by-default stub, not deleted, so a future budget decision needs only a config change.
+**Decision update (2026-08-13)**: commercial satellite procurement is **out of scope** per `constitution.md` §9.2 — permanently, not merely unbudgeted. Enhanced-tier sourcing is limited to the existing GEE-hosted baseline plus ISRO's free sovereign sources (Resourcesat-2A LISS-4, EOS-04/RISAT-1A) accessed via a separate Bhoonidhi client — GEE does not host ISRO's own satellite data (confirmed directly against Earth Engine's Data Catalog, which lists NASA/USGS/ESA-primary datasets only). `commercial_tasking_client.py` is **removed from the design**: it had been retained as a disabled stub so a future budget decision would need only a config change, and that is precisely what a permanent boundary must not leave lying around. *(Superseded: a 2026-08-12 decision had made this free-only for the near-term rollout.)*
 
 ## Technical Context
 
 **Language/Version**: Python 3.11 — unchanged from `001-evidence-generation-pipeline/plan.md`; every new dependency below has a mature Python 3.11-compatible client.
 
-**Primary Dependencies**: Existing (`001` plan) — GEE Python API, scikit-learn/DNN framework, WOFOST/InfoCrop, Matplotlib/Folium, ReportLab. **New**: a PyTorch runtime to load and run Presto (open, MIT-licensed, small ViT-style pixel-timeseries transformer — research §4.1) for foundation-model embeddings; an openEO/Copernicus Data Space Ecosystem client for WorldCereal-based crop-type cross-checking (research §4.3); a Bhoonidhi API client for ISRO's free sovereign sources (Resourcesat-2A LISS-4, EOS-04/RISAT-1A — not available via GEE, see Summary decision update); an AWS Open Data Registry client (`boto3` or plain HTTPS, no vendor-specific SDK needed) for NASA ECOSTRESS canopy-temperature data. Vendor tasking API clients for commercial enhanced-tier sources (Planet/Maxar/Airbus/ICEYE/Capella) are designed-for but **not implemented in this rollout** — isolated behind the Satellite Source Registry and gated off per the free-only decision above, so no commercial vendor SDK is hard-baked into the core pipeline (preserves the module's own standalone-by-design ethos, Constitution §5, applied internally as well as externally).
+**Primary Dependencies**: Existing (`001` plan) — GEE Python API, scikit-learn/DNN framework, WOFOST/InfoCrop, Matplotlib/Folium, ReportLab. **New**: a PyTorch runtime to load and run Presto (open, MIT-licensed, small ViT-style pixel-timeseries transformer — research §4.1) for foundation-model embeddings; an openEO/Copernicus Data Space Ecosystem client for WorldCereal-based crop-type cross-checking (research §4.3); a Bhoonidhi API client for ISRO's free sovereign sources (Resourcesat-2A LISS-4, EOS-04/RISAT-1A — not available via GEE, see Summary decision update); an AWS Open Data Registry client (`boto3` or plain HTTPS, no vendor-specific SDK needed) for NASA ECOSTRESS canopy-temperature data. Vendor tasking API clients for commercial sources are **out of scope** per `constitution.md` §9.2; no commercial vendor SDK appears anywhere in this design.
 
 **Storage**: Extends the existing PostgreSQL + PostGIS store (`001` plan) — new columns and tables only (data-model.md below); no new storage engine.
 
@@ -30,9 +30,9 @@ Extends the existing evidence-generation pipeline with five additive capabilitie
 
 **Performance Goals**: Must not regress the existing targets (`001` plan: weather-only preliminary within minutes; full package within the relevant imagery revisit window). Source-selection logic (capability 1) and the confidence-tier computation (capability 2) run on the request's synchronous path and must add negligible latency; foundation-model inference (capability 3) and the crop-calendar cross-check (capability 4) are additive analysis steps within the existing full-package timing budget, not on any new faster path.
 
-**Constraints**: All constraints from `001-evidence-generation-pipeline/plan.md` carry forward unchanged (reproducibility, never-fail-silently, mandatory provenance, 10-year retention, no CCE, no proactive alerting, no privileged caller). New in this plan: enhanced sources and foundation-model features MUST be additive/optional — the pipeline MUST produce a complete evidence package using only the existing `001` baseline if no enhanced source or foundation-model feature is available for a given request (spec.md FR-003, FR-008); commercial/tasked source usage MUST be recorded whether or not it was actually used (spec.md FR-013); discrepancy flags (capability 4) MUST be surfaced, never silently resolved (spec.md FR-010).
+**Constraints**: All constraints from `001-evidence-generation-pipeline/plan.md` carry forward unchanged (reproducibility, never-fail-silently, mandatory provenance, 10-year retention, no CCE, no proactive alerting, no privileged caller). New in this plan: enhanced sources and foundation-model features MUST be additive/optional — the pipeline MUST produce a complete evidence package using only the existing `001` baseline if no enhanced source or foundation-model feature is available for a given request (spec.md FR-003, FR-008); enhanced-source consideration MUST be recorded whether or not the source was actually used (spec.md FR-013); discrepancy flags (capability 4) MUST be surfaced, never silently resolved (spec.md FR-010).
 
-**Scale/Scope**: Commercial (paid/tasked) satellite source budget and per-region/per-season volume thresholds — **resolved 2026-08-12**: none authorized for this rollout (Option A, free-only), so this no longer gates Scale/Scope; commercial tasking is simply out of scope until revisited (see [`issue/open query - commercial satellite tasking budget and volume thresholds.md`](./issue/open%20query%20-%20commercial%20satellite%20tasking%20budget%20and%20volume%20thresholds.md), Resolution). Request-volume/concurrency targets remain unresolved for the same reason `001`'s own equivalent question is open — not invented here either.
+**Scale/Scope**: Commercial satellite source budget and volume thresholds are **moot as of 2026-08-13** — procurement is out of scope per `constitution.md` §9.2, so there is no budget to size (see [`issue/open query - commercial satellite tasking budget and volume thresholds.md`](./issue/open%20query%20-%20commercial%20satellite%20tasking%20budget%20and%20volume%20thresholds.md), superseded). Request-volume/concurrency targets remain unresolved for the same reason `001`'s own equivalent question is open — not invented here either.
 
 ## Constitution Check
 
@@ -40,11 +40,11 @@ Extends the existing evidence-generation pipeline with five additive capabilitie
 
 | Constitution principle | Gate | Status |
 |---|---|---|
-| I. Reproducible, Versioned Evidence | Every new signal (source selection, foundation-model feature, cross-check) carries a pinned version/provenance; identical inputs + version → identical output | **PASS** — `foundation_model_feature_sets.model_version`, `satellite_analysis_results.source_class`/`access_model`, and `crop_calendar_cross_checks.source_dataset`/`source_version` (data-model.md) all carry this; confidence-tier computation is a pure function of already-versioned component/ensemble outputs, adding no unversioned input |
-| II. Event-Causal, Independently Verifiable | Every new source/signal traces to a specific request and to a named, dated public or commercial source | **PASS** — new tables all FK to `evidence_requests`; `satellite_analysis_results` extension records source name, resolution class, and acquisition date for every source considered, not just the one used |
+| I. Reproducible, Versioned Evidence | Every new signal (source selection, foundation-model feature, cross-check) carries a pinned version/provenance; identical inputs + version → identical output | **PASS** — `foundation_model_feature_sets.model_version`, `satellite_analysis_results.source_class`, and `crop_calendar_cross_checks.source_dataset`/`source_version` (data-model.md) all carry this; confidence-tier computation is a pure function of already-versioned component/ensemble outputs, adding no unversioned input |
+| II. Event-Causal, Independently Verifiable | Every new source/signal traces to a specific request and to a named, dated public source | **PASS** — new tables all FK to `evidence_requests`; `satellite_analysis_results` extension records source name, resolution class, and acquisition date for every source considered, not just the one used |
 | III. Legally Admissible by Construction (NON-NEGOTIABLE) | §65B fields remain mandatory on every output; new fields (confidence tier, discrepancy flags) are additive to, not replacements for, existing mandatory fields | **PASS** — `evidence_packages.confidence_tier` and its guidance text are additive columns; the existing attribution/methodology/accuracy/chain-of-custody fields from `001-evidence-generation-pipeline/data-model.md` are untouched |
 | IV. No CCE, No Standalone Prediction (NON-NEGOTIABLE) | No CCE ingestion/blending anywhere in this plan; every new capability is reactive to an existing request | **PASS** — no entity in data-model.md below references CCE data; the crop-calendar cross-check (capability 4) compares against an open crop-type mapping product, never CCE; the lowest confidence tier explicitly states non-equivalence to CCE (spec.md FR-005), reinforcing rather than relaxing this boundary |
-| V. Standalone Interface, No Privileged Caller | New endpoint/fields remain generic; no caller-specific schema is introduced | **PASS** — the new Supplementary Evidence Attachment endpoint (contracts/) accepts an opaque attachment with no assumption about which intimation channel produced it, matching the existing `external_reference_id` pattern in `001`'s contract |
+| V. Standalone Interface, No Privileged Caller | New fields remain generic; no caller-specific schema is introduced | **PASS** — and stronger since 2026-08-13: the two endpoints this feature would have added (supplementary evidence, claim outcome) are out of scope per `constitution.md` §9.1/§9.2, so the request surface is unchanged from `001`'s |
 
 No violations — Complexity Tracking table below is empty.
 
@@ -64,7 +64,7 @@ specs/002-satellite-evidence-parity/
 ├── quickstart.md        # Phase 1 output (/speckit-plan command)
 ├── contracts/           # Phase 1 output (/speckit-plan command) — extends 001's contract
 ├── checklists/          # Spec quality checklist (/speckit-specify command)
-├── issue/                # Open queries deferred from spec/plan (commercial tasking budget)
+├── issue/                # Open queries deferred from spec/plan, plus queries superseded by constitution.md §9
 └── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
 ```
 
@@ -73,30 +73,26 @@ specs/002-satellite-evidence-parity/
 ```text
 src/evidence_intelligence/
 ├── api/
-│   └── routes.py                     # MODIFIED — new supplementary-evidence and claim-outcome endpoints (contracts/)
+│   └── routes.py                     # UNCHANGED — the supplementary-evidence and claim-outcome endpoints are out of scope (constitution.md §9.1/§9.2); the request surface stays as 001 defined it
 ├── ingestion/
 │   ├── imagery.py                    # MODIFIED — consults source_registry.py for SAR-priority/enhanced-source selection
 │   ├── gee_client.py                 # UNCHANGED — remains the client for existing baseline (Sentinel/Landsat/MODIS) sources
 │   ├── source_registry.py            # NEW — Satellite Source Registry: catalog + selection logic (FR-001, FR-002, FR-003, FR-013)
 │   ├── bhoonidhi_client.py           # NEW — ISRO free sovereign sources (Resourcesat-2A LISS-4, EOS-04); not covered by gee_client.py
-│   ├── commercial_tasking_client.py  # NEW, INACTIVE — isolated stub for tasked VHR/commercial SAR, disabled by free-only decision (FR-002, FR-013); not on the near-term critical path
 │   └── crop_calendar_crosscheck.py   # NEW — WorldCereal-based crop-type/calendar cross-check (FR-010)
 ├── models/
 │   ├── ai_ml.py                      # MODIFIED — accepts foundation-model embeddings as an additive feature source (FR-007, FR-008)
 │   ├── foundation_features.py        # NEW — Presto embedding extraction, versioned (FR-007, FR-008)
 │   ├── confidence_tier.py            # NEW — derives High/Medium/Low tier from existing ensemble confidence (FR-004, FR-005)
 │   ├── thermal_stress.py             # NEW — ECOSTRESS canopy-temperature ingestion + water-stress signal for drought/heatwave (FR-016, FR-017)
-│   ├── red_edge_indices.py           # NEW — formalized NDRE/CIred-edge/MTCI computation, replacing the generic "red-edge index" placeholder (FR-015)
-│   └── field_boundary_assist.py      # NEW, SHOULD-priority — human-in-the-loop segmentation assist (FR-014)
+│   └── red_edge_indices.py           # NEW — formalized NDRE/CIred-edge/MTCI computation, replacing the generic "red-edge index" placeholder (FR-015)
 ├── packaging/
 │   └── report_generator.py           # MODIFIED — surfaces confidence tier, source provenance, cross-check outcome, non-equivalence statement, thermal/red-edge signals, package lineage
 ├── validation/                       # NEW (Phase 0.6) — label-free validation harnesses
 │   ├── negative_controls.py          # NEW — false-positive rate over unclaimed fields (TV-03)
-│   ├── reproducibility.py            # NEW — same request re-run yields an identical package (TV-04)
-│   └── ablation.py                   # NEW — does a feature change the output at all (TV-05)
+│   └── reproducibility.py            # NEW — same request re-run yields an identical package (TV-04)
 └── store/
-    ├── schema.py                      # MODIFIED — new columns/tables per data-model.md, incl. claim_outcomes and package lineage
-    └── label_export.py                # NEW — training CSV from captured outcomes, in scripts/train_ai_ml_model.py's format (TV-02)
+    └── schema.py                      # MODIFIED — new columns/tables per data-model.md, incl. package lineage
 
 src/tests/
 ├── contract/              # New: validates api/ against contracts/ extension
@@ -104,7 +100,9 @@ src/tests/
 └── unit/                  # New: source_registry, confidence_tier, foundation_features, crop_calendar_crosscheck, thermal_stress, red_edge_indices
 ```
 
-**Structure additions 2026-08-13**: `validation/` and `store/label_export.py` come from Phase 0.6 (`tasks.md` `TV-01`–`TV-05`), which did not exist when this plan was written. `validation/` is deliberately a sibling of the pipeline packages rather than part of `models/` — its harnesses measure the assembled system's behaviour (false-positive rate, reproducibility, feature sensitivity) rather than contributing any figure to an evidence package, and nothing under it is ever imported by a request path.
+**Structure additions 2026-08-13**: `validation/` comes from Phase 0.6 (`tasks.md` `TV-03`/`TV-04`), which did not exist when this plan was written. It is deliberately a sibling of the pipeline packages rather than part of `models/` — its harnesses measure the assembled system's behaviour (false-positive rate, reproducibility) rather than contributing any figure to an evidence package, and nothing under it is ever imported by a request path.
+
+**Structure removals 2026-08-13**: `commercial_tasking_client.py`, `field_boundary_assist.py`, `store/label_export.py`, `validation/ablation.py`, and the two new `routes.py` endpoints are all out of scope per `constitution.md` §9. Note that `validation/negative_controls.py` runs the pipeline over fields with no claimed event — permitted explicitly by §9.4's carve-out, because it produces no package.
 
 **Structure Decision**: Single project (Option 1), same as `001` — this is an extension of the existing service, not a new one. Every new module is additive within the existing `ingestion/`, `models/`, `packaging/` subpackages so each stays independently testable, matching the module's existing per-component structure; nothing here introduces a second service, a frontend, or a new top-level source tree.
 

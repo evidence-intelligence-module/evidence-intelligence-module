@@ -648,6 +648,7 @@ each lives in [`GUIDE.md`](../GUIDE.md) "Open Issues" and the two `issue/README.
 | §11 | `map_uris`, `affected_area_ha` | Promised by `hld.md` §6 / `evidence-flow-spec.md` §4, not implemented | not yet tracked as a task |
 | §11 | Weather-only assembly | Duplicate package-assembly path, no manifest attached | `002` `T0R-06` |
 | §2 | Retry scheduling | `retry_insufficient_data` exists but nothing calls it in `src/` | `002` `T05-06` (durability) |
+| §11 | No outcome capture | The module discards claim outcomes — now **by design**, not by omission: label sourcing is out of scope per `constitution.md` §9.2 | closed; see `notes/2026-08-13-scope-boundaries-design.md` |
 | §7 | Preserved substitutions | 25 °C temperature, 0.0 weather anomaly | flagged in `tasks.md`, fixture-owning tasks |
 
 None of these are in the diagrams by accident: the module's stated posture is that an undisclosed

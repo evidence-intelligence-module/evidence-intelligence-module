@@ -28,10 +28,22 @@ The module exposes a generic evidence-request contract (location, event date, pe
 
 ## Development Workflow
 
-Cross-document references use `File.md §N — Section Title` or a markdown link, naming sections by actual heading text so references survive renumbering. This is a documentation-only repo today — there's no build/test/run step; correctness means internal consistency (cross-references resolve, no contradicted boundaries) and factual accuracy against cited sources. Read `documents/notes/decision-log.md` before assuming something is "missing" — it's the running decision log for why prior material was deliberately removed.
+Cross-document references use `File.md §N — Section Title` or a markdown link, naming sections by actual heading text so references survive renumbering. `src/` has a real build/test step (`pytest`, `ruff` — see `GUIDE.md`); everything under `documents/` and `specs/` is documentation, where correctness means internal consistency (cross-references resolve, no contradicted boundaries) and factual accuracy against cited sources. Read `documents/notes/decision-log.md` before assuming something is "missing" — it's the running decision log for why prior material was deliberately removed.
+
+## Scope Boundaries (canonical §9)
+
+**The module owns the transformation, not the supply chain at either end.** Labeled data arrives; an evidence package leaves. Who produces the one and who consumes the other are outside this module.
+
+28 permanent boundaries in four groups, enumerated in canonical `documents/constitution.md` §9. Crossing any requires a §8 amendment; there is no "for now" tier. Summary for planning purposes:
+
+- **Data minimisation** — the module accepts exactly `geometry`, `event_date`, `peril_type`, and an opaque `external_reference_id`, and never widens that surface. Stated as minimisation, not as absence of personal data: geometry plus event date plus peril type already identifies a farm.
+- **Upstream** — training-label sourcing/curation/annotation, ground-truth survey operations, commercial satellite procurement, hosting or mirroring source archives, owning master reference data (consuming a published product is fine), field-boundary derivation and land records, sensor operations.
+- **Downstream** — the consuming service, claim adjudication and settlement, indemnity/payout computation, delivery and notification (a callback announces readiness; it is not delivery), farmer/surveyor UI, dashboards and BI, dispute filing and §65B certification, human override of an issued figure.
+- **Lateral** — predictive alerting (§3), CCE (§4), fraud detection and claimant risk scoring, underwriting/pricing, parametric trigger computation, agronomic advisory, yield forecasting, continuous monitoring without a claimed event (internal specificity testing that produces no package is permitted), other insurance lines and other geographies.
+- **Platform** — ML platform services, SaaS product surface, deployment/infrastructure, authentication and identity (a gateway concern).
 
 ## Governance
 
-This Constitution may be amended only by an explicit, recorded decision — never silently superseded by a later document that merely contradicts it. Any proposal to integrate this module more tightly with a specific intimation channel (relaxing Principle V), add predictive alerting (relaxing Principle IV), or touch CCE data (relaxing Principle IV) must amend the canonical Constitution first, with rationale stated, before implementation. `hld.md` and `evidence-flow-spec.md` implement this Constitution; where they appear to conflict with it, the canonical document controls. This file is a Spec-Kit-facing distillation kept in sync with it, not an independent authority.
+This Constitution may be amended only by an explicit, recorded decision — never silently superseded by a later document that merely contradicts it. Any proposal to integrate this module more tightly with a specific intimation channel (relaxing Principle V), add predictive alerting (relaxing Principle IV), touch CCE data (relaxing Principle IV), or cross any boundary in canonical §9 must amend the canonical Constitution first, with rationale stated, before implementation. `hld.md` and `evidence-flow-spec.md` implement this Constitution; where they appear to conflict with it, the canonical document controls. This file is a Spec-Kit-facing distillation kept in sync with it, not an independent authority.
 
-**Version**: 1.0.0 | **Ratified**: 2026-08-12 | **Last Amended**: 2026-08-12
+**Version**: 1.1.0 | **Ratified**: 2026-08-12 | **Last Amended**: 2026-08-13 (added Scope Boundaries, mirroring canonical §9)
