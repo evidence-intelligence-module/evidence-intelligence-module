@@ -41,6 +41,7 @@ See [`GUIDE.md`](GUIDE.md) for configuration, running the service, training the 
 
 For Component 2 training-data preparation, the repo now includes:
 - [`src/scripts/prepare_ai_ml_labels.py`](src/scripts/prepare_ai_ml_labels.py) to normalize external survey/assessment CSVs into canonical labels
+- [`src/scripts/assemble_ai_ml_training_data.py`](src/scripts/assemble_ai_ml_training_data.py) to join those labels to a feature table and produce the exact training CSV shape expected by `train_ai_ml_model.py`
 - [`src/data/component2/README.md`](src/data/component2/README.md) with mapping templates for India-relevant sources like PBI and CSISA/LCAS
 
 ## Current Status
