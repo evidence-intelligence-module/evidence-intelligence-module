@@ -39,6 +39,10 @@ Full step-by-step detail: [`documents/evidence-flow-spec.md`](documents/evidence
 
 See [`GUIDE.md`](GUIDE.md) for configuration, running the service, training the AI/ML model, and open issues.
 
+For Component 2 training-data preparation, the repo now includes:
+- [`src/scripts/prepare_ai_ml_labels.py`](src/scripts/prepare_ai_ml_labels.py) to normalize external survey/assessment CSVs into canonical labels
+- [`src/data/component2/README.md`](src/data/component2/README.md) with mapping templates for India-relevant sources like PBI and CSISA/LCAS
+
 ## Current Status
 
 All 42 implementation tasks in [`tasks.md`](specs/001-evidence-generation-pipeline/tasks.md) are complete and tested (55/55 passing).
